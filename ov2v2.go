@@ -15,6 +15,8 @@ func main(){
     go syncingThread(done, i)
 	go countUpwards(done, i)
 	go countDownwards(done, i)
+    <-done
+    <-done 
 	res := <- i
 	println(res)
 }
@@ -42,17 +44,17 @@ func countDownwards(done chan int, i chan int){
 }
 
 func syncingThread(done chan int, i chan int){
-    var threadsDone int = 0
+    //var threadsDone int = 0
     for {
         select {
             case tmp := <- i:
                 i <- tmp
-            case <-done:
+            /* case <-done:
                 if threadsDone == 1{
                     return
                 }else{
                     threadsDone++
-                }
+                }*/
         }
     }
 }
