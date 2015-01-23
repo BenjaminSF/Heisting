@@ -1,4 +1,3 @@
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -6,6 +5,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
+#include <pthread.c>
 
 int recSock, sendSock;
 int myPort = 20009;
@@ -13,7 +13,29 @@ int listenPort = 30000;
 
 const int BUF_SIZE = 1024;
 
+void* tFunc_sendSocket(){
+	for (int i = 0; i++; i<5){	
+		char *msg = "Hei paa deg, verden!";
+		if (sendto(sendSock, msg, strlen(msg), 0, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
+			perror("Sending socket failed");
+			return -1;
+		}
+		printf("Sending message...\n");
+		sleep(1000);
+	}
+}
 
+void* tFunc_recvSocket(){
+	for (;;) {
+		printf("Waiting for response...\n");
+		int recvlen = recvfrom(recSock, buf, BUF_SIZE, 0, (struct sockaddr *)&remaddr, &remaddrLen);
+		printf("Received bytes: %d\n", recvlen);
+		if (recvlen > 0){
+			buf[recvlen] = 0;
+			printf("Received message: %s \n", buf);
+		}
+	}
+}
 
 int main(){
 	unsigned char buf[BUF_SIZE];
@@ -54,32 +76,12 @@ int main(){
 		return -1;
 	}*/
 	
-	
-	char *msg = "Hei paa deg, verden!";
-	if (sendto(sendSock, msg, strlen(msg), 0, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
-		perror("Sending socket failed");
-		return -1;
-	}
+	pthread_t send_t, rec_t;
+	pthread_create(&send_t, NULL, tFunc_sendSocket, NULL);
+	pthread_create(&rec_t, NULL, tFunc_recSocket, NULL);
 	//printf("Socket sent\n");
-	for (;;) {
-		printf("Waiting for response...\n");
-		int recvlen = recvfrom(recSock, buf, BUF_SIZE, 0, (struct sockaddr *)&remaddr, &remaddrLen);
-		printf("Received bytes: %d\n", recvlen);
-		if (recvlen > 0){
-			buf[recvlen] = 0;
-			printf("Received message: %s \n", buf);
-		}
-	}
+	sleep(5000);
 	close(recSock);
 	close(sendSock);
 	return 0;
-} 
-// port = 20009;
-
-// broadcast = '129.241.187.255';
-
-
-// IP = 129.241.187.156
-
-
-
+}

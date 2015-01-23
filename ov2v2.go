@@ -26,21 +26,17 @@ func countUpwards(done chan int, i chan int){
 		tmp := <- i
 		tmp++
 		i <- tmp
-		if (k == 999999){
-			done <- 1
-		}
 	}
+	done <- 1
 }
 
 func countDownwards(done chan int, i chan int){
-	for k:= 0; k < 1000; k++ {
+	for k:= 0; k < 1000000; k++ {
 		tmp := <- i
 		tmp--
-		i <- tmp
-		if (k == 999){
-			done <- 1
-		}
+		i <- tmp	
 	}
+	done <- 1
 }
 
 func syncingThread(done chan int, i chan int){
