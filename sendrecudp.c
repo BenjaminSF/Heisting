@@ -8,7 +8,7 @@
 #include <string.h>
 
 int recSock, sendSock;
-int myPort = 20009;
+int myPort = 20008;
 int listenPort = 30000;
 
 const int BUF_SIZE = 1024;
@@ -56,25 +56,28 @@ int main(){
 	
 	
 	char *msg = "Hei paa deg, verden!";
-	if (sendto(sendSock, msg, strlen(msg), 0, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
-		perror("Sending socket failed");
-		return -1;
-	}
+	char *recIP;
 	//printf("Socket sent\n");
 	for (;;) {
 		printf("Waiting for response...\n");
 		int recvlen = recvfrom(recSock, buf, BUF_SIZE, 0, (struct sockaddr *)&remaddr, &remaddrLen);
 		printf("Received bytes: %d\n", recvlen);
 		if (recvlen > 0){
+			if (sendto(sendSock, msg, strlen(msg), 0, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
+				perror("Sending socket failed");
+				return -1;
+			}
+			recIP = inet_ntoa(remaddr.sin_addr);
 			buf[recvlen] = 0;
-			printf("Received message: %s \n", buf);
+			printf("Received message: %s from IP: %s \n", buf, recIP);
+			
 		}
 	}
 	close(recSock);
 	close(sendSock);
 	return 0;
 } 
-// port = 20009;
+// port = 20008;
 
 // broadcast = '129.241.187.255';
 
