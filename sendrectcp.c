@@ -9,7 +9,7 @@
 #define BUF_SIZE 1024
 int recSock, sendSock, tcpSock;
 int myPort = 20008;
-int sendPort = 33493;
+int sendPort = 33546;
 unsigned char buf[1024];
 struct sockaddr_in remaddr;
 struct sockaddr_in serveraddr;
@@ -27,9 +27,7 @@ int main(){
 	myaddr.sin_port = htons(myPort);
 	myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	//struct sockaddr_in serveraddr;
-	serveraddr.sin_family = AF_INET;
-	serveraddr.sin_port = htons(sendPort);
-	serveraddr.sin_addr.s_addr = inet_addr(serverIP);
+	
 	//struct sockaddr_in remaddr;
 	//socklen_t remaddrLen = sizeof(remaddr);
 	socklen_t recaddrLen = sizeof(myaddr);
@@ -41,11 +39,17 @@ int main(){
 		perror("Socket not created\n");
 		return -1;
 	}
-	/*int broadcastPermission = 1;
-	if (setsockopt(sendSock, SOL_SOCKET, SO_BROADCAST, (void *)&broadcastPermission, sizeof(broadcastPermission)) < 0){
+	memset(&serveraddr,0, sizeof(serveraddr));
+	
+	serveraddr.sin_family = AF_INET;
+	serveraddr.sin_port = htons(sendPort);
+	serveraddr.sin_addr.s_addr = inet_addr(serverIP);
+	
+	int broadcastPermission = 1;
+	if (setsockopt(sendSock, SOL_SOCKET, SO_REUSEADDR,&broadcastPermission, sizeof(broadcastPermission)) < 0){
 		perror("sendSock broadcast enable failed\n");
 		return -1;
-	}*/
+	}
 	if (bind(recSock,(struct sockaddr *)&myaddr,recaddrLen) < 0){
 		perror("Failed to bind recSocket\n");
 		return -1;
@@ -53,15 +57,16 @@ int main(){
 	printf("Starting initialization\n");
 	char *initConnectionMsg = "Connect to: 129.241.187.161:20008";
 	
+	if(connect(sendSock, (const struct sockaddr *) &serveraddr, sizeof(struct sockaddr))<0){
+		perror("Could not connect");
+		return -1;
+	}
 	if (sendto(sendSock, initConnectionMsg, strlen(initConnectionMsg), 0,(struct sockaddr *)&serveraddr, sizeof(serveraddr))< 0){
 		perror("Sending socket failed\n");
 		return -1;
 	}
-
-	if(connect(sendSock, (const struct sockaddr *) &serveraddr, sizeof(serveraddr))<0){
-		perror("Could not connect");
-		return -1;
-	}
+	printf("dsjkfslkjdsdlk");
+	
 	
 	//send(sendSock, initConnectionMsg, strlen(initConnectionMsg), 0); //, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
 	
