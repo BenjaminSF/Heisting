@@ -1,0 +1,155 @@
+//
+//  sendRecFunctions.c
+//  UDPcommunication
+//
+//  Created by Even on 09/02/15.
+//  Copyright (c) 2015 Even. All rights reserved.
+//
+
+#include "sendRecFunctions.h"
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#define BUF_SIZE 1024
+#define REC_LEN 10
+int listenPort = 30000;
+unsigned char bufMessage[BUF_SIZE];
+unsigned char bufIP[BUF_SIZE];
+
+
+void* tFunc_sendSocket(){
+    	int sendSock;
+	int i;
+    	char *broadcastIP = "129.241.187.255";
+    	int myPort = 20008;
+    	struct sockaddr_in serveraddr;
+    	serveraddr.sin_family = AF_INET;
+    	serveraddr.sin_port = htons(myPort);
+    	serveraddr.sin_addr.s_addr = inet_addr(broadcastIP);
+    
+    	if ((sendSock = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+     	   perror("SendSocket not created\n");
+    	}
+    
+    	int broadcastPermission = 1;
+    	if (setsockopt(sendSock, SOL_SOCKET, SO_BROADCAST, (void *)&broadcastPermission, sizeof(broadcastPermission)) < 0){
+    	    perror("sendSocket broadcast enable failed");
+    	}
+    	
+    	printf("Initialize sendSocket thread\n");
+    	for (i=0;i<5;i++){
+    	   char *msg = "129.241.187.255:129.241.187.161: Connect to me!";
+     	   if (sendto(sendSock, msg, strlen(msg), 0, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0){
+     	       perror("Sending socket failed");
+            
+      	  }
+      	  printf("Sending message...\n");
+      	  usleep(1000);
+    	}
+	printf("her da1 \n");
+    	close(sendSock);
+    
+}
+
+void* tFunc_recSocket(){
+	int recSock;
+	int i;
+	int myPort = 20008;
+	struct sockaddr_in remaddr;
+	socklen_t remaddrLen = sizeof(remaddr);
+	struct sockaddr_in myaddr;
+	myaddr.sin_family = AF_INET;
+	myaddr.sin_port = htons(myPort);
+	myaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	socklen_t recaddrLen = sizeof(myaddr);
+
+	if ((recSock = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+		perror("RecSocket not created\n");
+	}
+
+	if (bind(recSock,(struct sockaddr *)&myaddr,recaddrLen) < 0){
+		perror("Failed to bind recSocket");
+	}
+	//printf("Initialize RecSocket thread\n");
+	for (i=0;i<REC_LEN;i++) {
+		int recvlen = recvfrom(recSock, bufMessage, BUF_SIZE, MSG_DONTWAIT, (struct sockaddr *)&remaddr, &remaddrLen);
+		if (recvlen > 0){
+			bufIP[i] = ntohl(remaddr.sin_addr.s_addr);
+	    		bufMessage[recvlen] = 0;
+	    		printf("Received message: %s %d \n", bufMessage, bufIP[i]);
+
+		}
+
+	}
+
+
+	close(recSock);
+
+}
+
+int init_network_module(){
+	char* addressList;	
+	int i,addressNum;
+	int master;
+	addressNum = 0;
+
+	//send init message, broadcast
+	pthread_t send_t, rec_t;
+	pthread_create(&send_t, NULL, tFunc_sendSocket, NULL);
+	pthread_create(&rec_t, NULL, tFunc_recSocket, NULL);
+	pthread_join(send_t,NULL);
+	pthread_join(rec_t,NULL);
+
+	printf("virk ditt esel \n");
+
+	//Message: egen IP-adresse, masterStatus?, 
+	//listen for reply
+
+
+	if (sizeof(bufMessage) == 0){
+				
+		return 1; //Return 1 for missing network
+}	else {
+		master = addressList[addressNum];
+		for(i=0;i<REC_LEN;i++){
+			
+			if(sizeof(bufIP[i]) != 0){
+				addressList[addressNum] = bufIP[i];
+				if(addressNum > 0){
+					if (addressList[addressNum] > master){		//Set master to maxIP
+						master = addressList[addressNum];
+					}
+				}				
+				addressNum++;
+			}			
+		}
+	}
+	//if no reply:
+	//	no network, break
+	//store address list
+	
+	if(addressNum>1){
+		int slaveOrder[addressNum-1];
+	
+		for (i=0;i<sizeof(slaveOrder);i++){
+			if ( addressList[i] != master){
+			slaveOrder[i] = addressList[i];
+			}
+		}
+	}
+	
+	//select master{
+	//	if masterSet
+	//		setup communication order
+	//	else
+	//		lavestIP regjerer
+	//if slave:
+	//	share backlog?
+	//send test message
+	return 0;
+}

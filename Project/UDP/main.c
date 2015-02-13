@@ -1,0 +1,30 @@
+//
+//  main.c
+//  UDPcommunication
+//
+//  Created by Even on 09/02/15.
+//  Copyright (c) 2015 Even. All rights reserved.
+//
+
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include "sendRecFunctions.h"
+
+
+int main(){
+	if(init_network_module() == 1){
+		printf("We drive solo");
+	}
+	//pthread_t send_t, rec_t;
+	//pthread_create(&send_t, NULL, tFunc_sendSocket, NULL);
+	//pthread_create(&rec_t, NULL, tFunc_recSocket, NULL);
+	//pthread_join(send_t,NULL);
+	//pthread_join(rec_t,NULL);
+	return 0;
+}
