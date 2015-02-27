@@ -31,7 +31,7 @@ void* send_message(void *args){
 void *listen_for_messages(void *args){
     struct ListenParams *myArgs = (struct ListenParams*)args;
     printf("Test mottak, port: %d\n", (*myArgs).port);
-    while (args.timeoutLock == EBUSY){
+    while (pthread_mutex_trylock((*myArgs).timeoutLock) == EBUSY){
         printf("Testing...\n");
         usleep(50);
     return 0;
