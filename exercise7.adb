@@ -20,7 +20,7 @@ procedure exercise7 is
         begin
             ------------------------------------------
             -- PART 3: Complete the exit protocol here
-            ------------------------------------------
+            
 	    if Finished'Count = N-1 then
 		Finished_Gate_Open := True;
 		if Aborted then
@@ -32,7 +32,8 @@ procedure exercise7 is
 		Finished_Gate_Open := False;
 		Aborted := False;
 	    end if;
-	    
+	    -- END PART 3: Complete the exit protocol here
+	    ------------------------------------------
         end Finished;
 
         procedure Signal_Abort is
@@ -56,7 +57,7 @@ procedure exercise7 is
     begin
         -------------------------------------------
         -- PART 1: Create the transaction work here
-        -------------------------------------------
+        
 	Error_Test := Random(Gen);
 	if Error_Test < Error_Rate then
 		raise Count_Failed;
@@ -64,6 +65,8 @@ procedure exercise7 is
 		delay Duration(5.0*Random(Gen));
 		return x + 10;
 	end if;
+	-- END PART 1: Create the transaction work here
+	-------------------------------------------
     end Unreliable_Slow_Add;
 
 
@@ -83,7 +86,7 @@ procedure exercise7 is
 
             ---------------------------------------
             -- PART 2: Do the transaction work here             
-            ---------------------------------------
+            
 	    begin
 	    	Num := Unreliable_Slow_Add(Num);
 	    exception
@@ -91,7 +94,8 @@ procedure exercise7 is
 			    Manager.Signal_Abort;
 	    end;
 	    Manager.Finished;
-
+	    -- END PART 2: Do the transaction work here 
+	    ---------------------------------------
             if Manager.Commit = True then
                 Put_Line ("  Worker" & Integer'Image(Initial) & " comitting" & Integer'Image(Num));
             else
@@ -100,8 +104,10 @@ procedure exercise7 is
                              " to" & Integer'Image(Prev));
                 -------------------------------------------
                 -- PART 2: Roll back to previous value here
-                -------------------------------------------
+                
 		Num := Prev;
+		-- END PART 2: Roll back to previous value
+		-------------------------------------------
             end if;
 
             Prev := Num;
