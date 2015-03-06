@@ -1,4 +1,9 @@
+#ifndef __INCLUDE_DRIVER_H__
+#define __INCLUDE_DRIVER_H__
 
+// Number of floors
+
+#define N_FLOORS 4
 
 typedef enum tag_motorDirection {
 DIRN_DOWN = -1,
@@ -10,3 +15,29 @@ typedef enum tag_lampType {
 	BUTTON_CALL_DOWN = 1,
 	BUTTON_COMMAND = 2
 } buttonType;
+
+int elevDriver_initialize(void);
+
+void setMotorDirection(motorDirection direction);
+
+void setFloor();
+
+void setDoorOpenLamp(int status);
+
+int isElevObstructed(void);
+
+int isElevStopped(void);
+
+
+
+void setStopLamp(int status);
+
+int getFloor(void);
+
+void setFloorIndicator(int status);
+
+int getButtonLamp(int floor, buttonType button);
+
+void setButtonLamp(int floor, buttonType button);
+
+#endif // #ifndef __INCLUDE_DRIVER_H__
