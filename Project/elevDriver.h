@@ -28,8 +28,6 @@ int isElevObstructed(void);
 
 int isElevStopped(void);
 
-
-
 void setStopLamp(int status);
 
 int getFloor(void);

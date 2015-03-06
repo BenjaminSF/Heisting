@@ -115,7 +115,7 @@ int elev_get_button_signal(elev_button_type_t button, int floor) {
 		return 0;
 }
 
-void elev_set_button_lamp(elev_button_type_t button, int floor, int value) {
+void elev_set_button_lamp(buttonType button, int floor, int value) {
 	assert(floor >= 0);
 	assert(floor < N_FLOORS);
 	assert(!(button == BUTTON_CALL_UP && floor == N_FLOORS - 1));
