@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#define N_BUTTONS 3
+
 static const int lamp_channel_matrix[N_FLOORS][N_BUTTONS] = {
 	{LIGHT_UP1, LIGHT_DOWN1, LIGHT_COMMAND1},
 	{LIGHT_UP2, LIGHT_DOWN2, LIGHT_COMMAND2},
@@ -25,15 +27,15 @@ int elevDriver_initialize(void) {
 	// Zero all floor button lamps
 	for (i = 0; i < N_FLOORS; ++i) {
 		if (i != 0)
-			elev_set_button_lamp(BUTTON_CALL_DOWN, i, 0);
+			setButtonLamp(BUTTON_CALL_DOWN, i, 0);
 		if (i != N_FLOORS - 1)
-			elev_set_button_lamp(BUTTON_CALL_UP, i, 0);
-			elev_set_button_lamp(BUTTON_COMMAND, i, 0);
+			setButtonLamp(BUTTON_CALL_UP, i, 0);
+			setButtonLamp(BUTTON_COMMAND, i, 0);
 	}
 	// Clear stop lamp, door open lamp, and set floor indicator to ground floor.
-	elev_set_stop_lamp(0);
-	elev_set_door_open_lamp(0);
-	elev_set_floor_indicator(0);
+	setStopLamp(0);
+	setDoorOpenLamp(0);
+	setFloorIndicator(0);
 	// Return success.
 	return 1;
 }
