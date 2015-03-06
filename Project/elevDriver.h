@@ -20,7 +20,7 @@ int elevDriver_initialize(void);
 
 void setMotorDirection(motorDirection direction);
 
-void setFloor();
+void setFloor(int floor);
 
 void setDoorOpenLamp(int status);
 

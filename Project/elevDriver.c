@@ -50,8 +50,26 @@ void setMotorDirection(motorDirection direction) {
 		io_write_analog(MOTOR, 0);
 }
 }
+void moveElevator(void){
+	
+}
 
-void setFloor(void);
+void setFloor(int floor){
+	motorDirection direction;
+	int i, currentFloor = getFloor(),diff = floor-currentFloor;
+	if (diff > 0){
+		direction = DIRN_UP;
+	}else if(diff < 0){
+		direction = DIRN_DWN;
+		diff = (-1)*diff;
+	}else{
+		return;
+	}
+	for (i = 0; i < diff; i++){
+		setMotorDirection(direction)
+	}
+	setFloorIndicator(floor);
+}
 
 void setDoorOpenLamp(int status){
 	if status{
