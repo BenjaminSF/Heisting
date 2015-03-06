@@ -61,11 +61,11 @@ void setDoorOpenLamp(int status){
 	}
 }
 
-int isElevObstructed(void){
+int isObstructed(void){
 	return io_read_bit(OBSTRUCTION);
 }
 
-int isElevStopped(void){
+int isStopped(void){
 	return io_read_bit(STOP);
 }
 
