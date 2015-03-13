@@ -1,5 +1,11 @@
-#include "elev.h"
+
+
+#include "elevDriver.h"
+#include "costFunction.h"
 #include <stdio.h>
+
+
+#define N_FLOORS 4
 
 
 
@@ -7,66 +13,64 @@ int main() {
 
 // Initialize hardware
 
-	if (!elev_init()) {
+	if (!elevDriver_initialize()) {
 		printf("Unable to initialize elevator hardware!\n");
 		return 1;
 }
 	printf("Press STOP button to stop elevator and exit program.\n");
-	elev_set_motor_direction(DIRN_STOP);
-	while(1){
-		int currentFloor = elev_get_floor_sensor_signal();
-		if (currentFloor == -1){
-			elev_set_motor_direction(DIRN_DOWN);
-		}else if (elev_get_floor_sensor_signal() != -1){
-			elev_set_motor_direction(DIRN_STOP);
-			printf("STOPP!!!\n");
-			break;
-		}else{
-			printf("Noe er alvorlig feil.\n");
-		}
-	}
+	setMotorDirection(DIRN_STOP);
+	
 	int nextFloor = 0;
 	int i;
 	int queueActive = 0;
-	while (1) {
-	// Change direction when we reach top/bottom floor
-		/*if (elev_get_floor_sensor_signal() == N_FLOORS - 1) {
-			elev_set_motor_direction(DIRN_DOWN);
-			//break;			
-			//elev_set_motor_direction(DIRN_DOWN);
-} 		else if (elev_get_floor_sensor_signal() == 0) {
-			elev_set_motor_direction(DIRN_UP);
-}*/
-// Stop elevator and exit program if the stop button is pressed
-
-		if (elev_get_stop_signal()) {
-			elev_set_motor_direction(DIRN_STOP);
-			break;
-		}
-		if (queueActive){
-			int currentFloor = elev_get_floor_sensor_signal();
-			if (currentFloor == -1){
-				printf("Nu kjör vi!\n");
-			}else if (currentFloor < nextFloor){
-				elev_set_motor_direction(DIRN_UP);
-			}else if (currentFloor > nextFloor){
-				elev_set_motor_direction(DIRN_DOWN);
-			}else if (currentFloor == nextFloor){
-				elev_set_motor_direction(DIRN_STOP);
-				queueActive = 0;
+	int currentFloor;
+	int check;
+	int maxCheck = 20;
+	while(!isStopped()|| !isObstructed()){
+		check = 0;
+		currentFloor = -1;
+		while(currentFloor == -1){
+			currentFloor = getFloor();
+			check++;
+			if(isObstructed() || isStopped() || check == maxCheck){
+				break;
 			}
 		}
-		//printf("%d\n", elev_get_floor_sensor_signal());
+
 		for (i = 0; i < N_FLOORS; i++){
-			if (elev_get_button_signal(BUTTON_COMMAND, i) == 1){
+			if(getButtonLamp(i,BUTTON_COMMAND)){
 				nextFloor = i;
 				queueActive = 1;
-				//printf("Next floor: %d\n", nextFloor+1);
 			}
-	
 		}
-		//printf("Det loopes.\n");
+
+		if(queueActive){
+
+			//addNewOrder
+
+			//int nextFloor = ..//getNeworder
+			if(currentFloor == nextFloor){
+				setMotorDirection(DIRN_STOP);
+			}else{
+				printf("Heis kjører fra %d til %d\n",currentFloor, nextFloor);
+				setFloor(nextFloor);
+		}
+		}
+		queueActive = 0;
+
 	}
+	
+	setMotorDirection(DIRN_STOP);
+	if(isObstructed()){
+		printf("Elevator was obstructed\n");
+	}
+	if(isStopped()){
+		printf("Elevator was stopped\n");
+	}
+	if(check >= maxCheck){
+		printf("Checked getFloor() %d times without sucess, and therefore stopped\n",check);
+	}
+
 
 return 0;
 }
