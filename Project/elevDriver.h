@@ -20,7 +20,7 @@ int elevDriver_initialize(void);
 
 void setMotorDirection(motorDirection direction);
 
-void setFloor(int floor);
+void goToFloor(int floor);
 
 void setDoorOpenLamp(int status);
 
@@ -36,6 +36,6 @@ void setFloorIndicator(int status);
 
 int getButtonSignal(int floor, buttonType button);
 
-void setButtonLamp(int floor, buttonType button);
+void setButtonLamp(int floor, buttonType button, int status);
 
 #endif // #ifndef __INCLUDE_DRIVER_H__

@@ -3,6 +3,7 @@
 #include "elevDriver.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define N_BUTTONS 3
 
@@ -27,17 +28,18 @@ int elevDriver_initialize(void) {
 	// Zero all floor button lamps
 	for (i = 0; i < N_FLOORS; ++i) {
 		if (i != 0)
-			setButtonLamp(BUTTON_CALL_DOWN, i, 0);
+			setButtonLamp(i, BUTTON_CALL_DOWN, 0);
 		if (i != N_FLOORS - 1)
-			setButtonLamp(BUTTON_CALL_UP, i, 0);
-			setButtonLamp(BUTTON_COMMAND, i, 0);
+			setButtonLamp(i, BUTTON_CALL_UP, 0);
+			setButtonLamp(i, BUTTON_COMMAND, 1);
 	}
 	// Clear stop lamp, door open lamp, and set floor indicator to current floor.
 	setStopLamp(0);
 	setDoorOpenLamp(0);
-	//setFloorIndicator(0);
-	int currentFloor = getFloor();
-	setFloorIndicator(currentFloor);
+	setFloorIndicator(0);
+	//setMotorDirection(DIRN_STOP);
+	//int currentFloor = getFloor();
+	//setFloorIndicator(currentFloor);
 
 	// Return success.
 	return 1;
@@ -55,28 +57,25 @@ void setMotorDirection(motorDirection direction) {
 }
 
 
-void setFloor(int floor){
-	setDoorOpenLamp(0);
+void goToFloor(int floor){
 	motorDirection direction;
 	int i, currentFloor = getFloor(),diff = floor-currentFloor;
 	assert(floor>= 0 && floor < N_FLOORS);
 	if (diff > 0){
 		direction = DIRN_UP;
 	}else if(diff < 0){
-		direction = DIRN_DWN;
+		direction = DIRN_DOWN;
 		diff = (-1)*diff;
 	}else{
 		return;
 	}
-	for (i = 0; i < diff; i++){
-		setMotorDirection(direction)
-	}
-	setFloorIndicator(floor);
-	setDoorOpenLamp(1);
+	setMotorDirection(direction);
+	//setFloorIndicator(floor);
 }
 
+
 void setDoorOpenLamp(int status){
-	if status{
+	if (status){
 		io_set_bit(LIGHT_DOOR_OPEN);
 	}else{
 		io_clear_bit(LIGHT_DOOR_OPEN);
@@ -92,11 +91,11 @@ int isStopped(void){
 }
 
 void setStopLamp(int status){
-	if (!(getFloor == -1) && status){
+	if (!(getFloor() == -1) && status){
 		setDoorOpenLamp(1);
 		printf("The door is open, get out!\n");
 	}
-	if status{
+	if (status){
 		io_set_bit(LIGHT_STOP);
 	}else{
 		io_clear_bit(LIGHT_STOP);
@@ -117,6 +116,7 @@ int getFloor(void){
 }
 
 void setFloorIndicator(int floor){
+	//printf("Floor: %d\n", floor);
 	assert(floor >= 0);
 	assert(floor < N_FLOORS);
 	// Binary encoding. One light must always be on.
@@ -129,20 +129,20 @@ void setFloorIndicator(int floor){
 	else
 		io_clear_bit(LIGHT_FLOOR_IND2);
 }
-int isbuttonSignalValid(int floor, butttonType button){
+int isbuttonSignalValid(int floor, buttonType button){
 	assert(floor>= 0 && floor < N_FLOORS);
-	assert(!(button == BUTTON_CALL_UP && floor == N-1) && !(button == BUTTON_CALL_DOWN && floor == 0))
-	assert(button == BUTTON_CALL_DOWN || button == BUTTON_CALL_UP || BUTTON_COMMAND);
+	assert(!(button == BUTTON_CALL_UP && floor == N_FLOORS-1) && !(button == BUTTON_CALL_DOWN && floor == 0));
+	assert(button == BUTTON_CALL_DOWN || button == BUTTON_CALL_UP || button == BUTTON_COMMAND);
 	return 1;
 }
 int getButtonSignal(int floor, buttonType button){
-	if isbuttonSignalValid(floor,button){
-		return io_read_bit(button_channel_matrix[floor][button]);
-}
-	return -1;
+	//if (isbuttonSignalValid(floor,button) || 1){
+	return io_read_bit(button_channel_matrix[floor][button]);
+//}
+	//return -1;
 }
 void setButtonLamp(int floor, buttonType button, int status){
-	if isbuttonSignalValid(floor,button){
+	if (isbuttonSignalValid(floor,button)){
 			if (status){
 				io_set_bit(lamp_channel_matrix[floor][button]);
 			}else{
