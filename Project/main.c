@@ -25,7 +25,7 @@ int main() {
 	int queueActive = 0;
 	int currentFloor;
 	int check;
-	int maxCheck = 20;
+	int maxCheck = 5;
 	while(!isStopped()|| !isObstructed()){
 		check = 0;
 		currentFloor = -1;
@@ -38,7 +38,7 @@ int main() {
 		}
 
 		for (i = 0; i < N_FLOORS; i++){
-			if(getButtonLamp(i,BUTTON_COMMAND)){
+			if(getButtonSignal(i,BUTTON_COMMAND)){
 				nextFloor = i;
 				queueActive = 1;
 			}
@@ -65,12 +65,14 @@ int main() {
 		printf("Elevator was obstructed\n");
 	}
 	if(isStopped()){
+		setStopLamp(1);
 		printf("Elevator was stopped\n");
+		if()
 	}
 	if(check >= maxCheck){
 		printf("Checked getFloor() %d times without sucess, and therefore stopped\n",check);
 	}
 
-
+	
 return 0;
 }

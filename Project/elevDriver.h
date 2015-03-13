@@ -34,7 +34,7 @@ int getFloor(void);
 
 void setFloorIndicator(int status);
 
-int getButtonLamp(int floor, buttonType button);
+int getButtonSignal(int floor, buttonType button);
 
 void setButtonLamp(int floor, buttonType button);
 

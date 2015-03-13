@@ -92,6 +92,10 @@ int isStopped(void){
 }
 
 void setStopLamp(int status){
+	if (!(getFloor == -1) && status){
+		setDoorOpenLamp(1);
+		printf("The door is open, get out!\n");
+	}
 	if status{
 		io_set_bit(LIGHT_STOP);
 	}else{
@@ -131,7 +135,7 @@ int isbuttonSignalValid(int floor, butttonType button){
 	assert(button == BUTTON_CALL_DOWN || button == BUTTON_CALL_UP || BUTTON_COMMAND);
 	return 1;
 }
-int getButtonLamp(int floor, buttonType button){
+int getButtonSignal(int floor, buttonType button){
 	if isbuttonSignalValid(floor,button){
 		return io_read_bit(button_channel_matrix[floor][button]);
 }
