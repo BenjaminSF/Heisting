@@ -32,10 +32,13 @@ int elevDriver_initialize(void) {
 			setButtonLamp(BUTTON_CALL_UP, i, 0);
 			setButtonLamp(BUTTON_COMMAND, i, 0);
 	}
-	// Clear stop lamp, door open lamp, and set floor indicator to ground floor.
+	// Clear stop lamp, door open lamp, and set floor indicator to current floor.
 	setStopLamp(0);
 	setDoorOpenLamp(0);
-	setFloorIndicator(0);
+	//setFloorIndicator(0);
+	int currentFloor = getFloor();
+	setFloorIndicator(currentFloor);
+
 	// Return success.
 	return 1;
 }
@@ -50,13 +53,13 @@ void setMotorDirection(motorDirection direction) {
 		io_write_analog(MOTOR, 0);
 }
 }
-void moveElevator(void){
-	
-}
+
 
 void setFloor(int floor){
+	setDoorOpenLamp(0);
 	motorDirection direction;
 	int i, currentFloor = getFloor(),diff = floor-currentFloor;
+	assert(floor>= 0 && floor < N_FLOORS);
 	if (diff > 0){
 		direction = DIRN_UP;
 	}else if(diff < 0){
@@ -69,6 +72,7 @@ void setFloor(int floor){
 		setMotorDirection(direction)
 	}
 	setFloorIndicator(floor);
+	setDoorOpenLamp(1);
 }
 
 void setDoorOpenLamp(int status){
