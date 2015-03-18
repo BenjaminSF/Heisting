@@ -22,6 +22,7 @@ static const int button_channel_matrix[N_FLOORS][N_BUTTONS] = {
 
 int elevDriver_initialize(void) {
 	int i;
+
 	// Init hardware
 	if (!io_init())
 		return 0;
@@ -36,12 +37,15 @@ int elevDriver_initialize(void) {
 	// Clear stop lamp, door open lamp, and set floor indicator to current floor.
 	setStopLamp(0);
 	setDoorOpenLamp(0);
-	setFloorIndicator(0);
-	//setMotorDirection(DIRN_STOP);
-	//int currentFloor = getFloor();
-	//setFloorIndicator(currentFloor);
+	if(getFloor() == -1){
+		printf("Set in a valid floor\n");
+		while(getFloor() == -1){
+		}
+	}
+	setFloorIndicator(getFloor());
+	setMotorDirection(DIRN_STOP);
 
-	// Return success.
+
 	return 1;
 }
 void setMotorDirection(motorDirection direction) {
@@ -55,11 +59,20 @@ void setMotorDirection(motorDirection direction) {
 		io_write_analog(MOTOR, 0);
 }
 }
-
+motorDirection getMotorDirection(void){
+	motorDirection direction = io_read_bit(MOTORDIR);
+	return direction;
+}
 
 void goToFloor(int floor){
 	motorDirection direction;
+	if(getFloor() == -1){
+		while(getFloor() == -1){
+			//wait
+		}
+	}
 	int i, currentFloor = getFloor(),diff = floor-currentFloor;
+
 	assert(floor>= 0 && floor < N_FLOORS);
 	if (diff > 0){
 		direction = DIRN_UP;
@@ -70,7 +83,6 @@ void goToFloor(int floor){
 		return;
 	}
 	setMotorDirection(direction);
-	//setFloorIndicator(floor);
 }
 
 
@@ -79,6 +91,7 @@ void setDoorOpenLamp(int status){
 		io_set_bit(LIGHT_DOOR_OPEN);
 	}else{
 		io_clear_bit(LIGHT_DOOR_OPEN);
+
 	}
 }
 
@@ -93,7 +106,7 @@ int isStopped(void){
 void setStopLamp(int status){
 	if (!(getFloor() == -1) && status){
 		setDoorOpenLamp(1);
-		printf("The door is open, get out!\n");
+		printf("The elevator has stopped. Please leave the elevator.\n");
 	}
 	if (status){
 		io_set_bit(LIGHT_STOP);
@@ -116,7 +129,6 @@ int getFloor(void){
 }
 
 void setFloorIndicator(int floor){
-	//printf("Floor: %d\n", floor);
 	assert(floor >= 0);
 	assert(floor < N_FLOORS);
 	// Binary encoding. One light must always be on.
