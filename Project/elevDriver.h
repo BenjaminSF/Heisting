@@ -18,6 +18,8 @@ typedef enum tag_lampType {
 
 int elevDriver_initialize(void);
 
+motorDirection getMotorDirection(void);
+
 void setMotorDirection(motorDirection direction);
 
 void goToFloor(int floor);

@@ -28,6 +28,10 @@ int main() {
 	int currentFloor;
 	motorDirection direction;
 	buttonType buttonCall;
+
+
+
+
 	while(!isStopped() && !isObstructed()){
 		setMotorDirection(DIRN_STOP);
 		setFloorIndicator(getFloor());
@@ -45,7 +49,6 @@ int main() {
 			}
 		}
 		if(queueActive){
-			printf("%d\n",getFloor() );
 			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
 				direction = DIRN_UP;
@@ -54,7 +57,6 @@ int main() {
 				direction = DIRN_DOWN;
 				buttonCall = BUTTON_CALL_DOWN;
 			}
-			printf("Want to go to floor %d\n",nextFloor);
 			setDoorOpenLamp(0);
 			goToFloor(nextFloor);
 			while((getFloor() != nextFloor) && (!isStopped() && !isObstructed())){
@@ -65,9 +67,6 @@ int main() {
 							if(j> nextFloor){
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
-								goToFloor(nextFloor);
-								printf("Going to floor %d",nextFloor);
-
 							}else if(j < nextFloor){
 								localQueue[j] = 1;
 							}
@@ -77,9 +76,6 @@ int main() {
 							if(j< nextFloor){
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
-								printf("Nu går det galt nextFloor == %d and getFloor() == %d\n",nextFloor,getFloor());
-
-								goToFloor(nextFloor);
 							}else if(j > nextFloor){
 								localQueue[j] = 1;
 							}
@@ -87,15 +83,15 @@ int main() {
 					}
 
 					if (getButtonSignal(j,buttonCall)){
-						printf("Got a button call for %d\n",j);
+						//printf("Got a button call for %d\n",j);
 						
 						if(lastFloor <j && j< nextFloor){
 							localQueue[j] = 1;
-							printf("Will stop at %d on the way up\n",j);
+							//printf("Will stop at %d on the way up\n",j);
 						}
 						if(lastFloor> j && j> nextFloor){
 							localQueue[j] = 1;
-							printf("Will stop at %d on the way down\n",j);
+							//printf("Will stop at %d on the way down\n",j);
 
 						
 					}
@@ -103,18 +99,18 @@ int main() {
 			}
 				if(localQueue[getFloor()]== 1 && (getFloor() != -1)){
 					setMotorDirection(DIRN_STOP);
-					printf("Stopping at floor %d\n",getFloor());
+					//printf("Stopping at floor %d\n",getFloor());
 					setDoorOpenLamp(1);
 					setFloorIndicator(getFloor());
 					k=0;
-					printf("Waiting\n");
+					//printf("Waiting\n");
 					while((k<100000) && (!isStopped() && !isObstructed())){
 						k++;
 						setMotorDirection(DIRN_STOP);
 					}
 					setDoorOpenLamp(0);
 					localQueue[getFloor()] = 0;
-					printf("Starting again\n");
+					//printf("Starting again\n");
 					goToFloor(nextFloor);
 				}			
 		}
