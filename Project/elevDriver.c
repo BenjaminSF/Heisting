@@ -22,6 +22,7 @@ static const int button_channel_matrix[N_FLOORS][N_BUTTONS] = {
 
 int elevDriver_initialize(void) {
 	int i;
+
 	// Init hardware
 	if (!io_init())
 		return 0;
@@ -36,12 +37,14 @@ int elevDriver_initialize(void) {
 	// Clear stop lamp, door open lamp, and set floor indicator to current floor.
 	setStopLamp(0);
 	setDoorOpenLamp(0);
-	setFloorIndicator(0);
-	//setMotorDirection(DIRN_STOP);
-	//int currentFloor = getFloor();
-	//setFloorIndicator(currentFloor);
+	if(getFloor() == -1){
+		printf("Set in a valid floor\n");
+		while(getFloor() == -1){
+		}
+	}
+	setFloorIndicator(getFloor());
+	setMotorDirection(DIRN_STOP);
 
-	// Return success.
 	return 1;
 }
 void setMotorDirection(motorDirection direction) {
@@ -59,7 +62,15 @@ void setMotorDirection(motorDirection direction) {
 
 void goToFloor(int floor){
 	motorDirection direction;
+	printf("%d\n",getFloor());
+	if(getFloor() == -1){
+		while(getFloor() == -1){
+			//wait
+		}
+	}
+	printf("%d\n",getFloor());
 	int i, currentFloor = getFloor(),diff = floor-currentFloor;
+
 	assert(floor>= 0 && floor < N_FLOORS);
 	if (diff > 0){
 		direction = DIRN_UP;

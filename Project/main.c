@@ -20,29 +20,22 @@ int main() {
 		return 1;
 }
 	printf("Press STOP button to stop elevator and exit program.\n");
-	setMotorDirection(DIRN_STOP);
 	
 	int nextFloor = 0;
 	int i, j,k;
 	int queueActive = 0;
+	int lastFloor = 0;
 	int currentFloor;
-	int check;
-	int maxCheck = 5;
 	motorDirection direction;
 	buttonType buttonCall;
-	while(!isStopped()|| !isObstructed()){
+	while(!isStopped() && !isObstructed()){
+		setMotorDirection(DIRN_STOP);
+		setFloorIndicator(getFloor());
+		setDoorOpenLamp(1);
+		
 		int localQueue[N_FLOORS];
 		memset(localQueue,0,sizeof(int)*N_FLOORS);
-		check = 0;
 		currentFloor = getFloor();
-		while(currentFloor == -1){
-			check++;
-			if(isObstructed() || isStopped() || check == maxCheck){
-				break;
-			}
-			currentFloor = getFloor();
-		}
-
 		for (i = 0; i < N_FLOORS; i++){
 			if(getButtonSignal(i,BUTTON_COMMAND)){
 				if(i != currentFloor){
@@ -51,8 +44,9 @@ int main() {
 			}
 			}
 		}
-
 		if(queueActive){
+			printf("%d\n",getFloor() );
+			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
 				direction = DIRN_UP;
 				buttonCall = BUTTON_CALL_UP;
@@ -60,79 +54,73 @@ int main() {
 				direction = DIRN_DOWN;
 				buttonCall = BUTTON_CALL_DOWN;
 			}
-
+			printf("Want to go to floor %d\n",nextFloor);
+			setDoorOpenLamp(0);
 			goToFloor(nextFloor);
-			
-			while(getFloor() != nextFloor){
-			//addNewOrder
+			while((getFloor() != nextFloor) && (!isStopped() && !isObstructed())){
 				for(j=0;j<N_FLOORS;j++){
 					if(direction == DIRN_UP){
 						if(getButtonSignal(j,BUTTON_COMMAND)){
-							printf("Button esel1\n");
+							//printf("Got button signal upwards %d \n",j);
 							if(j> nextFloor){
-								//Legge nextFloor på queue ok
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
 								goToFloor(nextFloor);
+								printf("Going to floor %d",nextFloor);
 
 							}else if(j < nextFloor){
-								//Legg i queue ok
 								localQueue[j] = 1;
 							}
 						}
 					}else{
 						if(getButtonSignal(j,BUTTON_COMMAND)){
-							printf("Button esel2\n");
 							if(j< nextFloor){
-								//Legge nextFloor på queue ok
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
-								goToFloor(nextFloor);
+								printf("Nu går det galt nextFloor == %d and getFloor() == %d\n",nextFloor,getFloor());
 
+								goToFloor(nextFloor);
 							}else if(j > nextFloor){
-								//Legg i queue ok
 								localQueue[j] = 1;
 							}
 						}
 					}
 
 					if (getButtonSignal(j,buttonCall)){
-						printf("Button esel3\n");
-						if(getFloor() <j && j< nextFloor){
-							//QUEUQquqe ok
+						printf("Got a button call for %d\n",j);
+						
+						if(lastFloor <j && j< nextFloor){
 							localQueue[j] = 1;
+							printf("Will stop at %d on the way up\n",j);
 						}
-						if(getFloor()> j && j> nextFloor){
+						if(lastFloor> j && j> nextFloor){
 							localQueue[j] = 1;
-						}/*if(getFloor() == j){
-							setMotorDirection(DIRN_STOP);
-							setDoorOpenLamp(1);
-							usleep(500000);
-							setDoorOpenLamp(0);
-							goToFloor(nextFloor);
-						}*/
+							printf("Will stop at %d on the way down\n",j);
+
+						
 					}
 				}
-				if(localQueue[getFloor()]== 1){
-					setMotorDirection(DIRN_STOP);
-					printf("Stop esel\n");
-					setDoorOpenLamp(1);
-					k=0;
-					while(k<10000){k++;}
-					setDoorOpenLamp(0);
-					localQueue[getFloor()] == 0;
-					goToFloor(nextFloor);
-				}
-				//printf("Sjekker etasje\n");
 			}
-			//int nextFloor = ..//getNeworder
-			
-			
-			queueActive = 0;
-			setMotorDirection(DIRN_STOP);
+				if(localQueue[getFloor()]== 1 && (getFloor() != -1)){
+					setMotorDirection(DIRN_STOP);
+					printf("Stopping at floor %d\n",getFloor());
+					setDoorOpenLamp(1);
+					setFloorIndicator(getFloor());
+					k=0;
+					printf("Waiting\n");
+					while((k<100000) && (!isStopped() && !isObstructed())){
+						k++;
+						setMotorDirection(DIRN_STOP);
+					}
+					setDoorOpenLamp(0);
+					localQueue[getFloor()] = 0;
+					printf("Starting again\n");
+					goToFloor(nextFloor);
+				}			
 		}
 	}
-	setMotorDirection(DIRN_STOP);
+	queueActive = 0;
+	}
 	if(isObstructed()){
 		printf("Elevator was obstructed\n");
 	}
@@ -140,10 +128,6 @@ int main() {
 		setStopLamp(1);
 		printf("Elevator was stopped\n");
 	}
-	if(check >= maxCheck){
-		printf("Checked getFloor() %d times without sucess, and therefore stopped\n",check);
-	}
-
-	
 	return 0;
+
 }
