@@ -32,7 +32,7 @@ int elevDriver_initialize(void) {
 			setButtonLamp(i, BUTTON_CALL_DOWN, 0);
 		if (i != N_FLOORS - 1)
 			setButtonLamp(i, BUTTON_CALL_UP, 0);
-			setButtonLamp(i, BUTTON_COMMAND, 1);
+			setButtonLamp(i, BUTTON_COMMAND, 0);
 	}
 	// Clear stop lamp, door open lamp, and set floor indicator to current floor.
 	setStopLamp(0);

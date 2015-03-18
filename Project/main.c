@@ -42,6 +42,7 @@ int main() {
 		currentFloor = getFloor();
 		for (i = 0; i < N_FLOORS; i++){
 			if(getButtonSignal(i,BUTTON_COMMAND)){
+				setButtonLamp(i, BUTTON_COMMAND, 1);
 				if(i != currentFloor){
 					nextFloor = i;
 					queueActive = 1;
@@ -64,6 +65,7 @@ int main() {
 					if(direction == DIRN_UP){
 						if(getButtonSignal(j,BUTTON_COMMAND)){
 							//printf("Got button signal upwards %d \n",j);
+							setButtonLamp(j,BUTTON_COMMAND,1);
 							if(j> nextFloor){
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
@@ -73,6 +75,7 @@ int main() {
 						}
 					}else{
 						if(getButtonSignal(j,BUTTON_COMMAND)){
+							setButtonLamp(j,BUTTON_COMMAND,1);
 							if(j< nextFloor){
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
@@ -84,12 +87,13 @@ int main() {
 
 					if (getButtonSignal(j,buttonCall)){
 						//printf("Got a button call for %d\n",j);
-						
 						if(lastFloor <j && j< nextFloor){
+							setButtonLamp(j,BUTTON_CALL_UP,1);
 							localQueue[j] = 1;
 							//printf("Will stop at %d on the way up\n",j);
 						}
 						if(lastFloor> j && j> nextFloor){
+							setButtonLamp(j,BUTTON_CALL_DOWN,1);
 							localQueue[j] = 1;
 							//printf("Will stop at %d on the way down\n",j);
 
@@ -102,6 +106,10 @@ int main() {
 					//printf("Stopping at floor %d\n",getFloor());
 					setDoorOpenLamp(1);
 					setFloorIndicator(getFloor());
+					setButtonLamp(getFloor(),BUTTON_COMMAND,0);
+					setButtonLamp(getFloor(),BUTTON_CALL_DOWN,0);
+					setButtonLamp(getFloor(),BUTTON_CALL_UP,0);
+
 					k=0;
 					//printf("Waiting\n");
 					while((k<100000) && (!isStopped() && !isObstructed())){
@@ -116,6 +124,9 @@ int main() {
 		}
 	}
 	queueActive = 0;
+	for (i = 0; i < N_FLOORS; i++){
+		setButtonLamp(i,BUTTON_COMMAND,0);
+	}
 	}
 	if(isObstructed()){
 		printf("Elevator was obstructed\n");
