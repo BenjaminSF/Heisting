@@ -110,16 +110,20 @@ void *listen_for_messages(void *args){
 	struct timeval timeout = {.tv_sec = 0, .tv_usec = (myArgs).timeoutMs * 1000};
 	fd_set readfds;
 	//prepare socket
-	while (1){
+	int notDone = 1;
+	while (notDone){
 		FD_ZERO(&readfds);
 		FD_SET(recSock, &readfds);
 		int event = select(recSock, &readfds, 0, 0, &timeout);
 		switch (event){
 			case -1:
 				printf("Switch/select for recSock failed.\n");
+				notDone = 0; 
 				break;
 			case 0:
 				close(recSock);
+				notDone = 0;
+				printf("Timed out\n");
 				break;
 			default:
 				pthread_mutex_lock((&myArgs.rwLock));
@@ -179,7 +183,7 @@ int init_network(){
 	encodeMessage(bufSend, sendInfo);
 
 	//Start listening for responses
-	struct ListenParams params = {.port = info.port, .timeoutMs = 200};
+	struct ListenParams params = {.port = info.port, .timeoutMs = 2000};
 	pthread_mutex_init(&(params.rwLock), NULL);
 	pthread_cond_init(&(params.readReady), NULL);
 
@@ -195,13 +199,16 @@ int init_network(){
 	int addrslistCounter = 0;
 	struct bufferInfo bufInfo;
 	while(pthread_kill(findOtherElevs, 0) != ESRCH){	//Listening
+		printf("Entered while-loop\n");
 		pthread_mutex_lock(&(params.rwLock));
+		printf("Mutex locked, waiting for cond\n");
 		pthread_cond_wait(&(params.readReady), &(params.rwLock));
 		bufInfo = decodeMessage(bufMessage);
+		printf("Decoded\n");
 		pthread_mutex_unlock(&(params.rwLock));
 		if (bufInfo.myState == MSG_CONNECT_RESPOND){ //Only use related messages
 		
-			info.addrsList[addrslistCounter] = bufInfo.srcAddr;
+			//info.addrsList[addrslistCounter] = bufInfo.srcAddr;
 			addrslistCounter++;
 			if (bufInfo.masterStatus == 1){
 				//master not available
