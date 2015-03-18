@@ -16,7 +16,7 @@ unsigned char bufMessage[BUF_SIZE];
 
 void sendBroadcast(int statusMsg){
 	char *broadcastIP = "129.241.187.255";
-	int myPort = 20011;
+	int myPort = 20004;
 	int sendSock;
 	struct sockaddr_in serveraddr;
 	serveraddr.sin_family = AF_INET;
@@ -73,7 +73,7 @@ void primaryFunc(int counter){
 void backupFunc(char *newBackupCommand){
 	printf("Starting backup.\n");
 	int recSock;
-	int myPort = 20011;
+	int myPort = 20004;
 	struct sockaddr_in remaddr;
 	socklen_t remaddrLen = sizeof(remaddr);
 	struct sockaddr_in myaddr = {.sin_family = AF_INET, .sin_port = htons(myPort), .sin_addr.s_addr = htonl(INADDR_ANY)};
@@ -105,7 +105,7 @@ void backupFunc(char *newBackupCommand){
 			case 0:
 				printf("Timed out, backup becomes primary.\n");
 				close(recSock);
-				system(newBackupCommand);
+				//system(newBackupCommand);
 				primaryFunc(backupCount+1);
 				break;
 			default:
@@ -127,6 +127,7 @@ void backupFunc(char *newBackupCommand){
 
 
 void main(int argc, char**argv){
+	/*
 	char *startOption;
 	if (argc == 1){
 		startOption = "primary";	
@@ -136,8 +137,11 @@ void main(int argc, char**argv){
 		printf("Too many arguments\n");
 		return;
 	}
+	*/
 	char newBackupCommand[200];
 	sprintf(newBackupCommand, "gnome-terminal -e \"%s backup\"", argv[0]);
+	backupFunc(newBackupCommand);
+	/*
 	if (!strcmp(startOption, "primary")){
 		int startValue = 1;
 		primaryFunc(startValue);
@@ -146,6 +150,7 @@ void main(int argc, char**argv){
 		backupFunc(newBackupCommand);
 	}
 	printf("This should never happen.\n");
+	*/
 	return;
 }
 
