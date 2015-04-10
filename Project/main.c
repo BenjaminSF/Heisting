@@ -48,23 +48,25 @@ int main() {
 					queueActive = 1;
 			}
 			}
-			/*
-			else if (getButtonSignal(i,BUTTON_CALL_UP)){
-				setButtonLamp(i,BUTTON_CALL_UP,1);
-				if(i != currentFloor){
-					nextFloor = i;
-					queueActive = 1;				//Fullfører driver for en heis
-				}									//Men skal i costfunction ved flere heiser
+			if(i< N_FLOORS){
+				if (getButtonSignal(i,BUTTON_CALL_UP)){
+					setButtonLamp(i,BUTTON_CALL_UP,1);
+					if(i != currentFloor){
+						nextFloor = i;
+						queueActive = 1;				//Fullfører driver for en heis
+					}									//Men skal i costfunction ved flere heiser
+				}
 			}
-			else if (getButtonSignal(i,BUTTON_CALL_DOWN)){
-				setButtonLamp(i,BUTTON_CALL_DOWN,1);
-				if (i != currentFloor){
-					nextFloor = i;
-					queueActive = 1;
+			if(i>0){
+				if (getButtonSignal(i,BUTTON_CALL_DOWN)){
+					setButtonLamp(i,BUTTON_CALL_DOWN,1);
+					if (i != currentFloor){
+						nextFloor = i;
+						queueActive = 1;
+					}
 				}
 			}
 		}
-		*/
 		if(queueActive){
 			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
