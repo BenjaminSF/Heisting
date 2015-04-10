@@ -16,7 +16,7 @@ unsigned char bufMessage[BUF_SIZE];
 
 void sendBroadcast(int statusMsg){
 	char *broadcastIP = "129.241.187.255";
-	int myPort = 20004;
+	int myPort = 20011;
 	int sendSock;
 	struct sockaddr_in serveraddr;
 	serveraddr.sin_family = AF_INET;
@@ -61,6 +61,7 @@ void primaryFunc(int counter){
 			sendBroadcast(0);
 			time(&startTime);
 			printf("Primary sent: I'm alive!\n");
+			usleep(1);
 		}		
 		sendBroadcast(counter);
 		printf("Primary sent: %d\n", counter);
@@ -73,7 +74,7 @@ void primaryFunc(int counter){
 void backupFunc(char *newBackupCommand){
 	printf("Starting backup.\n");
 	int recSock;
-	int myPort = 20004;
+	int myPort = 20011;
 	struct sockaddr_in remaddr;
 	socklen_t remaddrLen = sizeof(remaddr);
 	struct sockaddr_in myaddr = {.sin_family = AF_INET, .sin_port = htons(myPort), .sin_addr.s_addr = htonl(INADDR_ANY)};
@@ -110,7 +111,7 @@ void backupFunc(char *newBackupCommand){
 				break;
 			default:
 				recvfrom(recSock, bufMessage, BUF_SIZE, 0, (struct sockaddr *)&remaddr, &remaddrLen);
-				if (!strcmp(bufMessage, "I'm alive!")){
+				if (!strcmp(bufMessage, "I'm alive!\n")){
 					printf("Backup received: I'm alive!\n");
 					timeout.tv_sec = 4;
 					timeout.tv_usec = 0;

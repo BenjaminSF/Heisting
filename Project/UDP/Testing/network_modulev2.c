@@ -12,7 +12,9 @@
 #include <time.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <semaphore.h>
 #include "network_modulev2.h"
+#include "fifoqueue.h"
 #define BUF_SIZE 1024
 
 char bufMessage[BUF_SIZE];
@@ -30,16 +32,17 @@ static struct {
 struct ListenParams{
 	int port;
 	int timeoutMs;
+	int finished;
 	//struct lock rwLock;
 	//struct condition available;
 	pthread_mutex_t rwLock;
-	pthread_cond_t readReady;
+	sem_t readReady;
 };
 
 
 enum bufferState{
 	MSG_CONNECT_SEND,
-	MSG_CONNECT_RESPOND,
+	MSG_CONNECT_RESPONSE,
 	MSG_ELEVSTATE,
 	MSG_ELEV_UP,
 	MSG_ELEV_DOWN,
@@ -61,6 +64,7 @@ void* send_message(void *args){
 	strcpy(msg, bufSend);
 	pthread_cond_signal(&myArgs.readReady);
 	pthread_mutex_unlock(&myArgs.rwLock);
+	printf("Sending message: %s\n", msg);
 
 	int sendSocket;
 	struct sockaddr_in sendAddr;
@@ -78,8 +82,15 @@ void* send_message(void *args){
 	if (setsockopt(sendSocket, SOL_SOCKET, SO_REUSEPORT, (void*)&socketPermission, sizeof(socketPermission)) < 0){
 		perror("sendSocket re-use port enable failed\n");
 	}
-	if (sendto(sendSocket, msg, strlen(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
-		perror("Sending socket failed\n");
+	int i;
+	for (i = 0; i < 10; i++){
+		if (sendto(sendSocket, msg, strlen(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
+			perror("Sending socket failed\n");
+		}
+		if (sendto(sendSocket, msg, strlen(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
+			perror("Sending socket failed\n");
+		}
+		usleep(100000);
 	}
 	printf("Sending finished\n");
 	return;
@@ -88,11 +99,11 @@ void* send_message(void *args){
 
 void *listen_for_messages(void *args){
 	printf("Listen started\n");
-	struct ListenParams myArgs = *((struct ListenParams*)(args));
+	struct ListenParams *myArgs = ((struct ListenParams*)(args));
 	int recSock;
 	struct sockaddr_in remaddr;
 	socklen_t remaddrLen = sizeof(remaddr);
-	struct sockaddr_in myaddr = {.sin_family = AF_INET, .sin_port = htons(myArgs.port), .sin_addr.s_addr = htonl(INADDR_ANY)};
+	struct sockaddr_in myaddr = {.sin_family = AF_INET, .sin_port = htons(myArgs->port), .sin_addr.s_addr = htonl(INADDR_ANY)};
 	socklen_t myaddrLen = sizeof(myaddr);
 	int socketPermission = 1;
 	
@@ -106,15 +117,15 @@ void *listen_for_messages(void *args){
 		perror("Failed to bind recSocket.\n");
 	}
 
-	printf("Test mottak, port: %d\n", (myArgs).port);
-	struct timeval timeout = {.tv_sec = 0, .tv_usec = (myArgs).timeoutMs * 1000};
+	printf("Test mottak, port: %d\n", (myArgs)->port);
+	struct timeval timeout = {.tv_sec = 0, .tv_usec = (myArgs)->timeoutMs * 1000};
 	fd_set readfds;
 	//prepare socket
 	int notDone = 1;
 	while (notDone){
 		FD_ZERO(&readfds);
 		FD_SET(recSock, &readfds);
-		int event = select(recSock, &readfds, 0, 0, &timeout);
+		int event = select(recSock+1, &readfds, 0, 0, &timeout);
 		switch (event){
 			case -1:
 				printf("Switch/select for recSock failed.\n");
@@ -126,14 +137,19 @@ void *listen_for_messages(void *args){
 				printf("Timed out\n");
 				break;
 			default:
-				pthread_mutex_lock((&myArgs.rwLock));
-				
+				printf("Recieving\n");
+				pthread_mutex_lock((&myArgs->rwLock));
+				memset(bufMessage, '\0', BUF_SIZE);
 				recvfrom(recSock, bufMessage, BUF_SIZE, 0, (struct sockaddr *)&remaddr, &remaddrLen);
-				pthread_cond_signal(&myArgs.readReady);
-				pthread_mutex_unlock((&myArgs.rwLock));
+				pthread_mutex_unlock((&myArgs->rwLock));
+				pthread_cond_signal(&myArgs->readReady);
+				
 		}
 	}
+	myArgs->finished = 1;
+	pthread_cond_signal(&(myArgs->readReady));
 	printf("Listen finished\n");
+	printf("Test mottak, port: %d\n", (myArgs)->port);
 	return;
 }
 
@@ -159,7 +175,7 @@ int init_network(){
 	
 	//set IP info for use by other functions
 	info.localIP = strdup(tmpIP);
-	info.port = 20005; //Set to a static value for port, could implement and call a function if necessary
+	info.port = 20011; //Set to a static value for port, could implement and call a function if necessary
 	
 	//Finds broadcast-IP:
 	char *lastDot;
@@ -181,11 +197,12 @@ int init_network(){
 	sendInfo.masterStatus = 0;
 	sendInfo.myState = MSG_CONNECT_SEND;
 	encodeMessage(bufSend, sendInfo);
-
+	printf("bufSend: %s\n", bufSend);
 	//Start listening for responses
-	struct ListenParams params = {.port = info.port, .timeoutMs = 2000};
+	struct ListenParams params = {.port = info.port, .timeoutMs = 5000, .finished = 0};
 	pthread_mutex_init(&(params.rwLock), NULL);
-	pthread_cond_init(&(params.readReady), NULL);
+	sem_init(&(params.readReady),0,0);
+	//pthread_cond_init(&(params.readReady), NULL);
 
 	struct ListenParams sendParams = {.port = info.port};
 	pthread_mutex_init(&(sendParams.rwLock), NULL);
@@ -198,15 +215,21 @@ int init_network(){
 	pthread_create(&findElevsSend, NULL, send_message, &sendParams);	//Send
 	int addrslistCounter = 0;
 	struct bufferInfo bufInfo;
+
+	pthread_mutex_lock(&(params.rwLock));
+	printf("Mutex locked, waiting for cond\n");
 	while(pthread_kill(findOtherElevs, 0) != ESRCH){	//Listening
-		printf("Entered while-loop\n");
-		pthread_mutex_lock(&(params.rwLock));
-		printf("Mutex locked, waiting for cond\n");
+		//printf("Entered while-loop\n");
+		//params.port = params.port +1;
+		//printf("%d\n", params.port);
 		pthread_cond_wait(&(params.readReady), &(params.rwLock));
+		if (params.finished == 1){
+			break;
+		}
 		bufInfo = decodeMessage(bufMessage);
-		printf("Decoded\n");
+		printf("Received: %s\n", bufMessage);
 		pthread_mutex_unlock(&(params.rwLock));
-		if (bufInfo.myState == MSG_CONNECT_RESPOND){ //Only use related messages
+		if (bufInfo.myState == MSG_CONNECT_RESPONSE){ //Only use related messages
 		
 			//info.addrsList[addrslistCounter] = bufInfo.srcAddr;
 			addrslistCounter++;
@@ -216,8 +239,9 @@ int init_network(){
 			}
 			//add buffer to address list
 		}
-		
+		pthread_mutex_lock(&(params.rwLock));
 	}
+	pthread_mutex_unlock(&(params.rwLock));
 	printf("Finished listening\n");
 	//Finished listening
 	pthread_join(findOtherElevs, NULL);
@@ -235,13 +259,13 @@ struct bufferInfo decodeMessage(char *buffer){
 	msg.srcAddr = "192.128.187.111";
 	msg.dstAddr = "192.128.187.123";
 	msg.masterStatus = 1;
-	msg.myState = MSG_CONNECT_RESPOND;
+	msg.myState = MSG_CONNECT_RESPONSE;
 	//End: Testing
 
 	return msg;
 }
 
 void encodeMessage(char *buffer, struct bufferInfo information){
-	buffer = "Testing:12:12";
-
+	char* melding = "testing 12";
+	strcpy(buffer,melding);
 }
