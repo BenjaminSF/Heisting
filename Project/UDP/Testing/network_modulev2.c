@@ -17,8 +17,10 @@
 #include "fifoqueue.h"
 #define BUF_SIZE 1024
 
-char bufMessage[BUF_SIZE];
-char bufSend[BUF_SIZE];
+//char bufMessage[BUF_SIZE];
+//char bufSend[BUF_SIZE];
+fifoqueue_t* receiveQueue;
+fifoqueue_t* sendBuffer;
 
 //All values set by init_network
 static struct {
@@ -35,7 +37,7 @@ struct ListenParams{
 	int finished;
 	//struct lock rwLock;
 	//struct condition available;
-	pthread_mutex_t rwLock;
+	//pthread_mutex_t rwLock;
 	sem_t readReady;
 };
 
@@ -60,10 +62,7 @@ void* send_message(void *args){
 	printf("Sending started\n");
 	struct ListenParams myArgs = *((struct ListenParams*)(args));
 	char msg[BUF_SIZE];
-	pthread_mutex_lock(&myArgs.rwLock);
-	strcpy(msg, bufSend);
-	pthread_cond_signal(&myArgs.readReady);
-	pthread_mutex_unlock(&myArgs.rwLock);
+	dequeue(sendQueue, msg);
 	printf("Sending message: %s\n", msg);
 
 	int sendSocket;
@@ -99,6 +98,7 @@ void* send_message(void *args){
 
 void *listen_for_messages(void *args){
 	printf("Listen started\n");
+	char tempString[BUF_SIZE];
 	struct ListenParams *myArgs = ((struct ListenParams*)(args));
 	int recSock;
 	struct sockaddr_in remaddr;
@@ -138,22 +138,24 @@ void *listen_for_messages(void *args){
 				break;
 			default:
 				printf("Recieving\n");
-				pthread_mutex_lock((&myArgs->rwLock));
-				memset(bufMessage, '\0', BUF_SIZE);
-				recvfrom(recSock, bufMessage, BUF_SIZE, 0, (struct sockaddr *)&remaddr, &remaddrLen);
-				pthread_mutex_unlock((&myArgs->rwLock));
-				pthread_cond_signal(&myArgs->readReady);
+				memset(tempString, '\0', BUF_SIZE);
+				recvfrom(recSock, tempString, BUF_SIZE, 0, (struct sockaddr *)&remaddr, &remaddrLen);
+				enqueue(receiveQueue, tempString, BUF_SIZE);
+				sem_post(&myArgs->readReady);
 				
 		}
 	}
 	myArgs->finished = 1;
-	pthread_cond_signal(&(myArgs->readReady));
+	sem_post(&(myArgs->readReady));
 	printf("Listen finished\n");
 	printf("Test mottak, port: %d\n", (myArgs)->port);
 	return;
 }
 
 int init_network(){
+	receiveQueue = new_fifoqueue();
+	sendBuffer = new_fifoqueue();
+	
 	//Finds the local machine's IP address
 	printf("Start init\n");
 	struct ifaddrs *ifap, *ifa;
@@ -193,21 +195,18 @@ int init_network(){
 	printf("Lokalt: IP: %s\t Port: %d\t Broadcast: %s\n", info.localIP, info.port, info.broadcastIP);
 	
 	//Create message to be broadcasted
+	char connect2meMsg[BUF_SIZE];
 	struct bufferInfo sendInfo = {.srcAddr = info.localIP, .dstAddr = info.broadcastIP};
 	sendInfo.masterStatus = 0;
 	sendInfo.myState = MSG_CONNECT_SEND;
-	encodeMessage(bufSend, sendInfo);
-	printf("bufSend: %s\n", bufSend);
+	encodeMessage(connect2meMsg, sendInfo);
+	enqueue(sendBuffer, connect2meMsg, BUF_SIZE)
+	printf("connect2meMsg: %s\n", connect2meMsg);
+	
 	//Start listening for responses
 	struct ListenParams params = {.port = info.port, .timeoutMs = 5000, .finished = 0};
-	pthread_mutex_init(&(params.rwLock), NULL);
 	sem_init(&(params.readReady),0,0);
-	//pthread_cond_init(&(params.readReady), NULL);
-
 	struct ListenParams sendParams = {.port = info.port};
-	pthread_mutex_init(&(sendParams.rwLock), NULL);
-	pthread_cond_init(&(sendParams.readReady), NULL);
-	
 
 	printf("Starting pthreads\n");
 	pthread_t findOtherElevs, findElevsSend;
@@ -216,21 +215,21 @@ int init_network(){
 	int addrslistCounter = 0;
 	struct bufferInfo bufInfo;
 
-	pthread_mutex_lock(&(params.rwLock));
+	char tmpResponseMsg[BUF_SIZE];
 	printf("Mutex locked, waiting for cond\n");
-	while(pthread_kill(findOtherElevs, 0) != ESRCH){	//Listening
-		//printf("Entered while-loop\n");
-		//params.port = params.port +1;
-		//printf("%d\n", params.port);
-		pthread_cond_wait(&(params.readReady), &(params.rwLock));
+	while(1){}//pthread_kill(findOtherElevs, 0) != ESRCH){	//Listening
+
+		sem_wait(&(params.readReady)); //To avoid blocking on wait_for_content()
 		if (params.finished == 1){
 			break;
 		}
-		bufInfo = decodeMessage(bufMessage);
-		printf("Received: %s\n", bufMessage);
-		pthread_mutex_unlock(&(params.rwLock));
-		if (bufInfo.myState == MSG_CONNECT_RESPONSE){ //Only use related messages
+		wait_for_content(receiveQueue);
 		
+		memset(tmpResponseMsg, '\0', BUF_SIZE);
+		dequeue(receiveQueue, tmpResponseMsg);
+		bufInfo = decodeMessage(tmpResponseMsg);
+		printf("Received: %s\n", tmpResponseMsg);
+		if (bufInfo.myState == MSG_CONNECT_RESPONSE){ //Only use related messages
 			//info.addrsList[addrslistCounter] = bufInfo.srcAddr;
 			addrslistCounter++;
 			if (bufInfo.masterStatus == 1){
@@ -239,17 +238,14 @@ int init_network(){
 			}
 			//add buffer to address list
 		}
-		pthread_mutex_lock(&(params.rwLock));
 	}
-	pthread_mutex_unlock(&(params.rwLock));
+
 	printf("Finished listening\n");
 	//Finished listening
 	pthread_join(findOtherElevs, NULL);
 	pthread_join(findElevsSend, NULL);
-	pthread_mutex_destroy(&(params.rwLock));
-	pthread_cond_destroy(&(params.readReady));
-	pthread_mutex_destroy(&(sendParams.rwLock));
-	pthread_cond_destroy(&(sendParams.readReady));
+	sem_destroy(&(params.readReady));
+	
 	return 0;
 }
 

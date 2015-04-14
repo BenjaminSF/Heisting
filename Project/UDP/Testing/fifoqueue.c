@@ -83,6 +83,10 @@ void wait_for_content(fifoqueue_t* q){
     sem_wait(&q->sem);
 }
 
+int trywait_for_content(fifoqueue_t* q){
+	return sem_trywait(&q->sem);
+}
+
 /*int front_type(fifoqueue_t* q){
     pthread_mutex_lock(&q->mtx);
     int res;
