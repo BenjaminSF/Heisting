@@ -1,7 +1,7 @@
 #include "channels.h"
 #include "io.h"
 #include "elevDriver.h"
-#include "constFunction.h"
+#include "costFunction.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>

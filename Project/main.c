@@ -8,7 +8,7 @@
 
 
 #define N_FLOORS 4
-
+/*
 struct order{
 	int dest;
 	int buttonType;
@@ -21,7 +21,7 @@ struct{
 	int localPri[100];
 	pthread_mutex_t rwLock;
 }orderQueue;
-
+*/
 
 int main() {
 
@@ -56,7 +56,7 @@ int main() {
 			if(getButtonSignal(i,BUTTON_COMMAND)){
 				setButtonLamp(i, BUTTON_COMMAND, 1);
 				if(i != currentFloor){
-					struct order newOrder
+					struct order newOrder;
 					newOrder.dest = i;
 					newOrder.buttonType = BUTTON_COMMAND;
 					newOrder.elevator = 1;
@@ -80,7 +80,7 @@ int main() {
 				if (getButtonSignal(i,BUTTON_CALL_DOWN)){
 					setButtonLamp(i,BUTTON_CALL_DOWN,1);
 					if (i != currentFloor){
-						struct order newOrder
+						struct order newOrder;
 						newOrder.dest = i;
 						newOrder.buttonType = BUTTON_CALL_DOWN;
 						newOrder.elevator = 0;
