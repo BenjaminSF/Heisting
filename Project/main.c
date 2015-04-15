@@ -48,7 +48,7 @@ int main() {
 		setMotorDirection(DIRN_STOP);
 		setFloorIndicator(getFloor());
 		setDoorOpenLamp(1);
-		
+		nextFloor = -1
 		int localQueue[N_FLOORS];
 		memset(localQueue,0,sizeof(int)*N_FLOORS);
 		currentFloor = getFloor();
@@ -136,21 +136,51 @@ int main() {
 						}
 					}
 
-					if (getButtonSignal(j,buttonCall)){
-						//printf("Got a button call for %d\n",j);
-						if(lastFloor <j && j< nextFloor){
-							setButtonLamp(j,BUTTON_CALL_UP,1);
-							localQueue[j] = 1;
-							//printf("Will stop at %d on the way up\n",j);
+					if (getButtonSignal(j,BUTTON_CALL_DOWN)){
+						if(direction == DIRN_UP){
+							struct order newOrder;
+							newOrder.dest = j;
+							newOrder.buttonType = BUTTON_CALL_DOWN;
+							newOrder.elevator = 0;
+						}else{
+							if (nextFloor<j<lastFloor)
+							{
+								localQueue[j] = 1;
+							}else if(j<nextFloor){
+								localQueue[nextFloor] = 1;
+								nextFloor = j;
+							}else{
+								struct order newOrder;
+								newOrder.dest = j;
+								newOrder.buttonType = BUTTON_CALL_DOWN;
+								newOrder.elevator = 0;
+							}
 						}
-						if(lastFloor> j && j> nextFloor){
-							setButtonLamp(j,BUTTON_CALL_DOWN,1);
-							localQueue[j] = 1;
-							//printf("Will stop at %d on the way down\n",j);
-
 						
 					}
-				}
+					if (getButtonSignal(j,BUTTON_CALL_UP)){
+						if(direction == DIRN_DOWN){
+							struct order newOrder;
+							newOrder.dest = j;
+							newOrder.buttonType = BUTTON_CALL_UP;
+							newOrder.elevator = 0;
+						}else{
+							if (nextFloor>j>lastFloor)
+							{
+								localQueue[j] = 1;
+							}else if(j>nextFloor){
+								localQueue[nextFloor] = 1;
+								nextFloor = j;
+							}else{
+								struct order newOrder;
+								newOrder.dest = j;
+								newOrder.buttonType = BUTTON_CALL_UP;
+								newOrder.elevator = 0;
+							}
+						}
+					}
+
+					}
 			}
 				if(localQueue[getFloor()]== 1 && (getFloor() != -1)){
 					setMotorDirection(DIRN_STOP);
@@ -169,7 +199,6 @@ int main() {
 					}
 					setDoorOpenLamp(0);
 					localQueue[getFloor()] = 0;
-					//printf("Starting again\n");
 					goToFloor(nextFloor);
 				}			
 		}

@@ -2,10 +2,10 @@
 #include "costFunction.h"
 #include <stdlib.h>
 #include <pthread.h>
-
+#define N_ORDERS 100
 void initPriorityQueue(){
 	int i;
-	for (i = 0; i < 100; i++){
+	for (i = 0; i < N_ORDERS; i++){
 		orderQueue.inUse[i] = 0;
 		orderQueue.localPri[i] = -1;
 
@@ -18,7 +18,7 @@ void addNewOrder(struct order newOrder){
 	int pos = 0;
 	while(orderQueue.inUse[pos]){
 		pos++;
-		if (pos == 100){
+		if (pos == N_ORDERS){
 			printf("Error: orderQueue is full, order not received");
 			pthread_mutex_unlock(&(orderQueue.rwLock));
 			return;
@@ -35,7 +35,7 @@ void addNewOrder(struct order newOrder){
 int getNewOrder(int currentFloor){
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	int i, destFloor;
-	for (i = 0; i < 100; i++){
+	for (i = 0; i < N_ORDERS; i++){
 		if (orderQueue.Queue[i].elevator == 1){
 			//Prioritizes commands from the buttons inside the elevator
 			orderQueue.inUse[i] = 0;
@@ -46,7 +46,7 @@ int getNewOrder(int currentFloor){
 		}
 	}
 	int cost = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor);
-	for (i = 0; i < 100; i++){
+	for (i = 0; i < N_ORDERS; i++){
 		if ((findCost(orderQueue.Queue[i],currentFloor)) == cost){
 			orderQueue.inUse[i] = 0;
 			orderQueue.localPri[i] = -1;
@@ -63,7 +63,7 @@ int getNewOrder(int currentFloor){
 int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], int currentFloor){
 	int i, minPos;
 	int min = 4;
-	for (i = 0; i < 100; i++){
+	for (i = 0; i < N_ORDERS; i++){
 		if ((priority[i] == -1) && (inUse[i] == 1)){
 			//orderQueue.costOfQueue[i] -= 1;
 			if(findCost(queue[i],currentFloor) < min){
