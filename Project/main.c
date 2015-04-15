@@ -8,25 +8,7 @@
 
 
 #define N_FLOORS 4
-/*
-struct order{
-	int dest;
-	int buttonType;
-	int elevator
-};
-struct{
-	struct order Queue[100];
-	int inUse[100];
-	int costOfQueue[100];
-	int localPri[100];
-	pthread_mutex_t rwLock;
-}orderQueue;
-*/
-
 int main() {
-
-// Initialize hardware
-
 	if (!elevDriver_initialize()) {
 		printf("Unable to initialize elevator hardware!\n");
 		return 1;
@@ -48,7 +30,7 @@ int main() {
 		setMotorDirection(DIRN_STOP);
 		setFloorIndicator(getFloor());
 		setDoorOpenLamp(1);
-		nextFloor = -1
+		nextFloor = -1;
 		int localQueue[N_FLOORS];
 		memset(localQueue,0,sizeof(int)*N_FLOORS);
 		currentFloor = getFloor();
@@ -61,9 +43,10 @@ int main() {
 					newOrder.buttonType = BUTTON_COMMAND;
 					newOrder.elevator = 1;
 					addNewOrder(newOrder);
+					while(getButtonSignal(i,BUTTON_COMMAND)){}
 			}
 			}
-			if(i< N_FLOORS){
+			if(i< N_FLOORS-1){
 				if (getButtonSignal(i,BUTTON_CALL_UP)){
 					setButtonLamp(i,BUTTON_CALL_UP,1);
 					if(i != currentFloor){
@@ -71,8 +54,9 @@ int main() {
 						newOrder.dest = i;
 						newOrder.buttonType = BUTTON_CALL_UP;
 						newOrder.elevator = 0;
-						addNewOrder(newOrder);							//Fullfører driver for en heis
-														//Men skal i costfunction ved flere heiser
+						addNewOrder(newOrder);
+						while(getButtonSignal(i,BUTTON_CALL_UP)){}							
+														
 					}
 				}
 			}
@@ -85,11 +69,16 @@ int main() {
 						newOrder.buttonType = BUTTON_CALL_DOWN;
 						newOrder.elevator = 0;
 						addNewOrder(newOrder);
+						while(getButtonSignal(i,BUTTON_CALL_DOWN)){}
 					}
 				}
 			}
 		}
 		nextFloor = getNewOrder(currentFloor);
+		
+		printf("nextFloor %d\n",nextFloor );
+		
+		
 		if(nextFloor != -1){
 			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
@@ -105,8 +94,9 @@ int main() {
 				for(j=0;j<N_FLOORS;j++){
 					if(direction == DIRN_UP){
 						if(getButtonSignal(j,BUTTON_COMMAND)){
-							//printf("Got button signal upwards %d \n",j);
+							if (j!= getFloor()){
 							setButtonLamp(j,BUTTON_COMMAND,1);
+							}
 							if(j> nextFloor){
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
@@ -117,11 +107,16 @@ int main() {
 								newOrder.dest = j;
 								newOrder.buttonType = BUTTON_COMMAND;
 								newOrder.elevator = 1;
+								addNewOrder(newOrder);
+								while(getButtonSignal(j,BUTTON_COMMAND)){}
+
 							}
 						}
 					}else{
 						if(getButtonSignal(j,BUTTON_COMMAND)){
+							if (j!= getFloor()){
 							setButtonLamp(j,BUTTON_COMMAND,1);
+							}
 							if(j< nextFloor){
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
@@ -132,56 +127,75 @@ int main() {
 								newOrder.dest = j;
 								newOrder.buttonType = BUTTON_COMMAND;
 								newOrder.elevator = 1;
+								addNewOrder(newOrder);
+								while(getButtonSignal(j,BUTTON_COMMAND)){}
 							}
 						}
 					}
-
-					if (getButtonSignal(j,BUTTON_CALL_DOWN)){
-						if(direction == DIRN_UP){
-							struct order newOrder;
-							newOrder.dest = j;
-							newOrder.buttonType = BUTTON_CALL_DOWN;
-							newOrder.elevator = 0;
-						}else{
-							if (nextFloor<j<lastFloor)
-							{
-								localQueue[j] = 1;
-							}else if(j<nextFloor){
-								localQueue[nextFloor] = 1;
-								nextFloor = j;
-							}else{
+					if(j>0){
+						if (getButtonSignal(j,BUTTON_CALL_DOWN)){
+							if (j!= getFloor()){
+							setButtonLamp(j,BUTTON_CALL_DOWN,1);
+							}
+							if(direction == DIRN_UP){
 								struct order newOrder;
 								newOrder.dest = j;
 								newOrder.buttonType = BUTTON_CALL_DOWN;
 								newOrder.elevator = 0;
-							}
-						}
-						
-					}
-					if (getButtonSignal(j,BUTTON_CALL_UP)){
-						if(direction == DIRN_DOWN){
-							struct order newOrder;
-							newOrder.dest = j;
-							newOrder.buttonType = BUTTON_CALL_UP;
-							newOrder.elevator = 0;
-						}else{
-							if (nextFloor>j>lastFloor)
-							{
-								localQueue[j] = 1;
-							}else if(j>nextFloor){
-								localQueue[nextFloor] = 1;
-								nextFloor = j;
+								addNewOrder(newOrder);
+								while(getButtonSignal(j,BUTTON_CALL_DOWN)){}
 							}else{
+								if (nextFloor<j<lastFloor)
+								{
+									localQueue[j] = 1;
+								}else if(j<nextFloor){
+									localQueue[nextFloor] = 1;
+									nextFloor = j;
+								}else{
+									struct order newOrder;
+									newOrder.dest = j;
+									newOrder.buttonType = BUTTON_CALL_DOWN;
+									newOrder.elevator = 0;
+									addNewOrder(newOrder);
+									while(getButtonSignal(j,BUTTON_CALL_DOWN)){}
+								}
+							}
+							
+						}
+					}
+					if(j<N_FLOORS-1){
+						if (getButtonSignal(j,BUTTON_CALL_UP)){
+							if (j!= getFloor()){
+							setButtonLamp(j,BUTTON_CALL_UP,1);
+							}
+							if(direction == DIRN_DOWN){
 								struct order newOrder;
 								newOrder.dest = j;
 								newOrder.buttonType = BUTTON_CALL_UP;
 								newOrder.elevator = 0;
+								addNewOrder(newOrder);
+								while(getButtonSignal(j,BUTTON_CALL_UP)){}
+							}else{
+								if (nextFloor>j>lastFloor)
+								{
+									localQueue[j] = 1;
+								}else if(j>nextFloor){
+									localQueue[nextFloor] = 1;
+									nextFloor = j;
+								}else{
+									struct order newOrder;
+									newOrder.dest = j;
+									newOrder.buttonType = BUTTON_CALL_UP;
+									newOrder.elevator = 0;
+									addNewOrder(newOrder);
+									while(getButtonSignal(j,BUTTON_CALL_UP)){}
+								}
 							}
 						}
 					}
-
 					}
-			}
+			
+			
 				if(localQueue[getFloor()]== 1 && (getFloor() != -1)){
 					setMotorDirection(DIRN_STOP);
 					//printf("Stopping at floor %d\n",getFloor());
@@ -201,12 +215,22 @@ int main() {
 					localQueue[getFloor()] = 0;
 					goToFloor(nextFloor);
 				}			
+		
+	
+				/*
+				for (i = 0; i < N_FLOORS; i++){
+					setButtonLamp(i,BUTTON_COMMAND,0);
+				}*/
+				if (getFloor() == nextFloor)
+				{
+					k = 0;
+					while((k<100000) && (!isStopped() && !isObstructed())){
+						k++;
+						setMotorDirection(DIRN_STOP);
+					}
+				}
+			}
 		}
-	}
-	queueActive = 0;
-	for (i = 0; i < N_FLOORS; i++){
-		setButtonLamp(i,BUTTON_COMMAND,0);
-	}
 	}
 	if(isObstructed()){
 		printf("Elevator was obstructed\n");

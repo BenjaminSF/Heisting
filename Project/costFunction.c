@@ -8,6 +8,7 @@ void initPriorityQueue(){
 	for (i = 0; i < N_ORDERS; i++){
 		orderQueue.inUse[i] = 0;
 		orderQueue.localPri[i] = -1;
+		orderQueue.Queue[i].dest = 100;
 
 	}
 	pthread_mutex_init(&(orderQueue.rwLock), NULL);
@@ -19,7 +20,7 @@ void addNewOrder(struct order newOrder){
 	while(orderQueue.inUse[pos]){
 		pos++;
 		if (pos == N_ORDERS){
-			printf("Error: orderQueue is full, order not received");
+			printf("Error: orderQueue is full, order not received\n");
 			pthread_mutex_unlock(&(orderQueue.rwLock));
 			return;
 		}
@@ -77,6 +78,7 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 
 int findCost(struct order newOrder,int currentFloor){
 	int cost = newOrder.dest - currentFloor;
+	printf("newOrder.dest: %d  cost: %d currentFloor: %d  \n", newOrder.dest, cost,currentFloor);
 	if (cost < 0){
 		return (-1)*cost;
 	} 
