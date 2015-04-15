@@ -20,7 +20,7 @@
 //char bufMessage[BUF_SIZE];
 //char bufSend[BUF_SIZE];
 fifoqueue_t* receiveQueue;
-fifoqueue_t* sendBuffer;
+fifoqueue_t* sendQueue;
 
 //All values set by init_network
 static struct {
@@ -42,28 +42,14 @@ struct ListenParams{
 };
 
 
-enum bufferState{
-	MSG_CONNECT_SEND,
-	MSG_CONNECT_RESPONSE,
-	MSG_ELEVSTATE,
-	MSG_ELEV_UP,
-	MSG_ELEV_DOWN,
-	MSG_ELEV_COMMAND
-};
-
-struct bufferInfo{
-	char *srcAddr;
-	char *dstAddr;
-	int masterStatus;
-	enum bufferState myState;
-};
-
 void* send_message(void *args){
 	printf("Sending started\n");
 	struct ListenParams myArgs = *((struct ListenParams*)(args));
-	char msg[BUF_SIZE];
-	dequeue(sendQueue, msg);
-	printf("Sending message: %s\n", msg);
+	//char msg[BUF_SIZE];
+	BufferInfo msg;
+	wait_for_content(sendQueue);
+	dequeue(sendQueue, &msg);
+	printf("Sending message: %s\n", msg.srcAddr);
 
 	int sendSocket;
 	struct sockaddr_in sendAddr;
@@ -83,10 +69,10 @@ void* send_message(void *args){
 	}
 	int i;
 	for (i = 0; i < 10; i++){
-		if (sendto(sendSocket, msg, strlen(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
+		if (sendto(sendSocket, (void *)&msg, sizeof(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
 			perror("Sending socket failed\n");
 		}
-		if (sendto(sendSocket, msg, strlen(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
+		if (sendto(sendSocket, (void *)&msg, sizeof(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
 			perror("Sending socket failed\n");
 		}
 		usleep(100000);
@@ -98,7 +84,8 @@ void* send_message(void *args){
 
 void *listen_for_messages(void *args){
 	printf("Listen started\n");
-	char tempString[BUF_SIZE];
+	//char tempString[BUF_SIZE];
+	BufferInfo *tempMsg = (BufferInfo *)malloc(sizeof(char)* 100);
 	struct ListenParams *myArgs = ((struct ListenParams*)(args));
 	int recSock;
 	struct sockaddr_in remaddr;
@@ -138,9 +125,9 @@ void *listen_for_messages(void *args){
 				break;
 			default:
 				printf("Recieving\n");
-				memset(tempString, '\0', BUF_SIZE);
-				recvfrom(recSock, tempString, BUF_SIZE, 0, (struct sockaddr *)&remaddr, &remaddrLen);
-				enqueue(receiveQueue, tempString, BUF_SIZE);
+				//memset(tempString, '\0', BUF_SIZE);
+				recvfrom(recSock, tempMsg, sizeof(BufferInfo), 0, (struct sockaddr *)&remaddr, &remaddrLen);
+				enqueue(receiveQueue, tempMsg, sizeof(tempMsg));
 				sem_post(&myArgs->readReady);
 				
 		}
@@ -154,7 +141,7 @@ void *listen_for_messages(void *args){
 
 int init_network(){
 	receiveQueue = new_fifoqueue();
-	sendBuffer = new_fifoqueue();
+	sendQueue = new_fifoqueue();
 	
 	//Finds the local machine's IP address
 	printf("Start init\n");
@@ -195,13 +182,15 @@ int init_network(){
 	printf("Lokalt: IP: %s\t Port: %d\t Broadcast: %s\n", info.localIP, info.port, info.broadcastIP);
 	
 	//Create message to be broadcasted
-	char connect2meMsg[BUF_SIZE];
-	struct bufferInfo sendInfo = {.srcAddr = info.localIP, .dstAddr = info.broadcastIP};
+	//char connect2meMsg[BUF_SIZE];
+	BufferInfo sendInfo;
+	sendInfo.srcAddr = info.localIP;
+	sendInfo.dstAddr = info.broadcastIP;
 	sendInfo.masterStatus = 0;
 	sendInfo.myState = MSG_CONNECT_SEND;
-	encodeMessage(connect2meMsg, sendInfo);
-	enqueue(sendBuffer, connect2meMsg, BUF_SIZE)
-	printf("connect2meMsg: %s\n", connect2meMsg);
+	//encodeMessage(connect2meMsg, sendInfo);
+	enqueue(sendQueue, &sendInfo, sizeof(sendInfo));
+	//printf("connect2meMsg: %s\n", connect2meMsg);
 	
 	//Start listening for responses
 	struct ListenParams params = {.port = info.port, .timeoutMs = 5000, .finished = 0};
@@ -213,11 +202,11 @@ int init_network(){
 	pthread_create(&findOtherElevs, NULL, &listen_for_messages, &params); //Listen
 	pthread_create(&findElevsSend, NULL, send_message, &sendParams);	//Send
 	int addrslistCounter = 0;
-	struct bufferInfo bufInfo;
+	BufferInfo bufInfo;
 
-	char tmpResponseMsg[BUF_SIZE];
+	//char tmpResponseMsg[BUF_SIZE];
 	printf("Mutex locked, waiting for cond\n");
-	while(1){}//pthread_kill(findOtherElevs, 0) != ESRCH){	//Listening
+	while(1){//pthread_kill(findOtherElevs, 0) != ESRCH){	//Listening
 
 		sem_wait(&(params.readReady)); //To avoid blocking on wait_for_content()
 		if (params.finished == 1){
@@ -225,10 +214,10 @@ int init_network(){
 		}
 		wait_for_content(receiveQueue);
 		
-		memset(tmpResponseMsg, '\0', BUF_SIZE);
-		dequeue(receiveQueue, tmpResponseMsg);
-		bufInfo = decodeMessage(tmpResponseMsg);
-		printf("Received: %s\n", tmpResponseMsg);
+		//memset(tmpResponseMsg, '\0', BUF_SIZE);
+		dequeue(receiveQueue, &bufInfo);
+		//bufInfo = decodeMessage(tmpResponseMsg);
+		printf("Received: %s\n", bufInfo.srcAddr);
 		if (bufInfo.myState == MSG_CONNECT_RESPONSE){ //Only use related messages
 			//info.addrsList[addrslistCounter] = bufInfo.srcAddr;
 			addrslistCounter++;
@@ -249,8 +238,8 @@ int init_network(){
 	return 0;
 }
 
-struct bufferInfo decodeMessage(char *buffer){
-	struct bufferInfo msg;
+BufferInfo decodeMessage(char *buffer){
+	BufferInfo msg;
 	//For testing only:
 	msg.srcAddr = "192.128.187.111";
 	msg.dstAddr = "192.128.187.123";
@@ -261,7 +250,7 @@ struct bufferInfo decodeMessage(char *buffer){
 	return msg;
 }
 
-void encodeMessage(char *buffer, struct bufferInfo information){
+void encodeMessage(char *buffer, BufferInfo information){
 	char* melding = "testing 12";
 	strcpy(buffer,melding);
 }

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include "network_modulev2.h"
 
 /** An untyped mutex-protected first-in first-out queue.
     Recommended usage:
@@ -43,13 +44,13 @@ fifoqueue_t* new_fifoqueue(void);
 *       Type id 0 is reserved (see frontType())
 *   enqueue does not do a deep copy of data
 */
-void enqueue(fifoqueue_t* q, int type, char* data, size_t size);
+void enqueue(fifoqueue_t* q, BufferInfo* message, size_t size);
 
 
 /** Copies the front element of the queue into recv
 *   Use frontType() to get the type of the front element
 */
-void dequeue(fifoqueue_t* q, char* recv);
+void dequeue(fifoqueue_t* q, BufferInfo* recv);
 
 /** Similar to dequeue(), but it does not copy the element
 */
@@ -61,7 +62,7 @@ void wait_for_content(fifoqueue_t* q);
 
 /** Non-blocking call: returns 0 if there is content available (and decrements the semaphore), otherwise it returns -1
 */
-int trywait_for_content(fifoqueue_t* q)
+int trywait_for_content(fifoqueue_t* q);
 
 /** Returns the type id of the front element, as set in enqueue()
     Returns 0 if the queue is empty

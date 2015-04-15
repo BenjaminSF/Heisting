@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "network_modulev2.h"
 
 
 
@@ -21,10 +22,11 @@ fifoqueue_t* new_fifoqueue(void){
 
 
 
-void enqueue(fifoqueue_t* q, char* data, int length){
+void enqueue(fifoqueue_t* q, BufferInfo* data, size_t size){
     pthread_mutex_lock(&q->mtx);
-    size_t size = sizeof(char) * length;
+    //size_t size = sizeof(char) * length;
     fifonode_t* newnode = malloc(sizeof(fifonode_t));
+    //int type = 1;
     //newnode->type = type;
     newnode->data = malloc(size);
     newnode->size = size;
@@ -47,7 +49,7 @@ void enqueue(fifoqueue_t* q, char* data, int length){
 
 
 
-void dequeue(fifoqueue_t* q, char* recv){
+void dequeue(fifoqueue_t* q, BufferInfo* recv){
     pthread_mutex_lock(&q->mtx);
 
     if(q->front){
@@ -119,7 +121,7 @@ void print_fifoqueue_t(fifoqueue_t* q){
 
 void delete_fifoqueue(fifoqueue_t** q){
     
-    while(front_type(*q) != 0){
+    while((*q)->front != NULL){
         fifonode_t* del = (*q)->front;
         (*q)->front = (*q)->front->next;
         
