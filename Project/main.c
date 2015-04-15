@@ -1,15 +1,27 @@
 
 
 #include "elevDriver.h"
-//#include "costFunction.h"
+#include "costFunction.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 
 #define N_FLOORS 4
-
-
+/*
+struct order{
+	int dest;
+	int buttonType;
+	int elevator
+};
+struct{
+	struct order Queue[100];
+	int inUse[100];
+	int costOfQueue[100];
+	int localPri[100];
+	pthread_mutex_t rwLock;
+}orderQueue;
+*/
 
 int main() {
 
@@ -44,30 +56,41 @@ int main() {
 			if(getButtonSignal(i,BUTTON_COMMAND)){
 				setButtonLamp(i, BUTTON_COMMAND, 1);
 				if(i != currentFloor){
-					nextFloor = i;
-					queueActive = 1;
+					struct order newOrder;
+					newOrder.dest = i;
+					newOrder.buttonType = BUTTON_COMMAND;
+					newOrder.elevator = 1;
+					addNewOrder(newOrder);
 			}
 			}
 			if(i< N_FLOORS){
 				if (getButtonSignal(i,BUTTON_CALL_UP)){
 					setButtonLamp(i,BUTTON_CALL_UP,1);
 					if(i != currentFloor){
-						nextFloor = i;
-						queueActive = 1;				//Fullfører driver for en heis
-					}									//Men skal i costfunction ved flere heiser
+						struct order newOrder;
+						newOrder.dest = i;
+						newOrder.buttonType = BUTTON_CALL_UP;
+						newOrder.elevator = 0;
+						addNewOrder(newOrder);							//Fullfører driver for en heis
+														//Men skal i costfunction ved flere heiser
+					}
 				}
 			}
 			if(i>0){
 				if (getButtonSignal(i,BUTTON_CALL_DOWN)){
 					setButtonLamp(i,BUTTON_CALL_DOWN,1);
 					if (i != currentFloor){
-						nextFloor = i;
-						queueActive = 1;
+						struct order newOrder;
+						newOrder.dest = i;
+						newOrder.buttonType = BUTTON_CALL_DOWN;
+						newOrder.elevator = 0;
+						addNewOrder(newOrder);
 					}
 				}
 			}
 		}
-		if(queueActive){
+		nextFloor = getNewOrder(currentFloor);
+		if(nextFloor != -1){
 			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
 				direction = DIRN_UP;
@@ -87,8 +110,13 @@ int main() {
 							if(j> nextFloor){
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
-							}else if(j < nextFloor){
+							}else if(lastFloor <j < nextFloor){
 								localQueue[j] = 1;
+							}else{
+								struct order newOrder;
+								newOrder.dest = j;
+								newOrder.buttonType = BUTTON_COMMAND;
+								newOrder.elevator = 1;
 							}
 						}
 					}else{
@@ -97,8 +125,13 @@ int main() {
 							if(j< nextFloor){
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
-							}else if(j > nextFloor){
+							}else if(lastFloor >j > nextFloor){
 								localQueue[j] = 1;
+							}else{
+								struct order newOrder;
+								newOrder.dest = j;
+								newOrder.buttonType = BUTTON_COMMAND;
+								newOrder.elevator = 1;
 							}
 						}
 					}

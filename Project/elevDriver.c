@@ -1,6 +1,7 @@
 #include "channels.h"
 #include "io.h"
 #include "elevDriver.h"
+#include "costFunction.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,7 +45,7 @@ int elevDriver_initialize(void) {
 	}
 	setFloorIndicator(getFloor());
 	setMotorDirection(DIRN_STOP);
-
+	initPriorityQueue();
 
 	return 1;
 }
@@ -148,10 +149,7 @@ int isbuttonSignalValid(int floor, buttonType button){
 	return 1;
 }
 int getButtonSignal(int floor, buttonType button){
-	//if (isbuttonSignalValid(floor,button) || 1){
 	return io_read_bit(button_channel_matrix[floor][button]);
-//}
-	//return -1;
 }
 void setButtonLamp(int floor, buttonType button, int status){
 	if (isbuttonSignalValid(floor,button)){
