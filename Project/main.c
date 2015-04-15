@@ -110,8 +110,13 @@ int main() {
 							if(j> nextFloor){
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
-							}else if(j < nextFloor){
+							}else if(lastFloor <j < nextFloor){
 								localQueue[j] = 1;
+							}else{
+								struct order newOrder;
+								newOrder.dest = j;
+								newOrder.buttonType = BUTTON_COMMAND;
+								newOrder.elevator = 1;
 							}
 						}
 					}else{
@@ -120,8 +125,13 @@ int main() {
 							if(j< nextFloor){
 								localQueue[nextFloor] = 1;
 								nextFloor = j;
-							}else if(j > nextFloor){
+							}else if(lastFloor >j > nextFloor){
 								localQueue[j] = 1;
+							}else{
+								struct order newOrder;
+								newOrder.dest = j;
+								newOrder.buttonType = BUTTON_COMMAND;
+								newOrder.elevator = 1;
 							}
 						}
 					}
