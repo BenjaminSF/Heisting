@@ -14,9 +14,11 @@ void initPriorityQueue(){
 	pthread_mutex_init(&(orderQueue.rwLock), NULL);
 }
 
-void addNewOrder(struct order newOrder){
+int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	int pos = 0;
+	int newFloor = -1;
+	motorDirection dir;
 	struct order storeOrder;
 	storeOrder.dest = newOrder.dest;
 	storeOrder.buttonType = newOrder.buttonType;
@@ -36,7 +38,12 @@ void addNewOrder(struct order newOrder){
 	if (storeOrder.buttonType == BUTTON_COMMAND){
 		orderQueue.localPri[pos] = storeOrder.elevator;
 	}
+	dir = getMotorDirection();
+	if (dir != DIRN_STOP){
+		newFloor = checkCurrentStatus(storeOrder,currentFloor,nextFloor);
+	}
 	pthread_mutex_unlock(&(orderQueue.rwLock));
+	return newFloor;
 }
 
 int getNewOrder(int currentFloor){
@@ -70,7 +77,7 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 	backlog = 0;
 	for (i = 0; i < N_ORDERS; i++){
 		if ((priority[i] == -1) && (inUse[i] == 1)){
-			cost = findCost(queue[i],currentFloor);
+			cost = findCost(queue[i],currentFloor,nextFloor);
 			if(cost < min){
 				min = cost;
 				minPos = queue[i].dest;
@@ -96,11 +103,39 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 		return minPos;
 	}
 }
+int findCost(struct order newOrder,int currentFloor,int nextFloor){
+	int cost;
+	cost = newOrder.dest - currentFloor;
+		if (cost < 0){
+			return (-1)*cost;
+		} 
+		return cost;
+}
+int checkCurrentStatus(struct order newOrder, int currentFloor,int nextFloor){
+	int newCost
+	motorDirection dir;
+	dir = getMotorDirection();
+	int cost;
+	if(direction == DIRN_DOWN){
+		cost = currentFloor- nextFloor;
+		if(newOrder.buttonType == BUTTON_CALL_DOWN && newOrder.buttonType == BUTTON_COMMAND){
+			if(newOrder.dest < currentFloor){
+				newCost = currentFloor -newOrder.dest;
+			}
+		}else if(newOrder.buttonType == BUTTON_COMMAND){
 
-int findCost(struct order newOrder,int currentFloor){
-	int cost = newOrder.dest - currentFloor;
-	if (cost < 0){
-		return (-1)*cost;
-	} 
-	return cost;
+		}
+	}else{
+		cost = nextFloor - currentFloor;
+		if(newOrder.buttonType == BUTTON_CALL_UP && newOrder.buttonType == BUTTON_COMMAND){
+			if(newOrder.dest > currentFloor){
+				newCost = newOrder.dest -currentFloor;
+			}
+		}
+	}
+	if (newCost < cost){
+		return newOrder.dest;
+	}else{
+		return -1;
+	}
 }

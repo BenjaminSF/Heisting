@@ -16,5 +16,5 @@ struct{
 
 
 void initPriorityQueue();
-void addNewOrder(struct order newOrder);
+void addNewOrder(struct order newOrder, int currentFloor, int nextFloor);
 int getNewOrder(int currentFloor);
