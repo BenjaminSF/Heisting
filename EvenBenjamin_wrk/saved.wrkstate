@@ -1,0 +1,11 @@
+<!DOCTYPE SaveWorkspaceState>
+<SaveWorkspaceState>
+    <Windows>
+        <Schematic width="944" cell="ads3stabilisering" view="schematic" height="1122" tune="0" y1="0" x1="0" lib="EvenBenjamin_lib"/>
+        <Schematic width="944" cell="ads3_testbenk" view="schematic" height="1122" tune="0" y1="0" x1="0" lib="EvenBenjamin_lib"/>
+        <Schematic width="1920" cell="PA_1800MHz" view="schematic" height="1138" tune="0" y1="-8" x1="-8" lib="DAK3_filer_lib"/>
+        <Layout width="1920" cell="PA_1800MHz" view="layout" height="1138" tune="0" y1="-8" x1="-8" lib="DAK3_filer_lib"/>
+        <DDS name="ads3_testbenk.dds"/>
+    </Windows>
+    <MainWindowTab tab="1"/>
+</SaveWorkspaceState>

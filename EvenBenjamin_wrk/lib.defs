@@ -1,0 +1,4 @@
+INCLUDE $HPEESOF_DIR/oalibs/analog_rf.defs
+DEFINE EvenBenjamin_lib EvenBenjamin_lib
+ASSIGN EvenBenjamin_lib libMode shared
+INCLUDE ../DAK3-filer/DAK3_filer_wrk/lib.defs
