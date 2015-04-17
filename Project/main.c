@@ -23,7 +23,7 @@ int main() {
 	int thisElevator = 1;
 	motorDirection direction;
 	buttonType buttonCall;
-
+	int newFloor;
 
 
 
@@ -43,7 +43,7 @@ int main() {
 					newOrder.dest = i;
 					newOrder.buttonType = BUTTON_COMMAND;
 					newOrder.elevator = thisElevator;
-					addNewOrder(newOrder);
+					newFloor = addNewOrder(newOrder,0,0);
 					while(getButtonSignal(i,BUTTON_COMMAND)){}
 			}
 			}
@@ -54,7 +54,7 @@ int main() {
 						newOrder.dest = i;
 						newOrder.buttonType = BUTTON_CALL_UP;
 						newOrder.elevator = thisElevator;
-						addNewOrder(newOrder);
+						newFloor = addNewOrder(newOrder,0,0);
 						while(getButtonSignal(i,BUTTON_CALL_UP)){}							
 														
 					}
@@ -67,13 +67,13 @@ int main() {
 						newOrder.dest = i;
 						newOrder.buttonType = BUTTON_CALL_DOWN;
 						newOrder.elevator = thisElevator;
-						addNewOrder(newOrder);
+						newFloor = addNewOrder(newOrder,0,0);
 						while(getButtonSignal(i,BUTTON_CALL_DOWN)){}
 					}
 				}
 			}
 		}
-		nextFloor = getNewOrder(currentFloor);
+		nextFloor = getNewOrder(currentFloor, nextFloor);
 		
 		printf("nextFloor %d\n",nextFloor );
 		

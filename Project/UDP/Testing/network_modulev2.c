@@ -16,6 +16,7 @@
 #include "network_modulev2.h"
 #include "fifoqueue.h"
 #define BUF_SIZE 1024
+#define MAX_ELEVS 30
 
 //char bufMessage[BUF_SIZE];
 //char bufSend[BUF_SIZE];
@@ -26,8 +27,10 @@ fifoqueue_t* sendQueue;
 static struct {
 	char *localIP;
 	char *broadcastIP;
+	char *masterIP;
 	int port;
 	char **addrsList; //Ikke implementert enda
+	int addrslistCounter;
 	int masterStatus; //Ikke implementert enda
 } info;
 
@@ -184,8 +187,8 @@ int init_network(){
 	//Create message to be broadcasted
 	//char connect2meMsg[BUF_SIZE];
 	BufferInfo sendInfo;
-	sendInfo.srcAddr = info.localIP;
-	sendInfo.dstAddr = info.broadcastIP;
+	sendInfo.srcAddr = strdup(info.localIP);
+	sendInfo.dstAddr = strdup(info.broadcastIP);
 	sendInfo.masterStatus = 0;
 	sendInfo.myState = MSG_CONNECT_SEND;
 	//encodeMessage(connect2meMsg, sendInfo);
@@ -201,11 +204,14 @@ int init_network(){
 	pthread_t findOtherElevs, findElevsSend;
 	pthread_create(&findOtherElevs, NULL, &listen_for_messages, &params); //Listen
 	pthread_create(&findElevsSend, NULL, send_message, &sendParams);	//Send
-	int addrslistCounter = 0;
+	info.addrslistCounter = 0;
 	BufferInfo bufInfo;
 
 	//char tmpResponseMsg[BUF_SIZE];
-	printf("Mutex locked, waiting for cond\n");
+	//printf("Mutex locked, waiting for cond\n");
+	info.masterStatus = 1;
+	info.addrsList = malloc(sizeof(char *) * MAX_ELEVS);
+	int isInList;
 	while(1){//pthread_kill(findOtherElevs, 0) != ESRCH){	//Listening
 
 		sem_wait(&(params.readReady)); //To avoid blocking on wait_for_content()
@@ -220,11 +226,26 @@ int init_network(){
 		printf("Received: %s\n", bufInfo.srcAddr);
 		if (bufInfo.myState == MSG_CONNECT_RESPONSE){ //Only use related messages
 			//info.addrsList[addrslistCounter] = bufInfo.srcAddr;
-			addrslistCounter++;
 			if (bufInfo.masterStatus == 1){
+				info.masterStatus = 0;
+				info.masterIP = strdup(bufInfo.srcAddr);
 				//master not available
 				//current master is bufInfo.srcAddr
 			}
+			isInList = 0;
+			int i;
+			for (i = 0; i < MAX_ELEVS; i++){
+				if (!strcmp(addrsList[i], bufInfo.srcAddr)){
+					isInList = 1;
+					break;
+				}
+			}
+			if (!isInList){
+				info.addrsList[info.addrslistCounter] = strdup(bufInfo.srcAddr);
+				info.addrslistCounter++;
+			}
+			
+
 			//add buffer to address list
 		}
 	}
@@ -235,7 +256,11 @@ int init_network(){
 	pthread_join(findElevsSend, NULL);
 	sem_destroy(&(params.readReady));
 	
-	return 0;
+	if (info.masterStatus == 1){
+		info.masterIP = strdup(info.localIP);
+	}
+
+	return info.masterStatus;
 }
 
 BufferInfo decodeMessage(char *buffer){
@@ -250,7 +275,19 @@ BufferInfo decodeMessage(char *buffer){
 	return msg;
 }
 
-void encodeMessage(char *buffer, BufferInfo information){
-	char* melding = "testing 12";
-	strcpy(buffer,melding);
+void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2){
+	strcpy(msg.srcAddr, srcAddr);
+	strcpy(msg.dstAddr, dstAddr);
+	msg.myState = myState;
+	switch(myState){
+		case MSG_CONNECT_SEND
+			if (var1 != -1) msg.masterStatus = var1;
+			break;
+		case MSG_CONNECT_RESPONSE
+			if (var1 != -1) msg.masterStatus = var1;
+			break;
+
+	}
+	//char* melding = "testing 12";
+	//strcpy(buffer,melding);
 }

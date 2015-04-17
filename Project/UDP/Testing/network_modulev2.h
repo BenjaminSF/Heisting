@@ -24,7 +24,7 @@ int init_network();
 void* send_message(void *args);
 void* listen_for_messages(void *args);
 BufferInfo decodeMessage(char *buffer);
-void encodeMessage(char *buffer, BufferInfo information);
+void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2);
 
 
 

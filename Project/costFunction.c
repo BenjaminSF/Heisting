@@ -46,10 +46,10 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	return newFloor;
 }
 
-int getNewOrder(int currentFloor){
+int getNewOrder(int currentFloor, int nextFloor){
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	int i, destFloor;
-	for (i = 0; i < N_ORDERS; i++){
+	/*for (i = 0; i < N_ORDERS; i++){
 		if ((orderQueue.inUse[i]) && (orderQueue.Queue[i].buttonType == BUTTON_COMMAND)){
 			//Prioritizes commands from the buttons inside the elevator
 			orderQueue.inUse[i] = 0;
@@ -61,8 +61,8 @@ int getNewOrder(int currentFloor){
 			pthread_mutex_unlock(&(orderQueue.rwLock));
 			return destFloor;
 		}
-	}
-	destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor);
+	}*/
+	destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
 	//setButtonLamp(orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, 0);
 
 	pthread_mutex_unlock(&(orderQueue.rwLock));
@@ -70,14 +70,14 @@ int getNewOrder(int currentFloor){
 }
 
 
-int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], int currentFloor){
+int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], int currentFloor, int nextFloor){
 	int i, minPos,cost, backlog;
 	int queuePos = 0;
 	int min = 4;
 	backlog = 0;
 	for (i = 0; i < N_ORDERS; i++){
-		if ((priority[i] == -1) && (inUse[i] == 1)){
-			cost = findCost(queue[i],currentFloor,nextFloor);
+		if (inUse[i] == 1){
+			cost = findCost(queue[i],currentFloor, nextFloor);
 			if(cost < min){
 				min = cost;
 				minPos = queue[i].dest;
@@ -89,32 +89,36 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 		}
 	}
 	if (inUse[queuePos] == 1){
-		printf("Button lamp off2: floor: %d, type: %d\n", queue[queuePos].dest, queue[queuePos].buttonType);
+		//printf("Button lamp off2: floor: %d, type: %d\n", queue[queuePos].dest, queue[queuePos].buttonType);
 		setButtonLamp(queue[queuePos].dest, queue[queuePos].buttonType, 0);
 	}
 	inUse[queuePos] = 0;
 	priority[queuePos] = -1;
 	queue[queuePos].elevator = 0;
 	
-	printf("min cost: %d and pos: %d, backlog: %d\n",min,minPos, backlog);
+	//printf("min cost: %d and pos: %d, backlog: %d\n",min,minPos, backlog);
 	if (min == 4){
 		return -1;
 	}else{
 		return minPos;
 	}
 }
-int findCost(struct order newOrder,int currentFloor,int nextFloor){
+int findCost(struct order newOrder,int currentFloor, int nextFloor){
 	int cost;
+	int dir = nextFloor - currentFloor;
 	cost = newOrder.dest - currentFloor;
-		if (cost < 0){
-			return (-1)*cost;
-		} 
-		return cost;
+	if ((cost * dir) >= 0){
+		return abs(cost);
+	}else{
+		return N_FLOORS + 1;
+	}
+
 }
 int checkCurrentStatus(struct order newOrder, int currentFloor,int nextFloor){
-	int newCost
-	motorDirection dir;
-	dir = getMotorDirection();
+	int newCost;
+	motorDirection direction;
+	direction = getMotorDirection();
+
 	int cost;
 	if(direction == DIRN_DOWN){
 		cost = currentFloor- nextFloor;
@@ -127,12 +131,14 @@ int checkCurrentStatus(struct order newOrder, int currentFloor,int nextFloor){
 		}
 	}else{
 		cost = nextFloor - currentFloor;
+		printf("Hallo\n");
 		if(newOrder.buttonType == BUTTON_CALL_UP && newOrder.buttonType == BUTTON_COMMAND){
 			if(newOrder.dest > currentFloor){
 				newCost = newOrder.dest -currentFloor;
 			}
 		}
 	}
+	printf("Cost: %d and newCost: %d\n", cost,newCost);
 	if (newCost < cost){
 		return newOrder.dest;
 	}else{
