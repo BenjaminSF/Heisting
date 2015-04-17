@@ -38,10 +38,14 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	if (storeOrder.buttonType == BUTTON_COMMAND){
 		orderQueue.localPri[pos] = storeOrder.elevator;
 	}
-	dir = getMotorDirection();
-	if (dir != DIRN_STOP){
-		newFloor = checkCurrentStatus(storeOrder,currentFloor,nextFloor);
+	if (findCost(newOrder, currentFloor, nextFloor) < N_FLOORS){
+		newFloor = newOrder.dest;
 	}
+	//dir = getMotorDirection();
+	//if (dir != DIRN_STOP){
+	//	printf("Dir: %d\n", dir);
+	//	newFloor = checkCurrentStatus(storeOrder,currentFloor,nextFloor);
+	//}
 	pthread_mutex_unlock(&(orderQueue.rwLock));
 	return newFloor;
 }
@@ -73,7 +77,7 @@ int getNewOrder(int currentFloor, int nextFloor){
 int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], int currentFloor, int nextFloor){
 	int i, minPos,cost, backlog;
 	int queuePos = 0;
-	int min = 4;
+	int min = N_FLOORS * 2;
 	backlog = 0;
 	for (i = 0; i < N_ORDERS; i++){
 		if (inUse[i] == 1){
@@ -97,9 +101,11 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 	queue[queuePos].elevator = 0;
 	
 	//printf("min cost: %d and pos: %d, backlog: %d\n",min,minPos, backlog);
-	if (min == 4){
+	if (min == N_FLOORS*2){
+		printf("DETTE BURDE SKJE\n");
 		return -1;
 	}else{
+		printf("DETTE BURDE IKKKKKKKKKKEEEEEEE SKJE\n");
 		return minPos;
 	}
 }
@@ -107,6 +113,9 @@ int findCost(struct order newOrder,int currentFloor, int nextFloor){
 	int cost;
 	int dir = nextFloor - currentFloor;
 	cost = newOrder.dest - currentFloor;
+	if (nextFloor == -1){
+		return abs(cost);
+	}
 	if ((cost * dir) >= 0){
 		return abs(cost);
 	}else{
@@ -143,5 +152,16 @@ int checkCurrentStatus(struct order newOrder, int currentFloor,int nextFloor){
 		return newOrder.dest;
 	}else{
 		return -1;
+	}
+}
+
+void deleteOrder(int floor, buttonType button){
+	int i;
+	for (i = 0; i < N_ORDERS; i++)
+	{
+		if(orderQueue.Queue[i].dest == floor && orderQueue.Queue[i].buttonType == button){
+			orderQueue.inUse[i] = 0;
+			orderQueue.localPri[i] = -1;
+		}
 	}
 }

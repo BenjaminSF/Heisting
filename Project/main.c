@@ -15,7 +15,7 @@ int main() {
 }
 	printf("Press STOP button to stop elevator and exit program.\n");
 	
-	int nextFloor = 0;
+	int nextFloor;
 	int i, j,k;
 	int queueActive = 0;
 	int lastFloor = 0;
@@ -31,7 +31,7 @@ int main() {
 		setMotorDirection(DIRN_STOP);
 		setFloorIndicator(getFloor());
 		setDoorOpenLamp(1);
-		nextFloor = -1;
+		//nextFloor = -1;
 		int localQueue[N_FLOORS];
 		buttonType localQueueButtonType[N_FLOORS];
 		memset(localQueue,0,sizeof(int)*N_FLOORS);
@@ -141,10 +141,10 @@ int main() {
 					}
 				if(localQueue[getFloor()]== 1 && (getFloor() != -1)){
 					setMotorDirection(DIRN_STOP);
-					//printf("Stopping at floor %d\n",getFloor());
+					deleteOrder(getFloor(),localQueueButtonType[getFloor()]);
 					setDoorOpenLamp(1);
 					setFloorIndicator(getFloor());
-					//setButtonLamp(getFloor(),BUTTON_COMMAND,0);
+					setButtonLamp(getFloor(),localQueueButtonType[getFloor()],0);
 					//setButtonLamp(getFloor(),BUTTON_CALL_DOWN,0);
 					//setButtonLamp(getFloor(),BUTTON_CALL_UP,0);
 
@@ -160,6 +160,7 @@ int main() {
 				}			
 				if (getFloor() == nextFloor){
 					k = 0;
+					//nextFloor = -1;
 					while((k<100000) && (!isStopped() && !isObstructed())){
 						k++;
 						setMotorDirection(DIRN_STOP);

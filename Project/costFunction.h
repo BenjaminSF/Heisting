@@ -18,3 +18,4 @@ struct{
 void initPriorityQueue();
 int addNewOrder(struct order newOrder, int currentFloor, int nextFloor);
 int getNewOrder(int currentFloor, int nextFloor);
+void deleteOrder(int floor, buttonType button);
