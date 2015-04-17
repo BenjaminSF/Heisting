@@ -18,5 +18,3 @@ struct{
 void initPriorityQueue();
 void addNewOrder(struct order newOrder);
 int getNewOrder(int currentFloor);
-int findLowestCost(int priority[100] ,int inUse[100],struct order queue[100], int currentFloor);
-int findCost(struct order newOrder,int currentFloor);
