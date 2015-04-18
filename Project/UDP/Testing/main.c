@@ -2,7 +2,8 @@
 #include <stdio.h>
 
 int main(){
-    if (init_network() != 0){
+	int masterStatus = init_network();
+    if (masterStatus == -1){
         printf("Network initialization failed");
     }
     return 0;

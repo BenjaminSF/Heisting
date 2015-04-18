@@ -70,16 +70,10 @@ void* send_message(void *args){
 	if (setsockopt(sendSocket, SOL_SOCKET, SO_REUSEPORT, (void*)&socketPermission, sizeof(socketPermission)) < 0){
 		perror("sendSocket re-use port enable failed\n");
 	}
-	int i;
-	for (i = 0; i < 10; i++){
-		if (sendto(sendSocket, (void *)&msg, sizeof(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
-			perror("Sending socket failed\n");
-		}
-		if (sendto(sendSocket, (void *)&msg, sizeof(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
-			perror("Sending socket failed\n");
-		}
-		usleep(100000);
+	if (sendto(sendSocket, (void *)&msg, sizeof(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
+		perror("Sending socket failed\n");
 	}
+
 	printf("Sending finished\n");
 	return;
 }
@@ -275,17 +269,27 @@ BufferInfo decodeMessage(char *buffer){
 	return msg;
 }
 
-void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2){
+void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2, int var3){
 	strcpy(msg.srcAddr, srcAddr);
 	strcpy(msg.dstAddr, dstAddr);
 	msg.myState = myState;
 	switch(myState){
-		case MSG_CONNECT_SEND
+		case MSG_CONNECT_SEND:
 			if (var1 != -1) msg.masterStatus = var1;
 			break;
-		case MSG_CONNECT_RESPONSE
+		case MSG_CONNECT_RESPONSE:
 			if (var1 != -1) msg.masterStatus = var1;
 			break;
+		case MSG_ELEVSTATE:
+			if (var1 != -1) msg.active = var1;
+			if (var2 != -1) msg.currentFloor = var2;
+			if (var3 != -1) msg.nextFloor = var3;
+			if ((var3 != -1) && (var2 != -1)){
+				int dir = var3 - var2;
+				if (dir > 0) msg.direction = 1;
+			}
+			break;
+		case MSG_
 
 	}
 	//char* melding = "testing 12";
