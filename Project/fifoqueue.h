@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include "network_modulev2.h"
 
+struct BufferInfo;
 /** An untyped mutex-protected first-in first-out queue.
     Recommended usage:
         fifoqueue_scoped* q = new_fifoqueue();
@@ -44,13 +44,13 @@ fifoqueue_t* new_fifoqueue(void);
 *       Type id 0 is reserved (see frontType())
 *   enqueue does not do a deep copy of data
 */
-void enqueue(fifoqueue_t* q, BufferInfo* message, size_t size);
+void enqueue(fifoqueue_t* q, struct BufferInfo* message, size_t size);
 
 
 /** Copies the front element of the queue into recv
 *   Use frontType() to get the type of the front element
 */
-void dequeue(fifoqueue_t* q, BufferInfo* recv);
+void dequeue(fifoqueue_t* q, struct BufferInfo* recv);
 
 /** Similar to dequeue(), but it does not copy the element
 */

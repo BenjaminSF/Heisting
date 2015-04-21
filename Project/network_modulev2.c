@@ -17,12 +17,11 @@
 #include "fifoqueue.h"
 #include "costFunction.h"
 #define BUF_SIZE 1024
-#define MAX_ELEVS 30
+#define MAX_ELEVS 5
 
 //char bufMessage[BUF_SIZE];
 //char bufSend[BUF_SIZE];
-fifoqueue_t* receiveQueue;
-fifoqueue_t* sendQueue;
+
 
 //All values set by init_network
 static struct {
@@ -51,7 +50,7 @@ void* send_message(void *args){
 	//struct ListenParams myArgs = *((struct ListenParams*)(args));
 	//char msg[BUF_SIZE];
 
-	int sendOnce = (int) args;
+	int sendOnce = *((int) args);
 	int sendSocket;
 	struct sockaddr_in sendAddr;
 	sendAddr.sin_family = AF_INET;
@@ -212,7 +211,7 @@ int init_network(){
 	printf("Starting pthreads\n");
 	pthread_t findOtherElevs, findElevsSend;
 	pthread_create(&findOtherElevs, NULL, &listen_for_messages, &params); //Listen
-	pthread_create(&findElevsSend, NULL, send_message, &sendOnce);	//Send
+	pthread_create(&findElevsSend, NULL, send_message, (void *) sendOnce);	//Send
 	info.addrslistCounter = 0;
 	BufferInfo bufInfo;
 
@@ -317,14 +316,53 @@ void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, in
 			if (var1 != -1) msg.nextFloor = var1;
 			if (var2 != -1) msg.button = var2;
 			break;
+		case MSG_GET_ORDER:
+			if (var1 != -1) msg.active = var1;
+			if (var2 != -1) msg.currentFloor = var2;
+			if (var3 != -1) msg.nextFloor = var3;
+			if ((var3 != -1) && (var2 != -1)){
+				int dir = var3 - var2;
+				if (dir > 0) msg.direction = 1;
+			}
+			break;
+		case MSG_SET_LAMP:
+			if (var1 != -1) msg.currentFloor = var1;
+			if (var2 != -1) msg.buttonType = var2;
+			if (var3 != -1) msg.active = var3;
+			break;
+		case MSG_IM_ALIVE:
+			if (var1 != -1) msg.masterStatus = var1;
+			break;
 
 
 	}
-	//char* melding = "testing 12";
-	//strcpy(buffer,melding);
+
 }
 
-int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
+int getLocalIP(){
+	return inet_addr(info.localIP);
+}
+
+int getBroadcastIP(){
+	return inet_addr(info.broadcastIP);
+}
+
+void addElevatorAddr(char* newIP){
+	int isInList = 0;
+	int i;
+	for (i = 0; i < MAX_ELEVS; i++){
+		if (!strcmp(addrsList[i], newIP)){
+			isInList = 1;
+			break;
+		}
+	}
+	if (!isInList){
+		info.addrsList[info.addrslistCounter] = strdup(newIP);
+		addrslistCounter++;
+	}
+}
+
+/*int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	int pos = 0;
 	int newFloor = -1;
@@ -362,23 +400,11 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	pthread_mutex_unlock(&(orderQueue.rwLock));
 	return newFloor;
 }
-
+/*
 int getNewOrder(int currentFloor, int nextFloor{
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	int i, destFloor;
-	/*for (i = 0; i < N_ORDERS; i++){
-		if ((orderQueue.inUse[i]) && (orderQueue.Queue[i].buttonType == BUTTON_COMMAND)){
-			//Prioritizes commands from the buttons inside the elevator
-			orderQueue.inUse[i] = 0;
-			orderQueue.localPri[i] = -1;
-			orderQueue.Queue[i].elevator = 0;
-			destFloor = orderQueue.Queue[i].dest;
-			printf("Button lamp off1: floor: %d, type: %d\n", orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType);
-			setButtonLamp(orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, 0);
-			pthread_mutex_unlock(&(orderQueue.rwLock));
-			return destFloor;
-		}
-	}*/
+
 	if (info.masterStatus == 1){
 	destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
 	//setButtonLamp(orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, 0);
@@ -398,4 +424,4 @@ int getNewOrder(int currentFloor, int nextFloor{
 	}
 	pthread_mutex_unlock(&(orderQueue.rwLock));
 	return destFloor;
-}
+}*/

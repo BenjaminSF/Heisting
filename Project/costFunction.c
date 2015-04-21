@@ -3,7 +3,7 @@
 #include "network_modulev2.h"
 #include <stdlib.h>
 #include <pthread.h>
-#define N_ORDERS 100
+//#define N_ORDERS 100
 void initPriorityQueue(){
 	int i;
 	for (i = 0; i < N_ORDERS; i++){
@@ -23,7 +23,7 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 	backlog = 0;
 	for (i = 0; i < N_ORDERS; i++){
 		if (inUse[i] == 1){
-			cost = findCost(queue[i],currentFloor, nextFloor);
+			cost = findCost(queue[i].dest,currentFloor, nextFloor);
 			if(cost < min){
 				min = cost;
 				minPos = queue[i].dest;
@@ -49,10 +49,10 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 		return minPos;
 	}
 }
-int findCost(struct order newOrder,int currentFloor, int nextFloor){
+int findCost(int costFloor,int currentFloor, int nextFloor){
 	int cost;
 	int dir = nextFloor - currentFloor;
-	cost = newOrder.dest - currentFloor;
+	cost = costFloor - currentFloor;
 	if (nextFloor == -1){
 		return abs(cost);
 	}
@@ -92,16 +92,5 @@ int checkCurrentStatus(struct order newOrder, int currentFloor,int nextFloor){
 		return newOrder.dest;
 	}else{
 		return -1;
-	}
-}
-
-void deleteOrder(int floor, buttonType button){
-	int i;
-	for (i = 0; i < N_ORDERS; i++)
-	{
-		if(orderQueue.Queue[i].dest == floor && orderQueue.Queue[i].buttonType == button){
-			orderQueue.inUse[i] = 0;
-			orderQueue.localPri[i] = -1;
-		}
 	}
 }
