@@ -1,5 +1,6 @@
 #include "elevDriver.h"
 #include "costFunction.h"
+#include "network_modulev2.h"
 #include <stdlib.h>
 #include <pthread.h>
 #define N_ORDERS 100
@@ -12,65 +13,6 @@ void initPriorityQueue(){
 
 	}
 	pthread_mutex_init(&(orderQueue.rwLock), NULL);
-}
-
-int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
-	pthread_mutex_lock(&(orderQueue.rwLock));
-	int pos = 0;
-	int newFloor = -1;
-	motorDirection dir;
-	struct order storeOrder;
-	storeOrder.dest = newOrder.dest;
-	storeOrder.buttonType = newOrder.buttonType;
-	storeOrder.elevator = newOrder.elevator;
-	printf("Button lamp on: floor: %d, type: %d\n", storeOrder.dest, storeOrder.buttonType);
-	setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
-	while(orderQueue.inUse[pos]){
-		pos++;
-		if (pos == N_ORDERS){
-			printf("Error: orderQueue is full, order not received\n");
-			pthread_mutex_unlock(&(orderQueue.rwLock));
-			return;
-		}
-	}
-	orderQueue.Queue[pos] = storeOrder;
-	orderQueue.inUse[pos] = 1;
-	if (storeOrder.buttonType == BUTTON_COMMAND){
-		orderQueue.localPri[pos] = storeOrder.elevator;
-	}
-	if (findCost(newOrder, currentFloor, nextFloor) < N_FLOORS){
-		newFloor = newOrder.dest;
-	}
-	//dir = getMotorDirection();
-	//if (dir != DIRN_STOP){
-	//	printf("Dir: %d\n", dir);
-	//	newFloor = checkCurrentStatus(storeOrder,currentFloor,nextFloor);
-	//}
-	pthread_mutex_unlock(&(orderQueue.rwLock));
-	return newFloor;
-}
-
-int getNewOrder(int currentFloor, int nextFloor){
-	pthread_mutex_lock(&(orderQueue.rwLock));
-	int i, destFloor;
-	/*for (i = 0; i < N_ORDERS; i++){
-		if ((orderQueue.inUse[i]) && (orderQueue.Queue[i].buttonType == BUTTON_COMMAND)){
-			//Prioritizes commands from the buttons inside the elevator
-			orderQueue.inUse[i] = 0;
-			orderQueue.localPri[i] = -1;
-			orderQueue.Queue[i].elevator = 0;
-			destFloor = orderQueue.Queue[i].dest;
-			printf("Button lamp off1: floor: %d, type: %d\n", orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType);
-			setButtonLamp(orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, 0);
-			pthread_mutex_unlock(&(orderQueue.rwLock));
-			return destFloor;
-		}
-	}*/
-	destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
-	//setButtonLamp(orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, 0);
-
-	pthread_mutex_unlock(&(orderQueue.rwLock));
-	return destFloor;
 }
 
 
@@ -102,10 +44,8 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 	
 	//printf("min cost: %d and pos: %d, backlog: %d\n",min,minPos, backlog);
 	if (min == N_FLOORS*2){
-		printf("DETTE BURDE SKJE\n");
 		return -1;
 	}else{
-		printf("DETTE BURDE IKKKKKKKKKKEEEEEEE SKJE\n");
 		return minPos;
 	}
 }
