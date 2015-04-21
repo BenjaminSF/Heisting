@@ -1,14 +1,14 @@
 
 
 #include "elevDriver.h"
-#include "costFunction.h"
+#include "network_modulev2.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 
 #define N_FLOORS 4
-int main() {
+int mainDriver() {
 	if (!elevDriver_initialize()) {
 		printf("Unable to initialize elevator hardware!\n");
 		return 1;
