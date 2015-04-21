@@ -89,7 +89,15 @@ void *listen_for_messages(void *args){
 	printf("Listen started\n");
 	//char tempString[BUF_SIZE];
 	BufferInfo *tempMsg = (BufferInfo *)malloc(sizeof(char)* 100);
-	struct ListenParams *myArgs = ((struct ListenParams*)(args));
+	if (args == NULL){
+		struct ListenParams *myArgs;
+		sem_init(&(myArgs->readReady));
+		myArgs->port = info.port;
+		myArgs->timeoutMs = 0;
+		myArgs->finished = 0;
+	}else{
+		struct ListenParams *myArgs = ((struct ListenParams*)(args));
+	}
 	int recSock;
 	struct sockaddr_in remaddr;
 	socklen_t remaddrLen = sizeof(remaddr);
@@ -355,7 +363,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	return newFloor;
 }
 
-int getNewOrder(int currentFloor, int nextFloor){
+int getNewOrder(int currentFloor, int nextFloor{
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	int i, destFloor;
 	/*for (i = 0; i < N_ORDERS; i++){
@@ -371,9 +379,23 @@ int getNewOrder(int currentFloor, int nextFloor){
 			return destFloor;
 		}
 	}*/
+	if (info.masterStatus == 1){
 	destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
 	//setButtonLamp(orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, 0);
+	}else{
+		BufferInfo msg;
+		msg.currentFloor = currentFloor;
+		if (nextFloor != -1){
+			msg.nextFloor = nextFloor;
+			msg.active = 1;
+		}
+		msg.masterStatus = info.masterStatus;
+		strcpy(msg.srcAddr, info.localIP);
+		strcpy(msg.dstAddr, info.broadcastIP);
+		msg.myState = MSG_GET_ORDER;
 
+		enqueue(sendQueue, &msg, sizeof(msg));
+	}
 	pthread_mutex_unlock(&(orderQueue.rwLock));
 	return destFloor;
 }

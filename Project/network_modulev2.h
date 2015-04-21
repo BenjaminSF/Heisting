@@ -11,7 +11,8 @@ enum bufferState{
 	MSG_ELEV_UP,
 	MSG_ELEV_DOWN,
 	MSG_ELEV_COMMAND,
-	MSG_ADD_ORDER
+	MSG_ADD_ORDER,
+	MSG_GET_ORDER
 };
 
 typedef struct bufferInformation{

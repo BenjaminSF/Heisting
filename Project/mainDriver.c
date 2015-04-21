@@ -8,7 +8,7 @@
 
 
 #define N_FLOORS 4
-int mainDriver() {
+void* mainDriver() {
 	if (!elevDriver_initialize()) {
 		printf("Unable to initialize elevator hardware!\n");
 		return 1;
@@ -176,6 +176,6 @@ int mainDriver() {
 		setStopLamp(1);
 		printf("Elevator was stopped\n");
 	}
-	return 0;
+	return;
 
 }
