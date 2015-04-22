@@ -50,7 +50,7 @@ void* send_message(void *args){
 	//struct ListenParams myArgs = *((struct ListenParams*)(args));
 	//char msg[BUF_SIZE];
 
-	int sendOnce = *((int) args);
+	int sendOnce = (intptr_t) args;
 	int sendSocket;
 	struct sockaddr_in sendAddr;
 	sendAddr.sin_family = AF_INET;
@@ -88,14 +88,15 @@ void *listen_for_messages(void *args){
 	printf("Listen started\n");
 	//char tempString[BUF_SIZE];
 	BufferInfo *tempMsg = (BufferInfo *)malloc(sizeof(char)* 100);
+	struct ListenParams *myArgs;
 	if (args == NULL){
-		struct ListenParams *myArgs;
-		sem_init(&(myArgs->readReady));
+		
+		sem_init(&(myArgs->readReady), 0, 0);
 		myArgs->port = info.port;
 		myArgs->timeoutMs = 0;
 		myArgs->finished = 0;
 	}else{
-		struct ListenParams *myArgs = ((struct ListenParams*)(args));
+		myArgs = ((struct ListenParams*)(args));
 	}
 	int recSock;
 	struct sockaddr_in remaddr;
@@ -211,7 +212,7 @@ int init_network(){
 	printf("Starting pthreads\n");
 	pthread_t findOtherElevs, findElevsSend;
 	pthread_create(&findOtherElevs, NULL, &listen_for_messages, &params); //Listen
-	pthread_create(&findElevsSend, NULL, send_message, (void *) sendOnce);	//Send
+	pthread_create(&findElevsSend, NULL, send_message, (void *) (intptr_t) sendOnce);	//Send
 	info.addrslistCounter = 0;
 	BufferInfo bufInfo;
 
@@ -243,7 +244,7 @@ int init_network(){
 			isInList = 0;
 			int i;
 			for (i = 0; i < MAX_ELEVS; i++){
-				if (!strcmp(addrsList[i], bufInfo.srcAddr)){
+				if (!strcmp(info.addrsList[i], bufInfo.srcAddr)){
 					isInList = 1;
 					break;
 				}
@@ -314,7 +315,7 @@ void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, in
 			break;
 		case MSG_ADD_ORDER:
 			if (var1 != -1) msg.nextFloor = var1;
-			if (var2 != -1) msg.button = var2;
+			if (var2 != -1) msg.buttonType = var2;
 			break;
 		case MSG_GET_ORDER:
 			if (var1 != -1) msg.active = var1;
@@ -353,20 +354,22 @@ int getBroadcastIP(){
 }
 
 void setMasterIP(int x){
-	info.masterIP = inet_ntoa(x);
+	struct in_addr tmp;
+	tmp.s_addr = x;
+	info.masterIP = strdup(inet_ntoa(tmp));
 }
 
 void addElevatorAddr(char* newIP){
 	int isInList = 0;
 	int i;
 	for (i = 0; i < MAX_ELEVS; i++){
-		if (!strcmp(addrsList[i], newIP)){
+		if (!strcmp(info.addrsList[i], newIP)){
 			isInList = 1;
 			break;
 		}
 	}
 	if (!isInList){
 		info.addrsList[info.addrslistCounter] = strdup(newIP);
-		addrslistCounter++;
+		info.addrslistCounter++;
 	}
 }

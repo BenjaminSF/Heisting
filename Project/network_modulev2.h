@@ -20,7 +20,9 @@ enum bufferState{
 	MSG_DO_ORDER,
 	MSG_SET_LAMP,
 	MSG_IM_ALIVE,
-	MSG_DELETE_ORDER
+	MSG_DELETE_ORDER,
+	MSG_MASTER_REQUEST,
+	MSG_MASTER_PROPOSAL
 };
 
 typedef struct BufferInfo{

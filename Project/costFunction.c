@@ -56,7 +56,7 @@ int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType){
 	if (nextFloor == -1){
 		return abs(cost);
 	}
-	if ((cost * dir) >= 0 && ((dir>0 && (buttonType == 0 || buttonType == 2))||(dir<0 && (buttonType == 2 || buttonType == 1))){
+	if ((cost * dir) >= 0 && ((dir>0 && (buttonType == 0 || buttonType == 2))||(dir<0 && (buttonType == 2 || buttonType == 1)))){
 		return abs(cost);
 	}else{
 		return N_FLOORS + 1;

@@ -9,6 +9,6 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor);
 int getNewOrder(int currentFloor, int nextFloor);
 void* sortMessages(void *args);
 void* masterTimeout(void *args);
-void deleteOrder(int floor, buttonType button);
+void deleteOrder(int floor, buttonType button, int elevator);
 
 #endif

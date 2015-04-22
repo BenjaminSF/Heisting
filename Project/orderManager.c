@@ -16,7 +16,7 @@ int MASTER; //Forward declaration?
 
 void* orderManager(void* args){
 	//int masterStatus = *(int *) args);
-	struct timespec startAnarchy;
+	//struct timespec startAnarchy;
 	struct timespec sleep = {.tv_sec = 2, .tv_nsec = 0};
 	struct timespec rem;
 	bestProposal = getLocalIP();
@@ -28,9 +28,8 @@ void* orderManager(void* args){
 	pthread_create(&sortMessages_, 0, &sortMessages, 0);
 	while(1){
 		pthread_create(&masterTimeout_, 0, &masterTimeout, 0);
-		pthread_join(&masterTimeout_, 0);
-		//startAnarchy = clock_gettime();
-		nanosleep(sleep, rem);
+		pthread_join(masterTimeout_, 0);
+		nanosleep(&sleep, &rem);
 		if (bestProposal == getLocalIP()){
 			MASTER = 1;
 		}else{
@@ -64,7 +63,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 			printf("Button lamp on: floor: %d, type: %d\n", storeOrder.dest, storeOrder.buttonType);
 			setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
 			BufferInfo newMsg;
-			encodeMessage(newMsg, NULL, NULL, MSG_SET_LAMP, storeOrder.nextFloor, storeOrder.buttonType, 1);
+			encodeMessage(newMsg, NULL, NULL, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
 			enqueue(sendQueue, &newMsg, sizeof(newMsg));
 		}
 		orderQueue.Queue[pos] = storeOrder;
@@ -114,7 +113,7 @@ void* sortMessages(void *args){
 	int myIP = getLocalIP();
 	int broadcast = getBroadcastIP();
 	while(1){
-		wait_for_content();
+		wait_for_content(receiveQueue);
 		dequeue(receiveQueue, &bufOrder);
 		int myState = bufOrder.myState;
 		int dstAddr = inet_addr(bufOrder.dstAddr);
@@ -177,7 +176,7 @@ void* masterTimeout(void *args){
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	struct timespec ts, rem;
 	if (MASTER == 0){
-		ts = clock_gettime();
+		clock_gettime(CLOCK_REALTIME, &ts);
 		ts.tv_sec = ts.tv_sec + 5;
 		int test;
 		while(1){
@@ -189,17 +188,17 @@ void* masterTimeout(void *args){
 				enqueue(sendQueue, &newMsg, sizeof(newMsg));
 				return;
 			}
-			ts = clock_gettime();
+			clock_gettime(CLOCK_REALTIME, &ts);
 			ts.tv_sec = ts.tv_sec + 5;
 		}
 	}else{
 		ts.tv_sec = 1;
 		ts.tv_nsec = 0;
-		BufferInfo = newMsg;
+		BufferInfo newMsg;
 		encodeMessage(newMsg, NULL, NULL, MSG_IM_ALIVE, 1, -1, -1);
 		while(1){
 			enqueue(sendQueue, &newMsg, sizeof(newMsg));
-			nanosleep(ts,rem);
+			nanosleep(&ts, &rem);
 
 		}
 	}
