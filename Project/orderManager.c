@@ -169,19 +169,22 @@ void* sortMessages(void *args){
 		int srcAddr = inet_addr(&bufOrder.srcAddr);
 		if ((myIP == dstAddr) || (broadcast == dstAddr)){
 			if (myState == MSG_DO_ORDER){
-				printf("DO_ORDER: %d\n", bufOrder.nextFloor);
+				printf("Receive: DO_ORDER%d\n", bufOrder.nextFloor);
 				localQueue[bufOrder.nextFloor] = 1;
 			}
 			if (myState == MSG_SET_LAMP){
+				printf("Receive: MSG_SET_LAMP\n");
 				setButtonLamp(bufOrder.currentFloor, bufOrder.buttonType, bufOrder.active);
 			}
 			if (myState == MSG_CONNECT_SEND){
+				printf("Receive: MSG_CONNECT_SEND\n");
 				addElevatorAddr(bufOrder.srcAddr);
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, NULL, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, MASTER, -1, -1);
 				enqueue(sendQueue, &newMsg, sizeof(newMsg));
 			}
 			if (myState == MSG_MASTER_REQUEST){
+				printf("Receive: MSG_MASTER_REQUEST\n");
 				int candidate = 1;
 				if (srcAddr > myIP){
 					candidate = 0;
@@ -191,6 +194,7 @@ void* sortMessages(void *args){
 				enqueue(sendQueue, &newMsg, sizeof(newMsg));
 			}
 			if (myState == MSG_MASTER_PROPOSAL){
+				printf("Receive: MSG_MASTER_PROPOSAL\n");
 				if (srcAddr > bestProposal){
 					bestProposal = srcAddr;
 				}
@@ -198,6 +202,7 @@ void* sortMessages(void *args){
 
 			if (MASTER == 1){
 				if (myState == MSG_ADD_ORDER){
+					printf("Receive: MSG_ADD_ORDER\n");
 					struct order newOrder;
 					newOrder.dest = bufOrder.nextFloor;
 					newOrder.buttonType = bufOrder.buttonType;
@@ -210,6 +215,7 @@ void* sortMessages(void *args){
 					}
 				}
 				if(myState == MSG_DELETE_ORDER){
+					printf("Receive: MSG_DELETE_ORDER\n");
 					deleteOrder(bufOrder.currentFloor,bufOrder.buttonType,srcAddr);
 					if (bufOrder.buttonType != BUTTON_COMMAND){
 						BufferInfo newMsg;
@@ -219,6 +225,7 @@ void* sortMessages(void *args){
 				}
 			}else{
 				if (myState == MSG_IM_ALIVE){
+					printf("Receive: MSG_IM_ALIVE\n");
 					sem_post(&timeoutSem);
 				}
 			}

@@ -61,7 +61,7 @@ void* send_message(void *args){
 	while(1){
 		wait_for_content(sendQueue);
 		dequeue(sendQueue, &msg);
-		printf("Sending message: %s\n", msg.srcAddr);
+		printf("Sending message: %d\n", msg.myState);
 
 		if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
 			perror("SendSocket not created\n");
