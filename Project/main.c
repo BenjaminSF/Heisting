@@ -1,6 +1,7 @@
 
 #include "mainDriver.h"
 #include "network_modulev2.h"
+#include "orderManager.h"
 #define N_FLOORS 4
 #define N_ELEVATORS 3
 
@@ -16,11 +17,12 @@ void main(){
 		printf("Master\n");
 	}
 
-	pthread_t driver, sendMessages, receiveMessages;
+	pthread_t driver, sendMessages, receiveMessages, manager;
 	pthread_create(&driver,NULL,&mainDriver,NULL);
+	pthread_create(&manager, NULL, &orderManager, NULL);
 	pthread_create(&sendMessages, NULL, &send_message, 0);
-	struct ListenParams
-	pthread_create(&receiveMessages, NULL, &listen_for_messages, )
+	//struct ListenParams
+	//pthread_create(&receiveMessages, NULL, &listen_for_messages, NULL);
 
 
 

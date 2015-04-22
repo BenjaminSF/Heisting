@@ -47,8 +47,8 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 			printf("Button lamp on: floor: %d, type: %d\n", storeOrder.dest, storeOrder.buttonType);
 			setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
 			BufferInfo newMsg;
-			encodeMessage(NULL, NULL, MSG_SET_LAMP, storeOrder.nextFloor, storeOrder.buttonType, 1);
-			enqueue(newMsg);
+			encodeMessage(newMsg, NULL, NULL, MSG_SET_LAMP, storeOrder.nextFloor, storeOrder.buttonType, 1);
+			enqueue(sendQueue, &newMsg, sizeof(newMsg));
 		}
 		orderQueue.Queue[pos] = storeOrder;
 		orderQueue.inUse[pos] = 1;
@@ -58,10 +58,10 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		pthread_mutex_unlock(&(orderQueue.rwLock));
 
 	}else{ //Send new order to the master
-		BufferInfo msg;
-		encodeMessage(NULL, NULL, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, 1);
-		msg.currentFloor = currentFloor;
-		enqueue(sendQueue, &msg, sizeof(msg));
+		BufferInfo newMsg;
+		encodeMessage(newMsg, NULL, NULL, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, 1);
+		newMsg.currentFloor = currentFloor;
+		enqueue(sendQueue, &newMsg, sizeof(newMsg));
 	}
 	return -1;
 }
@@ -112,8 +112,8 @@ void* sortMessages(void *args){
 			if (myState == MSG_CONNECT_SEND){
 				addElevatorAddr(bufOrder.srcAddr);
 				BufferInfo newMsg;
-				encodeMessage(NULL, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, MASTER, -1, -1);
-				enqueue(newMsg);
+				encodeMessage(newMsg, NULL, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, MASTER, -1, -1);
+				enqueue(sendQueue, &newMsg, sizeof(newMsg));
 			}
 
 			if (MASTER == 1){
@@ -125,8 +125,8 @@ void* sortMessages(void *args){
 					addNewOrder(newOrder, bufOrder.currentFloor,bufOrder.nextFloor);
 					if (bufOrder.buttonType == BUTTON_COMMAND){
 						BufferInfo newMsg;
-						encodeMessage(NULL, bufOrder.srcAddr, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
-						enqueue(newMsg);
+						encodeMessage(newMsg, NULL, bufOrder.srcAddr, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
+						enqueue(sendQueue, &newMsg, sizeof(newMsg));
 					}
 				}
 				if(myState == MSG_DELETE_ORDER){
@@ -161,9 +161,9 @@ void* masterTimeout(void *args){
 		ts.tv_sec = 1;
 		ts.tv_nsec = 0;
 		BufferInfo = newMsg;
-		encodeMessage(NULL, NULL, MSG_IM_ALIVE, 1, -1, -1);
+		encodeMessage(newMsg, NULL, NULL, MSG_IM_ALIVE, 1, -1, -1);
 		while(1){
-			enqueue(sendQueue, &newMsg);
+			enqueue(sendQueue, &newMsg, sizeof(newMsg));
 			nanosleep(ts,rem);
 
 		}

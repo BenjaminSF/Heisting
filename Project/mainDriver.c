@@ -118,7 +118,7 @@ void* mainDriver() {
 					}
 				if(localQueue[getFloor()]== 1 && (getFloor() != -1)){
 					setMotorDirection(DIRN_STOP);
-					deleteOrder(getFloor(),localQueueButtonType[getFloor()]);
+					deleteOrder(getFloor(),localQueueButtonType[getFloor()], thisElevator);
 					setDoorOpenLamp(1);
 					setFloorIndicator(getFloor());
 					setButtonLamp(getFloor(),localQueueButtonType[getFloor()],0);
@@ -133,7 +133,7 @@ void* mainDriver() {
 				}			
 				if (getFloor() == nextFloor){
 					k = 0;
-					deleteOrder(getFloor(), localQueueButtonType[getFloor()]);
+					deleteOrder(getFloor(), localQueueButtonType[getFloor()], thisElevator);
 					while((k<100000) && (!isStopped() && !isObstructed())){
 						k++;
 						setMotorDirection(DIRN_STOP);
