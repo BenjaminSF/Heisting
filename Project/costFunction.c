@@ -18,6 +18,7 @@ void initPriorityQueue(){
 
 
 int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], int currentFloor, int nextFloor){
+	printf("Find lowest cost\n");
 	int i, minPos,cost, backlog;
 	int queuePos = 0;
 	int min = N_FLOORS * 2;
@@ -25,7 +26,7 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 	for (i = 0; i < N_ORDERS; i++){
 		if (inUse[i] == 1){
 			cost = findCost(queue[i].dest,currentFloor, nextFloor,queue[i].buttonType);
-			printf("Cost: %d\n", cost);
+			printf("Elev: %d\n", queue[i].elevator);
 			if(cost < min){
 				min = cost;
 				minPos = queue[i].dest;
@@ -58,13 +59,15 @@ int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType){
 	int dir = nextFloor - currentFloor;
 	cost = costFloor - currentFloor;
 	if (nextFloor == -1){
-		return abs(cost);
+		cost = abs(cost);
 	}
 	if ((cost * dir) >= 0 && ((dir>0 && (buttonType == 0 || buttonType == 2))||(dir<0 && (buttonType == 2 || buttonType == 1)))){
-		return abs(cost);
+		cost = abs(cost);
 	}else{
-		return N_FLOORS + 1;
+		cost = N_FLOORS + 1;
 	}
+	printf("cost: %d, floor: %d, button: %d\n", cost, costFloor, buttonType);
+	return cost;
 
 }
 /*

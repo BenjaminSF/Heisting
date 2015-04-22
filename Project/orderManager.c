@@ -57,6 +57,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	printf("Enter addNewOrder\n");
 	if (MASTER == 1){
 		pthread_mutex_lock(&(orderQueue.rwLock));
+		printf("Mutex owner: addNewOrder\n");
 		int pos = 0;
 		struct order storeOrder;
 		storeOrder.dest = newOrder.dest;
@@ -64,7 +65,10 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		storeOrder.elevator = newOrder.elevator;
 		
 		while(orderQueue.inUse[pos]){
-			if(ordercmp(&(orderQueue.Queue[pos]), &storeOrder)) return -1; //Ignore duplicate orders
+			if(ordercmp(&(orderQueue.Queue[pos]), &storeOrder)){
+				pthread_mutex_unlock(&(orderQueue.rwLock));
+				return -1;
+			} 
 			pos++;
 			if (pos == N_ORDERS){
 				printf("Error: orderQueue is full, order not received\n");
@@ -85,6 +89,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		if (storeOrder.buttonType == BUTTON_COMMAND){
 			orderQueue.localPri[pos] = storeOrder.elevator;
 		}
+		printf("Mutex released: addNewOrder\n");
 		pthread_mutex_unlock(&(orderQueue.rwLock));
 
 	}else{ //Send new order to the master
@@ -98,13 +103,16 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 }
 
 int getNewOrder(int currentFloor, int nextFloor){
-	//printf("Enter getNewOrder\n");
+	printf("Enter getNewOrder: currentFloor: %d, nextFloor: %d\n", currentFloor, nextFloor);
 	int destFloor;
 	int dir = nextFloor - currentFloor;
 	if (nextFloor == -1) dir = 0;
 	if (MASTER == 1){
+		printf("Tying to get mutex\n");
 		pthread_mutex_lock(&(orderQueue.rwLock));
+		printf("Mutex owner: getNewORder\n");
 		destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
+		printf("Mutex released: getNewORder\n");
 		pthread_mutex_unlock(&(orderQueue.rwLock));
 	}else{
 		int i, tmp;
@@ -132,6 +140,7 @@ void distributeOrders(){ //Master only
 	//while(1){
 		addrsCount = getAddrsCount();
 		pthread_mutex_lock(&(orderQueue.rwLock));
+		printf("Mutex owner: distributeOrders\n");
 		for (j = 0; j < N_ORDERS; j++){
 			for (i = 0; i < addrsCount; i++){
 				tmpAddr = addrsList(i);
@@ -248,13 +257,16 @@ void* masterTimeout(void *args){
 }
 
 void deleteOrder(int floor, buttonType button, int elevator){
-	printf("Enter deleteOrder\n");
+	printf("Enter deleteOrder: floor: %d, button: %d, elev: %d\n", floor, button, elevator);
 	if (MASTER == 1){
 		int i;
 		for (i = 0; i < N_ORDERS; i++){
-			if(orderQueue.Queue[i].dest == floor && orderQueue.Queue[i].buttonType == button && orderQueue.localPri[i] == elevator){
-				orderQueue.inUse[i] = 0;
-				orderQueue.localPri[i] = -1;
+			if (orderQueue.inUse[i] == 1){
+				if (orderQueue.Queue[i].dest == floor && orderQueue.Queue[i].buttonType == button && orderQueue.Queue[i].elevator == elevator){
+					orderQueue.inUse[i] = 0;
+					orderQueue.localPri[i] = -1;
+					printf("Deleting order!\n");
+				}
 			}
 		}
 	}else{

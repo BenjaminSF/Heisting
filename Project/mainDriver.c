@@ -87,6 +87,7 @@ void* mainDriver() {
 			floorSetUpRunning = -1;
 			floorSetDownRunning = -1;
 			while((getFloor() != nextFloor) && (!isStopped() && !isObstructed())){
+				printf("Top while\n");
 				for(j=0;j<N_FLOORS;j++){
 					
 					if(getButtonSignal(j,BUTTON_COMMAND) && floorSetCommandRunning != j){
@@ -114,14 +115,17 @@ void* mainDriver() {
 							floorSetUpRunning = j;
 							
 						}
-						}
 					}
-			
+				}
+				printf("After for, in while\n");
 				newFloor = getNewOrder(lastFloor,nextFloor);
+				printf("After getNewOrder\n");
 				if(newFloor != nextFloor){
+					printf("Enter new != next\n");
 					localQueue[newFloor] = 1;
 				}
 				if(localQueue[getFloor()]== 1 && (getFloor() != -1)){
+					printf("Enter localQueue\n");
 					setMotorDirection(DIRN_STOP);
 					deleteOrder(getFloor(),buttonCall, thisElevator);
 					deleteOrder(getFloor(),BUTTON_COMMAND,thisElevator);
@@ -138,7 +142,8 @@ void* mainDriver() {
 					localQueue[getFloor()] = 0;
 					goToFloor(nextFloor);
 				}	
-				if (getFloor() == nextFloor){
+				printf("getFloor: %d\n", getFloor());
+				/*if (getFloor() == nextFloor){
 					k = 0;
 					printf("Dørene åpnes\n");
 					deleteOrder(getFloor(), buttonCall, thisElevator);
@@ -147,10 +152,20 @@ void* mainDriver() {
 						k++;
 						setMotorDirection(DIRN_STOP);
 					}
-				}
+				}*/
 				if(getFloor() != -1){
 					lastFloor = getFloor();
 				}
+			}
+			nextFloor = -1;
+			k = 0;
+			printf("Dørene åpnes\n");
+			deleteOrder(getFloor(), BUTTON_CALL_UP, thisElevator);
+			deleteOrder(getFloor(), BUTTON_CALL_DOWN, thisElevator);
+			deleteOrder(getFloor(),BUTTON_COMMAND,thisElevator);
+			while((k<100000) && (!isStopped() && !isObstructed())){
+				k++;
+				setMotorDirection(DIRN_STOP);
 			}
 		}
 	}
