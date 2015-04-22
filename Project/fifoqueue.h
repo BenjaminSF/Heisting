@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _fifoqueue_
+#define _fifoqueue_
 
 #include <stdlib.h>
 #include <pthread.h>
@@ -97,3 +98,4 @@ struct fifoqueue_t {
     sem_t               sem;
 };
 
+#endif
