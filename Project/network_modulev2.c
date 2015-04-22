@@ -159,6 +159,7 @@ void *listen_for_messages(void *args){
 				//printf("Recieving\n");
 				//memset(tempString, '\0', BUF_SIZE);
 				recvfrom(recSock, tempMsg, sizeof(BufferInfo), 0, (struct sockaddr *)&remaddr, &remaddrLen);
+				printf("ListenReceived: %d\n", tempMsg->myState);
 				enqueue(receiveQueue, tempMsg, sizeof(tempMsg));
 				if (!nullParam) sem_post(&myArgs->readReady);
 				
