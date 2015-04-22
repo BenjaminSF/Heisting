@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "fifoqueue.h"
+#define BUFFER_SIZE 100
 
 fifoqueue_t* receiveQueue;
 fifoqueue_t* sendQueue;

@@ -62,6 +62,8 @@ void* send_message(void *args){
 		wait_for_content(sendQueue);
 		dequeue(sendQueue, &msg);
 		printf("Sending message: %d\n", msg.myState);
+		msg.srcAddr = strdup("Dette er en lang test, dette er mer enn 8 byte langt.");
+		printf("Send size srcAddr: %lu, %s\n", sizeof(msg.srcAddr), msg.srcAddr);
 
 		if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
 			perror("SendSocket not created\n");
@@ -72,7 +74,7 @@ void* send_message(void *args){
 		if (setsockopt(sendSocket, SOL_SOCKET, SO_REUSEPORT, (void*)&socketPermission, sizeof(socketPermission)) < 0){
 			perror("sendSocket re-use port enable failed\n");
 		}
-		if (sendto(sendSocket, (void *)&msg, sizeof(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
+		if (sendto(sendSocket, (void *)&msg, (size_t) BUFFER_SIZE, 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
 			perror("Sending socket failed\n");
 		}
 		if (sendOnce == 1){
@@ -158,9 +160,10 @@ void *listen_for_messages(void *args){
 			default:
 				//printf("Recieving\n");
 				//memset(tempString, '\0', BUF_SIZE);
-				recvfrom(recSock, tempMsg, sizeof(BufferInfo), 0, (struct sockaddr *)&remaddr, &remaddrLen);
+				recvfrom(recSock, tempMsg, (size_t) BUFFER_SIZE, 0, (struct sockaddr *)&remaddr, &remaddrLen);
 				printf("ListenReceived: %d\n", tempMsg->myState);
-				enqueue(receiveQueue, tempMsg, sizeof(tempMsg));
+				printf("size, struct: %d, srcAddr: %lu, myState: %lu\n", BUFFER_SIZE, sizeof(int*), sizeof(char));
+				enqueue(receiveQueue, tempMsg, BUFFER_SIZE);
 				if (!nullParam) sem_post(&myArgs->readReady);
 				
 		}
@@ -225,7 +228,7 @@ int init_network(){
 	sendInfo.masterStatus = 0;
 	sendInfo.myState = MSG_CONNECT_SEND;
 	//encodeMessage(connect2meMsg, sendInfo);
-	enqueue(sendQueue, &sendInfo, sizeof(sendInfo));
+	enqueue(sendQueue, &sendInfo, BUFFER_SIZE);
 	//printf("connect2meMsg: %s\n", connect2meMsg);
 	
 	//Start listening for responses

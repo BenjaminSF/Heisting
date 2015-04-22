@@ -181,7 +181,7 @@ void* sortMessages(void *args){
 				addElevatorAddr(bufOrder.srcAddr);
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, NULL, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, MASTER, -1, -1);
-				enqueue(sendQueue, &newMsg, sizeof(newMsg));
+				enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 			}
 			if (myState == MSG_MASTER_REQUEST){
 				printf("Receive: MSG_MASTER_REQUEST\n");
@@ -191,7 +191,7 @@ void* sortMessages(void *args){
 				}
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, NULL, NULL, MSG_MASTER_PROPOSAL, candidate, -1, -1);
-				enqueue(sendQueue, &newMsg, sizeof(newMsg));
+				enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 			}
 			if (myState == MSG_MASTER_PROPOSAL){
 				printf("Receive: MSG_MASTER_PROPOSAL\n");
@@ -211,7 +211,7 @@ void* sortMessages(void *args){
 					if (bufOrder.buttonType == BUTTON_COMMAND){
 						BufferInfo newMsg;
 						encodeMessage(&newMsg, NULL, bufOrder.srcAddr, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
-						enqueue(sendQueue, &newMsg, sizeof(newMsg));
+						enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 					}
 				}
 				if(myState == MSG_DELETE_ORDER){
@@ -220,7 +220,7 @@ void* sortMessages(void *args){
 					if (bufOrder.buttonType != BUTTON_COMMAND){
 						BufferInfo newMsg;
 						encodeMessage(&newMsg, NULL, NULL, MSG_SET_LAMP, bufOrder.currentFloor, bufOrder.buttonType, 0);
-						enqueue(sendQueue, &newMsg, sizeof(newMsg));
+						enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 					}
 				}
 			}else{
@@ -248,7 +248,7 @@ void* masterTimeout(void *args){
 				printf("Master timeout\n");
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, NULL, NULL, MSG_MASTER_REQUEST, -1, -1, -1);
-				enqueue(sendQueue, &newMsg, sizeof(newMsg));
+				enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 				return;
 			}
 			clock_gettime(CLOCK_REALTIME, &ts);
@@ -261,7 +261,7 @@ void* masterTimeout(void *args){
 		BufferInfo newMsg;
 		encodeMessage(&newMsg, NULL, NULL, MSG_IM_ALIVE, 1, -1, -1);
 		while(1){
-			enqueue(sendQueue, &newMsg, sizeof(newMsg));
+			enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 			nanosleep(&ts, &rem);
 
 		}
@@ -284,7 +284,7 @@ void deleteOrder(int floor, buttonType button, int elevator){
 	}else{
 		BufferInfo msg;
 		encodeMessage(&msg, NULL, NULL, MSG_DELETE_ORDER, floor, button, 1);
-		enqueue(sendQueue, &msg, sizeof(msg));
+		enqueue(sendQueue, &msg, BUFFER_SIZE);
 	}
 	setButtonLamp(floor, button, 0);
 	localQueue[floor] = 0;
