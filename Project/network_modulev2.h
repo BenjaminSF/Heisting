@@ -51,6 +51,8 @@ int getLocalIP();
 int getBroadcastIP();
 void setMasterIP(int IP);
 void addElevatorAddr(char* newIP);
+int getAddrsCount();
+int addrsList(int pos);
 
 
 #endif

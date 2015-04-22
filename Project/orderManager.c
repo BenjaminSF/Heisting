@@ -10,6 +10,11 @@
 #include "elevDriver.h"
 
 int localQueue[N_FLOORS];
+struct {
+	int active[N_ELEVATORS];
+	int floor[N_ELEVATORS];
+	int direction[N_ELEVATORS];
+} elevStates;
 sem_t timeoutSem;
 int bestProposal;
 int MASTER; //Forward declaration?
@@ -21,7 +26,7 @@ void* orderManager(void* args){
 	struct timespec rem;
 	bestProposal = getLocalIP();
 	sem_init(&timeoutSem, 0, 0);
-	initPriorityQueue();
+	//initPriorityQueue();
 	pthread_t sendMessages, receiveMessages, sortMessages_, masterTimeout_;
 	pthread_create(&sendMessages, 0, &send_message, 0);
 	pthread_create(&receiveMessages, 0, &listen_for_messages, 0);
@@ -52,6 +57,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		storeOrder.elevator = newOrder.elevator;
 		
 		while(orderQueue.inUse[pos]){
+			if(ordercmp(&(orderQueue.Queue[pos]), &storeOrder)) return -1; //Ignore duplicate orders
 			pos++;
 			if (pos == N_ORDERS){
 				printf("Error: orderQueue is full, order not received\n");
@@ -103,9 +109,26 @@ int getNewOrder(int currentFloor, int nextFloor){
 				}
 			}
 		} 
-		localQueue[destFloor] = 0;
+		//localQueue[destFloor] = 0;
 	}
 	return destFloor;
+}
+
+void distributeOrders(){ //Master only
+	int addrsCount, i, j, tmpAddr;
+	//while(1){
+		addrsCount = getAddrsCount();
+		pthread_mutex_lock(&(orderQueue.rwLock));
+		for (j = 0; j < N_ORDERS; j++){
+			for (i = 0; i < addrsCount; i++){
+				tmpAddr = addrsList(i);
+				if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr)){
+					
+				}
+			}
+		}
+		pthread_mutex_unlock(&(orderQueue.rwLock));
+	//}
 }
 
 void* sortMessages(void *args){
@@ -160,7 +183,6 @@ void* sortMessages(void *args){
 					}
 				}
 				if(myState == MSG_DELETE_ORDER){
-					
 					deleteOrder(bufOrder.currentFloor,bufOrder.buttonType,srcAddr);
 				}
 			}else{
@@ -218,4 +240,13 @@ void deleteOrder(int floor, buttonType button, int elevator){
 		encodeMessage(msg, NULL, NULL, MSG_DELETE_ORDER, floor, button, 1);
 		enqueue(sendQueue, &msg, sizeof(msg));
 	}
+	localQueue[floor] = 0;
+}
+
+int ordercmp(struct order *A, struct order *B){
+	int x = 1;
+	if (A->dest != B->dest) x = 0;
+	if (A->buttonType != B->buttonType) x = 0;
+	if (A->elevator != B->elevator) x = 0;
+	return x;
 }

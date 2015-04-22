@@ -373,3 +373,11 @@ void addElevatorAddr(char* newIP){
 		info.addrslistCounter++;
 	}
 }
+
+int getAddrsCount(){
+	return info.addrslistCounter;
+}
+
+int addrsList(int i){
+	return inet_addr(info.addrsList[i]);
+}

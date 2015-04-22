@@ -3,6 +3,7 @@
 
 #include "elevDriver.h"
 #include "costFunction.h"
+#define N_ELEVATORS 5
 
 void* orderManager(void *args);
 int addNewOrder(struct order newOrder, int currentFloor, int nextFloor);
