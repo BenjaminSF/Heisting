@@ -38,6 +38,7 @@ void enqueue(fifoqueue_t* q, BufferInfo* data, size_t size){
     }
     sem_post(&q->sem);
     pthread_mutex_unlock(&q->mtx);
+    printf("Enquiinging\n");
 }
 
 void dequeue(fifoqueue_t* q, BufferInfo* recv){
@@ -55,6 +56,7 @@ void dequeue(fifoqueue_t* q, BufferInfo* recv){
     }
     
     pthread_mutex_unlock(&q->mtx);
+    printf("Dequuiieieuing\n");
 }
 
 void wait_for_content(fifoqueue_t* q){

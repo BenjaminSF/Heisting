@@ -88,20 +88,41 @@ void *listen_for_messages(void *args){
 	printf("Listen started\n");
 	//char tempString[BUF_SIZE];
 	BufferInfo *tempMsg = (BufferInfo *)malloc(sizeof(char)* 100);
+	int nullParam = 0;
+	int port, timeoutMs;
 	struct ListenParams *myArgs;
+
+	struct timeval *timeout = malloc(sizeof(struct ListenParams));
 	if (args == NULL){
-		
+		nullParam = 1;
+		port = info.port;
+		timeoutMs = 0;
+		/*struct ListenParams *myArgs;
+		printf("sem_init\n");
 		sem_init(&(myArgs->readReady), 0, 0);
+		printf("sem_init done\n");
 		myArgs->port = info.port;
 		myArgs->timeoutMs = 0;
-		myArgs->finished = 0;
+		myArgs->finished = 0;*/
+		
+		timeout = NULL;
+		
 	}else{
 		myArgs = ((struct ListenParams*)(args));
+		port = myArgs->port;
+
+		timeoutMs = myArgs->timeoutMs;
+		printf("Test1\n");
+
+		timeout->tv_sec = 0;
+		printf("Test2\n");
+		timeout->tv_usec = timeoutMs * 1000;
+
 	}
 	int recSock;
 	struct sockaddr_in remaddr;
 	socklen_t remaddrLen = sizeof(remaddr);
-	struct sockaddr_in myaddr = {.sin_family = AF_INET, .sin_port = htons(myArgs->port), .sin_addr.s_addr = htonl(INADDR_ANY)};
+	struct sockaddr_in myaddr = {.sin_family = AF_INET, .sin_port = htons(port), .sin_addr.s_addr = htonl(INADDR_ANY)};
 	socklen_t myaddrLen = sizeof(myaddr);
 	int socketPermission = 1;
 	
@@ -115,15 +136,15 @@ void *listen_for_messages(void *args){
 		perror("Failed to bind recSocket.\n");
 	}
 
-	printf("Test mottak, port: %d\n", (myArgs)->port);
-	struct timeval timeout = {.tv_sec = 0, .tv_usec = (myArgs)->timeoutMs * 1000};
+	printf("Test mottak, port: %d\n", port);
+
 	fd_set readfds;
 	//prepare socket
 	int notDone = 1;
 	while (notDone){
 		FD_ZERO(&readfds);
 		FD_SET(recSock, &readfds);
-		int event = select(recSock+1, &readfds, 0, 0, &timeout);
+		int event = select(recSock+1, &readfds, 0, 0, timeout);
 		switch (event){
 			case -1:
 				printf("Switch/select for recSock failed.\n");
@@ -139,14 +160,16 @@ void *listen_for_messages(void *args){
 				//memset(tempString, '\0', BUF_SIZE);
 				recvfrom(recSock, tempMsg, sizeof(BufferInfo), 0, (struct sockaddr *)&remaddr, &remaddrLen);
 				enqueue(receiveQueue, tempMsg, sizeof(tempMsg));
-				sem_post(&myArgs->readReady);
+				if (!nullParam) sem_post(&myArgs->readReady);
 				
 		}
 	}
-	myArgs->finished = 1;
-	sem_post(&(myArgs->readReady));
+	if (!nullParam){
+		myArgs->finished = 1;
+		sem_post(&(myArgs->readReady));
+	}
 	printf("Listen finished\n");
-	printf("Test mottak, port: %d\n", (myArgs)->port);
+	printf("Test mottak, port: %d\n", port);
 	return;
 }
 
@@ -191,6 +214,7 @@ int init_network(){
 	tmpIP[index+4] = '\0';
 	info.broadcastIP = strdup(tmpIP);
 	printf("Lokalt: IP: %s\t Port: %d\t Broadcast: %s\n", info.localIP, info.port, info.broadcastIP);
+	printf("Lokal IP int: %d\n", inet_addr(info.localIP));
 	
 	//Create message to be broadcasted
 	//char connect2meMsg[BUF_SIZE];
@@ -259,7 +283,7 @@ int init_network(){
 		}
 	}
 
-	printf("Finished listening\n");
+	//printf("Finished listening\n");
 	//Finished listening
 	pthread_join(findOtherElevs, NULL);
 	pthread_join(findElevsSend, NULL);
@@ -268,11 +292,12 @@ int init_network(){
 	if (info.masterStatus == 1){
 		info.masterIP = strdup(info.localIP);
 	}
-
+	printf("Init network finished\n");
 	return info.masterStatus;
 }
 
 BufferInfo decodeMessage(char *buffer){
+	printf("Helt feil!!!\n");
 	BufferInfo msg;
 	//For testing only:
 	msg.srcAddr = "192.128.187.111";
@@ -284,60 +309,67 @@ BufferInfo decodeMessage(char *buffer){
 	return msg;
 }
 
-void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2, int var3){
+void encodeMessage(BufferInfo *msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2, int var3){
+	printf("Encoding message------------------------------------------------------\n");
 	if (srcAddr == NULL){
-		strcpy(msg.srcAddr, info.localIP);
+		printf("strcpy: %s , %s\n",msg->srcAddr,info.localIP);
+
+		msg->srcAddr = strdup(info.localIP);
+		printf("strcpy: msg.srcAddr\n");
 	}else{
-		strcpy(msg.srcAddr, srcAddr);
+		msg->srcAddr = strdup(srcAddr);
 	}
 	if (dstAddr == NULL){
-		strcpy(msg.dstAddr, info.broadcastIP);
-	}else{
-		strcpy(msg.dstAddr, dstAddr);
-	}
+		msg->dstAddr = strdup(info.broadcastIP);
+		printf("strcpy: dstAddr\n");
 
-	msg.myState = myState;
+	}else{
+		msg->dstAddr = strdup(dstAddr);
+	}
+	printf("Encode: IPs done\n");
+	msg->myState = myState;
 	switch(myState){
 		case MSG_CONNECT_SEND:
-			if (var1 != -1) msg.masterStatus = var1;
+			if (var1 != -1) msg->masterStatus = var1;
 			break;
 		case MSG_CONNECT_RESPONSE:
-			if (var1 != -1) msg.masterStatus = var1;
+			if (var1 != -1) msg->masterStatus = var1;
 			break;
 		case MSG_ELEVSTATE:
-			if (var1 != -1) msg.active = var1;
-			if (var2 != -1) msg.currentFloor = var2;
-			if (var3 != -1) msg.nextFloor = var3;
+			if (var1 != -1) msg->active = var1;
+			if (var2 != -1) msg->currentFloor = var2;
+			if (var3 != -1) msg->nextFloor = var3;
 			if ((var3 != -1) && (var2 != -1)){
 				int dir = var3 - var2;
-				if (dir > 0) msg.direction = 1;
+				if (dir > 0) msg->direction = 1;
 			}
 			break;
 		case MSG_ADD_ORDER:
-			if (var1 != -1) msg.nextFloor = var1;
-			if (var2 != -1) msg.buttonType = var2;
+			if (var1 != -1) msg->nextFloor = var1;
+			if (var2 != -1) msg->buttonType = var2;
 			break;
 		case MSG_GET_ORDER:
-			if (var1 != -1) msg.active = var1;
-			if (var2 != -1) msg.currentFloor = var2;
-			if (var3 != -1) msg.nextFloor = var3;
+			if (var1 != -1) msg->active = var1;
+			if (var2 != -1) msg->currentFloor = var2;
+			if (var3 != -1) msg->nextFloor = var3;
 			if ((var3 != -1) && (var2 != -1)){
 				int dir = var3 - var2;
-				if (dir > 0) msg.direction = 1;
+				if (dir > 0) msg->direction = 1;
 			}
 			break;
 		case MSG_SET_LAMP:
-			if (var1 != -1) msg.currentFloor = var1;
-			if (var2 != -1) msg.buttonType = var2;
-			if (var3 != -1) msg.active = var3;
+			if (var1 != -1) msg->currentFloor = var1;
+			if (var2 != -1) msg->buttonType = var2;
+			if (var3 != -1) msg->active = var3;
 			break;
 		case MSG_IM_ALIVE:
-			if (var1 != -1) msg.masterStatus = var1;
+			printf("Encode: I'm alive\n");
+			if (var1 != -1) msg->masterStatus = var1;
 			break;
 		case MSG_DELETE_ORDER:
-			if (var1 != -1) msg.currentFloor = var1;
-			if (var2 != -1) msg.buttonType = var2;
-			if (var3 != -1) msg.active = var3;
+			if (var1 != -1) msg->currentFloor = var1;
+			if (var2 != -1) msg->buttonType = var2;
+			if (var3 != -1) msg->active = var3;
 			break;
 
 
@@ -346,20 +378,24 @@ void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, in
 }
 
 int getLocalIP(){
+	printf("getLocalIP\n");
 	return inet_addr(info.localIP);
 }
 
 int getBroadcastIP(){
+	printf("getBroadcastIP\n");
 	return inet_addr(info.broadcastIP);
 }
 
 void setMasterIP(int x){
+	printf("setMasterIP\n");
 	struct in_addr tmp;
 	tmp.s_addr = x;
 	info.masterIP = strdup(inet_ntoa(tmp));
 }
 
 void addElevatorAddr(char* newIP){
+	printf("addElevatorAddr\n");
 	int isInList = 0;
 	int i;
 	for (i = 0; i < MAX_ELEVS; i++){
@@ -375,9 +411,11 @@ void addElevatorAddr(char* newIP){
 }
 
 int getAddrsCount(){
+	printf("getAddrsCount\n");
 	return info.addrslistCounter;
 }
 
 int addrsList(int i){
+	printf("addrsList\n");
 	return inet_addr(info.addrsList[i]);
 }

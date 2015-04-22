@@ -46,7 +46,7 @@ BufferInfo decodeMessage(char *buffer);
 
 //encodeMessage: Set the relevant fields in a BufferInfo struct all at once
 //Set var# = -1 when not applicable
-void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2, int var3);
+void encodeMessage(BufferInfo *msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2, int var3);
 int getLocalIP();
 int getBroadcastIP();
 void setMasterIP(int IP);

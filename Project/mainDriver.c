@@ -16,7 +16,7 @@ void* mainDriver() {
 }
 	printf("Press STOP button to stop elevator and exit program.\n");
 	
-	int nextFloor;
+	int nextFloor = -1;
 	int i, j,k;
 	int queueActive = 0;
 	int lastFloor = 0;
@@ -25,9 +25,7 @@ void* mainDriver() {
 	motorDirection direction;
 	buttonType buttonCall;
 	int newFloor,floorSetCommand,floorSetDown,floorSetUp,floorSetCommandRunning,floorSetDownRunning,floorSetUpRunning;
-
-
-
+	int localQueue[N_FLOORS];
 	while(!isStopped() && !isObstructed()){
 		floorSetCommand = -1;
 		floorSetDown = -1;
@@ -36,8 +34,7 @@ void* mainDriver() {
 		setFloorIndicator(getFloor());
 		setDoorOpenLamp(1);
 		//nextFloor = -1;
-		int localQueue[N_FLOORS];
-		buttonType localQueueButtonType[N_FLOORS];
+
 		memset(localQueue,0,sizeof(int)*N_FLOORS);
 		currentFloor = getFloor();
 		for (i = 0; i < N_FLOORS; i++){
@@ -75,6 +72,7 @@ void* mainDriver() {
 		
 		printf("nextFloor %d\n",nextFloor );
 		if(nextFloor != -1){
+			printf("Kommer ikke hit\n");
 			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
 				direction = DIRN_UP;
@@ -125,10 +123,12 @@ void* mainDriver() {
 				}
 				if(localQueue[getFloor()]== 1 && (getFloor() != -1)){
 					setMotorDirection(DIRN_STOP);
-					deleteOrder(getFloor(),localQueueButtonType[getFloor()], thisElevator);
+					deleteOrder(getFloor(),buttonCall, thisElevator);
+					deleteOrder(getFloor(),BUTTON_COMMAND,thisElevator);
 					setDoorOpenLamp(1);
 					setFloorIndicator(getFloor());
-					setButtonLamp(getFloor(),localQueueButtonType[getFloor()],0);
+					setButtonLamp(getFloor(),buttonCall,0);
+					setButtonLamp(getFloor(),BUTTON_COMMAND,0);
 					k=0;
 					while((k<100000) && (!isStopped() && !isObstructed())){
 						k++;
@@ -140,7 +140,9 @@ void* mainDriver() {
 				}	
 				if (getFloor() == nextFloor){
 					k = 0;
-					deleteOrder(getFloor(), localQueueButtonType[getFloor()], thisElevator);
+					printf("Dørene åpnes\n");
+					deleteOrder(getFloor(), buttonCall, thisElevator);
+					deleteOrder(getFloor(),BUTTON_COMMAND,thisElevator);
 					while((k<100000) && (!isStopped() && !isObstructed())){
 						k++;
 						setMotorDirection(DIRN_STOP);

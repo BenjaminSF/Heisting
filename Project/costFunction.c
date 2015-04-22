@@ -13,6 +13,7 @@ void initPriorityQueue(){
 
 	}
 	pthread_mutex_init(&(orderQueue.rwLock), NULL);
+	printf("Setup priority queue\n");
 }
 
 
@@ -24,6 +25,7 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 	for (i = 0; i < N_ORDERS; i++){
 		if (inUse[i] == 1){
 			cost = findCost(queue[i].dest,currentFloor, nextFloor,queue[i].buttonType);
+			printf("Cost: %d\n", cost);
 			if(cost < min){
 				min = cost;
 				minPos = queue[i].dest;
@@ -38,14 +40,16 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 		//printf("Button lamp off2: floor: %d, type: %d\n", queue[queuePos].dest, queue[queuePos].buttonType);
 		setButtonLamp(queue[queuePos].dest, queue[queuePos].buttonType, 0);
 	}
-	inUse[queuePos] = 0;
-	priority[queuePos] = -1;
-	queue[queuePos].elevator = 0;
+	//inUse[queuePos] = 0;
+	//priority[queuePos] = -1;
+	//queue[queuePos].elevator = 0;
 	
-	//printf("min cost: %d and pos: %d, backlog: %d\n",min,minPos, backlog);
+	printf("min cost: %d and pos: %d, backlog: %d\n",min,minPos, backlog);
 	if (min == N_FLOORS*2){
+		//printf("Dette burde skje\n");
 		return -1;
 	}else{
+		printf("Returnerer ordre: min: %d, pos: %d\n", min, minPos);
 		return minPos;
 	}
 }
