@@ -179,3 +179,22 @@ void* mainDriver() {
 	return;
 
 }
+
+
+void* printFunction(){
+	int i,j;
+	while(1){
+		for (i = 0; i < N_FLOORS; i++){
+			if (getButtonSignal(i,BUTTON_COMMAND) || getButtonSignal(i,BUTTON_CALL_DOWN) || getButtonSignal(i,BUTTON_CALL_UP)){
+				printf('-----------------------------------------\n')
+				printf('getFloor() = %d\n'getFloor())
+				printf('|Floor| BUTTON_COMMAND | BUTTON_CALL_UP | BUTTON_CALL_DOWN|\n')
+				for (j= 0; i < N_FLOORS; i++){
+					printf('|  %d  |  %d  |  %d  |  %d  |\n',getButtonLamp(j,BUTTON_COMMAND),getButtonLamp(j,BUTTON_CALL_UP),getButtonLamp(j,BUTTON_CALL_DOWN));
+				}
+			}
+		}
+	}
+}
+
+

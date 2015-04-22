@@ -39,9 +39,7 @@ int elevDriver_initialize(void) {
 	setStopLamp(0);
 	setDoorOpenLamp(0);
 	if(getFloor() == -1){
-		printf("Set in a valid floor\n");
-		while(getFloor() == -1){
-		}
+		goToFloor(0);
 	}
 	setFloorIndicator(getFloor());
 	setMotorDirection(DIRN_STOP);
@@ -160,6 +158,9 @@ void setButtonLamp(int floor, buttonType button, int status){
 				io_clear_bit(lampMatrix[floor][button]);
 			}
 	}
+}
+int getButtonLamp(int floor,buttonType button){
+	return io_read_bit(lampMatrix[floor][button]);
 }
 
 
