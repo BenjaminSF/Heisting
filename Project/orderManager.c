@@ -57,7 +57,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	printf("Enter addNewOrder\n");
 	if (MASTER == 1){
 		pthread_mutex_lock(&(orderQueue.rwLock));
-		printf("Mutex owner: addNewOrder\n");
+		//printf("Mutex owner: addNewOrder\n");
 		int pos = 0;
 		struct order storeOrder;
 		storeOrder.dest = newOrder.dest;
@@ -88,8 +88,9 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		orderQueue.inUse[pos] = 1;
 		if (storeOrder.buttonType == BUTTON_COMMAND){
 			orderQueue.localPri[pos] = storeOrder.elevator;
+			setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
 		}
-		printf("Mutex released: addNewOrder\n");
+		//printf("Mutex released: addNewOrder\n");
 		pthread_mutex_unlock(&(orderQueue.rwLock));
 
 	}else{ //Send new order to the master
@@ -103,16 +104,16 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 }
 
 int getNewOrder(int currentFloor, int nextFloor){
-	printf("Enter getNewOrder: currentFloor: %d, nextFloor: %d\n", currentFloor, nextFloor);
+	//printf("Enter getNewOrder: currentFloor: %d, nextFloor: %d\n", currentFloor, nextFloor);
 	int destFloor;
 	int dir = nextFloor - currentFloor;
 	if (nextFloor == -1) dir = 0;
 	if (MASTER == 1){
-		printf("Tying to get mutex\n");
+		//printf("Tying to get mutex\n");
 		pthread_mutex_lock(&(orderQueue.rwLock));
-		printf("Mutex owner: getNewORder\n");
+		//printf("Mutex owner: getNewORder\n");
 		destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
-		printf("Mutex released: getNewORder\n");
+		//printf("Mutex released: getNewORder\n");
 		pthread_mutex_unlock(&(orderQueue.rwLock));
 	}else{
 		int i, tmp;
@@ -129,7 +130,7 @@ int getNewOrder(int currentFloor, int nextFloor){
 		} 
 		//localQueue[destFloor] = 0;
 	}
-	//printf("currentFloor: %d, nextFloor: %d, destFloor: %d\n", currentFloor, nextFloor, destFloor);
+	printf("currentFloor: %d, nextFloor: %d, destFloor: %d\n", currentFloor, nextFloor, destFloor);
 
 	return destFloor;
 }
@@ -140,7 +141,7 @@ void distributeOrders(){ //Master only
 	//while(1){
 		addrsCount = getAddrsCount();
 		pthread_mutex_lock(&(orderQueue.rwLock));
-		printf("Mutex owner: distributeOrders\n");
+		//printf("Mutex owner: distributeOrders\n");
 		for (j = 0; j < N_ORDERS; j++){
 			for (i = 0; i < addrsCount; i++){
 				tmpAddr = addrsList(i);
@@ -159,9 +160,9 @@ void* sortMessages(void *args){
 	int myIP = getLocalIP();
 	int broadcast = getBroadcastIP();
 	while(1){
-		printf("Wait for content...\n");
+		//printf("Wait for content...\n");
 		wait_for_content(receiveQueue);
-		printf("Message received, should never ever ever happen but sometimes it should\n");
+		//printf("Message received, should never ever ever happen but sometimes it should\n");
 		dequeue(receiveQueue, &bufOrder);
 		int myState = bufOrder.myState;
 		int dstAddr = inet_addr(&bufOrder.dstAddr);
@@ -210,6 +211,11 @@ void* sortMessages(void *args){
 				}
 				if(myState == MSG_DELETE_ORDER){
 					deleteOrder(bufOrder.currentFloor,bufOrder.buttonType,srcAddr);
+					if (bufOrder.buttonType != BUTTON_COMMAND){
+						BufferInfo newMsg;
+						encodeMessage(&newMsg, NULL, NULL, MSG_SET_LAMP, bufOrder.currentFloor, bufOrder.buttonType, 0);
+						enqueue(sendQueue, &newMsg, sizeof(newMsg));
+					}
 				}
 			}else{
 				if (myState == MSG_IM_ALIVE){
@@ -227,7 +233,7 @@ void* masterTimeout(void *args){
 	if (MASTER == 0){
 		printf("Timer: slave\n");
 		clock_gettime(CLOCK_REALTIME, &ts);
-		ts.tv_sec = ts.tv_sec + 5;
+		ts.tv_sec = ts.tv_sec + 15;
 		int test;
 		while(1){
 			test = sem_timedwait(&timeoutSem, &ts);
@@ -243,12 +249,11 @@ void* masterTimeout(void *args){
 		}
 	}else{
 		printf("Timer: master\n");
-		ts.tv_sec = 1;
+		ts.tv_sec = 5;
 		ts.tv_nsec = 0;
 		BufferInfo newMsg;
 		encodeMessage(&newMsg, NULL, NULL, MSG_IM_ALIVE, 1, -1, -1);
 		while(1){
-			printf("Timer: Enqueue og sleep\n");
 			enqueue(sendQueue, &newMsg, sizeof(newMsg));
 			nanosleep(&ts, &rem);
 
@@ -274,6 +279,7 @@ void deleteOrder(int floor, buttonType button, int elevator){
 		encodeMessage(&msg, NULL, NULL, MSG_DELETE_ORDER, floor, button, 1);
 		enqueue(sendQueue, &msg, sizeof(msg));
 	}
+	setButtonLamp(floor, button, 0);
 	localQueue[floor] = 0;
 }
 

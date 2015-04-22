@@ -70,9 +70,10 @@ void* mainDriver() {
 		}
 		nextFloor = getNewOrder(currentFloor, nextFloor);
 		
-		printf("nextFloor %d\n",nextFloor );
+		//printf("nextFloor %d\n",nextFloor );
 		if(nextFloor != -1){
-			printf("Kommer ikke hit\n");
+			//printf("Kommer ikke hit\n");
+			localQueue[nextFloor] = 1;
 			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
 				direction = DIRN_UP;
@@ -86,10 +87,18 @@ void* mainDriver() {
 			floorSetCommandRunning = -1;
 			floorSetUpRunning = -1;
 			floorSetDownRunning = -1;
-			while((getFloor() != nextFloor) && (!isStopped() && !isObstructed())){
-				printf("Top while\n");
+			while((lastFloor != nextFloor) && (!isStopped() && !isObstructed())){
 				for(j=0;j<N_FLOORS;j++){
-					
+					int tmp = getFloor();
+					currentFloor = tmp;
+					if(tmp != -1 && tmp != lastFloor){
+						printf("Last lastFloor equals ------------------------------------ %d\n",lastFloor);
+						lastFloor = tmp;
+						setFloorIndicator(lastFloor);
+
+						printf("New lastFloor equals -------------------------------------- %d\n",lastFloor);
+
+					}
 					if(getButtonSignal(j,BUTTON_COMMAND) && floorSetCommandRunning != j){
 						struct order newOrder = {.dest = j, .buttonType = BUTTON_COMMAND, .elevator = thisElevator};
 						newFloor = addNewOrder(newOrder,lastFloor,nextFloor);
@@ -117,32 +126,41 @@ void* mainDriver() {
 						}
 					}
 				}
-				printf("After for, in while\n");
 				newFloor = getNewOrder(lastFloor,nextFloor);
-				printf("After getNewOrder\n");
-				if(newFloor != nextFloor){
-					printf("Enter new != next\n");
+				if(newFloor != nextFloor && newFloor != -1){
 					localQueue[newFloor] = 1;
+					if(buttonCall == BUTTON_CALL_UP && newFloor>nextFloor){
+						nextFloor = newFloor;
+					}else if(buttonCall == BUTTON_CALL_DOWN && newFloor < nextFloor){
+						nextFloor = newFloor;
+					}
+
+					printf("Enter new != next\n");
 				}
-				if(localQueue[getFloor()]== 1 && (getFloor() != -1)){
+				if((localQueue[lastFloor]== 1) && (currentFloor == lastFloor)){
 					printf("Enter localQueue\n");
 					setMotorDirection(DIRN_STOP);
-					deleteOrder(getFloor(),buttonCall, thisElevator);
-					deleteOrder(getFloor(),BUTTON_COMMAND,thisElevator);
+					deleteOrder(lastFloor,buttonCall, thisElevator);
+					deleteOrder(lastFloor,BUTTON_COMMAND,thisElevator);
 					setDoorOpenLamp(1);
-					setFloorIndicator(getFloor());
-					setButtonLamp(getFloor(),buttonCall,0);
-					setButtonLamp(getFloor(),BUTTON_COMMAND,0);
+					if ((buttonCall == BUTTON_CALL_DOWN && lastFloor != 0) || (buttonCall==BUTTON_CALL_UP && lastFloor != (N_FLOORS-1))){
+						setButtonLamp(lastFloor,buttonCall,0);
+					}else if(buttonCall == BUTTON_CALL_DOWN && lastFloor == 0){
+						setButtonLamp(lastFloor,BUTTON_CALL_UP,0);
+					}else if(buttonCall == BUTTON_CALL_UP && lastFloor == N_FLOORS-1){
+						setButtonLamp(lastFloor,BUTTON_CALL_DOWN,0);
+					}
+					setButtonLamp(lastFloor,BUTTON_COMMAND,0);
 					k=0;
 					while((k<100000) && (!isStopped() && !isObstructed())){
 						k++;
 						setMotorDirection(DIRN_STOP);
 					}
 					setDoorOpenLamp(0);
-					localQueue[getFloor()] = 0;
+					localQueue[lastFloor] = 0;
 					goToFloor(nextFloor);
 				}	
-				printf("getFloor: %d\n", getFloor());
+				//printf("getFloor: %d\n", lastFloor);
 				/*if (getFloor() == nextFloor){
 					k = 0;
 					printf("Dørene åpnes\n");
@@ -153,9 +171,7 @@ void* mainDriver() {
 						setMotorDirection(DIRN_STOP);
 					}
 				}*/
-				if(getFloor() != -1){
-					lastFloor = getFloor();
-				}
+				
 			}
 			nextFloor = -1;
 			k = 0;
@@ -166,6 +182,12 @@ void* mainDriver() {
 			while((k<100000) && (!isStopped() && !isObstructed())){
 				k++;
 				setMotorDirection(DIRN_STOP);
+			}
+			printf("localQueue: %d %d %d %d\n", localQueue[0], localQueue[1], localQueue[2], localQueue[3]);
+			for(k = 0; k < N_FLOORS; k++){
+				if (localQueue[k] != 0){
+					printf("ERROR!!!! Sjekk localQueue____________________");
+				}
 			}
 		}
 	}

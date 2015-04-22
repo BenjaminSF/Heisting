@@ -142,24 +142,25 @@ void setFloorIndicator(int floor){
 	else
 		io_clear_bit(LIGHT_FLOOR_IND2);
 }
+/*
 int isbuttonSignalValid(int floor, buttonType button){
 	//printf("Assert: Floor: %d, type: %d\n", floor, button);
 	assert(floor>= 0 && floor < N_FLOORS);
 	assert(!(button == BUTTON_CALL_UP && floor == N_FLOORS-1) && !(button == BUTTON_CALL_DOWN && floor == 0));
 	assert(button == BUTTON_CALL_DOWN || button == BUTTON_CALL_UP || button == BUTTON_COMMAND);
 	return 1;
-}
+}*/
 int getButtonSignal(int floor, buttonType button){
 	return io_read_bit(buttonMatrix[floor][button]);
 }
 void setButtonLamp(int floor, buttonType button, int status){
-	if (isbuttonSignalValid(floor,button)){
-			if (status){
-				io_set_bit(lampMatrix[floor][button]);
-			}else{
-				io_clear_bit(lampMatrix[floor][button]);
-			}
+	//if (isbuttonSignalValid(floor,button)){
+	if (status){
+		io_set_bit(lampMatrix[floor][button]);
+	}else{
+		io_clear_bit(lampMatrix[floor][button]);
 	}
+	//}
 }
 
 

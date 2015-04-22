@@ -11,9 +11,10 @@ struct order{
 	int elevator;
 };
 struct{
-	struct order Queue[100];
-	int inUse[100];
-	int localPri[100];
+	struct order Queue[N_ORDERS];
+	int inUse[N_ORDERS];
+	int localPri[N_ORDERS];
+	int enRoute[N_ORDERS];
 	pthread_mutex_t rwLock;
 }orderQueue;
 

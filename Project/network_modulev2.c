@@ -156,7 +156,7 @@ void *listen_for_messages(void *args){
 				printf("Timed out\n");
 				break;
 			default:
-				printf("Recieving\n");
+				//printf("Recieving\n");
 				//memset(tempString, '\0', BUF_SIZE);
 				recvfrom(recSock, tempMsg, sizeof(BufferInfo), 0, (struct sockaddr *)&remaddr, &remaddrLen);
 				enqueue(receiveQueue, tempMsg, sizeof(tempMsg));
