@@ -198,7 +198,7 @@ int init_network(){
 	
 	//set IP info for use by other functions
 	info.localIP = strdup(tmpIP);
-	info.port = 20011; //Set to a static value for port, could implement and call a function if necessary
+	info.port = 20016; //Set to a static value for port, could implement and call a function if necessary
 	
 	//Finds broadcast-IP:
 	char *lastDot;
@@ -257,7 +257,9 @@ int init_network(){
 		dequeue(receiveQueue, &bufInfo);
 		//bufInfo = decodeMessage(tmpResponseMsg);
 		printf("Received: %s\n", bufInfo.srcAddr);
+		printf("Received: %d\n", bufInfo.myState);
 		if (bufInfo.myState == MSG_CONNECT_RESPONSE){ //Only use related messages
+			printf("Adding to list\n");
 			//info.addrsList[addrslistCounter] = bufInfo.srcAddr;
 			if (bufInfo.masterStatus == 1){
 				info.masterStatus = 0;
