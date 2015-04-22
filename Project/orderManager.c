@@ -117,7 +117,7 @@ void* sortMessages(void *args){
 			}
 
 			if (MASTER == 1){
-				if (myState = MSG_ADD_ORDER){
+				if (myState == MSG_ADD_ORDER){
 					struct order newOrder;
 					newOrder.dest = bufOrder.nextFloor;
 					newOrder.buttonType = bufOrder.buttonType;
@@ -128,6 +128,10 @@ void* sortMessages(void *args){
 						encodeMessage(NULL, bufOrder.srcAddr, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
 						enqueue(newMsg);
 					}
+				}
+				if(myState == MSG_DELETE_ORDER){
+					
+					deleteOrder(bufOrder.nextFloor,bufOrder.buttonType,srcAddr);
 				}
 			}else{
 				if (myState == MSG_IM_ALIVE){
@@ -166,14 +170,18 @@ void* masterTimeout(void *args){
 	}
 }
 
-void deleteOrder(int floor, buttonType button){
+void deleteOrder(int floor, buttonType button, int elevator){
 	if (MASTER == 1){
 		int i;
 		for (i = 0; i < N_ORDERS; i++){
-			if(orderQueue.Queue[i].dest == floor && orderQueue.Queue[i].buttonType == button){
+			if(orderQueue.Queue[i].dest == floor && orderQueue.Queue[i].buttonType == button && orderQueue.localPri[i] == elevator){
 				orderQueue.inUse[i] = 0;
 				orderQueue.localPri[i] = -1;
 			}
 		}
+	}else{
+		BufferInfo msg;
+		encodeMessage(NULL, NULL, MSG_DELETE_ORDER, floor, button, 1);
+		enqueue(sendQueue, &msg, sizeof(msg));
 	}
 }

@@ -333,6 +333,11 @@ void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, in
 		case MSG_IM_ALIVE:
 			if (var1 != -1) msg.masterStatus = var1;
 			break;
+		case MSG_DELETE_ORDER:
+			if (var1 != -1) msg.currentFloor = var1;
+			if (var2 != -1) msg.buttonType = var2;
+			if (var3 != -1) msg.active = var3;
+			break;
 
 
 	}
