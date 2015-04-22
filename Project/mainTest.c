@@ -4,7 +4,7 @@
 
 int main() {
     // Initialize hardware
-    if (!elevDriver_init()) {
+    if (!elevDriver_initialize()) {
         printf("Unable to initialize elevator hardware!\n");
         return 1;
     }

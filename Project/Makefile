@@ -7,7 +7,7 @@ TARGET = test
 all: $(TARGET)
 OBJ = $(SRC:.c=.o)
 $(TARGET): $(OBJ)
-	$(CC) $^ -o $@ $(DEPS)
+	$(CC) $^ -o $@ $(CFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
