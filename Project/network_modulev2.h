@@ -47,6 +47,7 @@ BufferInfo decodeMessage(char *buffer);
 void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2, int var3);
 int getLocalIP();
 int getBroadcastIP();
+void setMasterIP(int IP);
 void addElevatorAddr(char* newIP);
 
 

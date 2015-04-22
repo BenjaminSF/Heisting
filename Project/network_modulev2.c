@@ -352,6 +352,10 @@ int getBroadcastIP(){
 	return inet_addr(info.broadcastIP);
 }
 
+void setMasterIP(int x){
+	info.masterIP = inet_ntoa(x);
+}
+
 void addElevatorAddr(char* newIP){
 	int isInList = 0;
 	int i;
@@ -366,67 +370,3 @@ void addElevatorAddr(char* newIP){
 		addrslistCounter++;
 	}
 }
-
-/*int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
-	pthread_mutex_lock(&(orderQueue.rwLock));
-	int pos = 0;
-	int newFloor = -1;
-	motorDirection dir;
-	struct order storeOrder;
-	storeOrder.dest = newOrder.dest;
-	storeOrder.buttonType = newOrder.buttonType;
-	storeOrder.elevator = newOrder.elevator;
-	printf("Button lamp on: floor: %d, type: %d\n", storeOrder.dest, storeOrder.buttonType);
-	setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
-	while(orderQueue.inUse[pos]){
-		pos++;
-		if (pos == N_ORDERS){
-			printf("Error: orderQueue is full, order not received\n");
-			pthread_mutex_unlock(&(orderQueue.rwLock));
-			return;
-		}
-	}
-	orderQueue.Queue[pos] = storeOrder;
-	orderQueue.inUse[pos] = 1;
-	if (storeOrder.buttonType == BUTTON_COMMAND){
-		orderQueue.localPri[pos] = storeOrder.elevator;
-	}
-	if (findCost(newOrder, currentFloor, nextFloor) < N_FLOORS){
-		newFloor = newOrder.dest;
-	}
-	BufferInfo msg;
-	encodeMessage(msg, NULL, NULL, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, -1);
-	enqueue(sendQueue, &msg, sizeof(msg));
-	//dir = getMotorDirection();
-	//if (dir != DIRN_STOP){
-	//	printf("Dir: %d\n", dir);
-	//	newFloor = checkCurrentStatus(storeOrder,currentFloor,nextFloor);
-	//}
-	pthread_mutex_unlock(&(orderQueue.rwLock));
-	return newFloor;
-}
-/*
-int getNewOrder(int currentFloor, int nextFloor{
-	pthread_mutex_lock(&(orderQueue.rwLock));
-	int i, destFloor;
-
-	if (info.masterStatus == 1){
-	destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
-	//setButtonLamp(orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, 0);
-	}else{
-		BufferInfo msg;
-		msg.currentFloor = currentFloor;
-		if (nextFloor != -1){
-			msg.nextFloor = nextFloor;
-			msg.active = 1;
-		}
-		msg.masterStatus = info.masterStatus;
-		strcpy(msg.srcAddr, info.localIP);
-		strcpy(msg.dstAddr, info.broadcastIP);
-		msg.myState = MSG_GET_ORDER;
-
-		enqueue(sendQueue, &msg, sizeof(msg));
-	}
-	pthread_mutex_unlock(&(orderQueue.rwLock));
-	return destFloor;
-}*/
