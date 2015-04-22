@@ -11,17 +11,34 @@
 
 int localQueue[N_FLOORS];
 sem_t timeoutSem;
+int bestProposal;
 int MASTER; //Forward declaration?
 
 void* orderManager(void* args){
 	//int masterStatus = *(int *) args);
+	struct timespec startAnarchy;
+	struct timespec sleep = {.tv_sec = 2, .tv_nsec = 0};
+	struct timespec rem;
+	bestProposal = getLocalIP();
 	sem_init(&timeoutSem, 0, 0);
 	initPriorityQueue();
 	pthread_t sendMessages, receiveMessages, sortMessages_, masterTimeout_;
 	pthread_create(&sendMessages, 0, &send_message, 0);
 	pthread_create(&receiveMessages, 0, &listen_for_messages, 0);
 	pthread_create(&sortMessages_, 0, &sortMessages, 0);
-	pthread_create(&masterTimeout_, 0, &masterTimeout, 0);
+	while(1){
+		pthread_create(&masterTimeout_, 0, &masterTimeout, 0);
+		pthread_join(&masterTimeout_, 0);
+		//startAnarchy = clock_gettime();
+		nanosleep(sleep, rem);
+		if (bestProposal == getLocalIP()){
+			MASTER = 1;
+		}else{
+			MASTER = 0;
+		}
+		setMasterIP(bestProposal);
+		bestProposal = getLocalIP();
+	}
 
 
 }
@@ -115,13 +132,27 @@ void* sortMessages(void *args){
 				encodeMessage(newMsg, NULL, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, MASTER, -1, -1);
 				enqueue(sendQueue, &newMsg, sizeof(newMsg));
 			}
+			if (myState == MSG_MASTER_REQUEST){
+				int candidate = 1;
+				if (srcAddr > myIP){
+					candidate = 0;
+				}
+				BufferInfo newMsg;
+				encodeMessage(newMsg, NULL, NULL, MSG_MASTER_PROPOSAL, candidate, -1, -1);
+				enqueue(sendQueue, &newMsg, sizeof(newMsg));
+			}
+			if (myState == MSG_MASTER_PROPOSAL){
+				if (srcAddr > bestProposal){
+					bestProposal = srcAddr;
+				}
+			}
 
 			if (MASTER == 1){
 				if (myState == MSG_ADD_ORDER){
 					struct order newOrder;
 					newOrder.dest = bufOrder.nextFloor;
 					newOrder.buttonType = bufOrder.buttonType;
-					newOrder.elevator = inet_aton(bufOrder.srcAddr);
+					newOrder.elevator = srcAddr;
 					addNewOrder(newOrder, bufOrder.currentFloor,bufOrder.nextFloor);
 					if (bufOrder.buttonType == BUTTON_COMMAND){
 						BufferInfo newMsg;
@@ -131,7 +162,7 @@ void* sortMessages(void *args){
 				}
 				if(myState == MSG_DELETE_ORDER){
 					
-					deleteOrder(bufOrder.nextFloor,bufOrder.buttonType,srcAddr);
+					deleteOrder(bufOrder.currentFloor,bufOrder.buttonType,srcAddr);
 				}
 			}else{
 				if (myState == MSG_IM_ALIVE){
@@ -143,19 +174,23 @@ void* sortMessages(void *args){
 }
 
 void* masterTimeout(void *args){
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	struct timespec ts, rem;
-	
 	if (MASTER == 0){
-		ts.tv_sec = 5;
-		ts.tv_nsec = 0;
+		ts = clock_gettime();
+		ts.tv_sec = ts.tv_sec + 5;
 		int test;
 		while(1){
 			test = sem_timedwait(&timeoutSem, &ts);
 			if (test == -1){
 				printf("Master timeout\n");
-				//Someone becomes master
+				BufferInfo newMsg;
+				encodeMessage(newMsg, NULL, NULL, MSG_MASTER_REQUEST, -1, -1, -1);
+				enqueue(sendQueue, &newMsg, sizeof(newMsg));
 				return;
 			}
+			ts = clock_gettime();
+			ts.tv_sec = ts.tv_sec + 5;
 		}
 	}else{
 		ts.tv_sec = 1;
@@ -181,7 +216,7 @@ void deleteOrder(int floor, buttonType button, int elevator){
 		}
 	}else{
 		BufferInfo msg;
-		encodeMessage(NULL, NULL, MSG_DELETE_ORDER, floor, button, 1);
+		encodeMessage(msg, NULL, NULL, MSG_DELETE_ORDER, floor, button, 1);
 		enqueue(sendQueue, &msg, sizeof(msg));
 	}
 }
