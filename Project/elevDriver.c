@@ -8,13 +8,13 @@
 
 #define N_BUTTONS 3
 
-static const int lamp_channel_matrix[N_FLOORS][N_BUTTONS] = {
+static const int lampMatrix[N_FLOORS][N_BUTTONS] = {
 	{LIGHT_UP1, LIGHT_DOWN1, LIGHT_COMMAND1},
 	{LIGHT_UP2, LIGHT_DOWN2, LIGHT_COMMAND2},
 	{LIGHT_UP3, LIGHT_DOWN3, LIGHT_COMMAND3},
 	{LIGHT_UP4, LIGHT_DOWN4, LIGHT_COMMAND4},
 };
-static const int button_channel_matrix[N_FLOORS][N_BUTTONS] = {
+static const int buttonMatrix[N_FLOORS][N_BUTTONS] = {
 	{BUTTON_UP1, BUTTON_DOWN1, BUTTON_COMMAND1},
 	{BUTTON_UP2, BUTTON_DOWN2, BUTTON_COMMAND2},
 	{BUTTON_UP3, BUTTON_DOWN3, BUTTON_COMMAND3},
@@ -150,14 +150,14 @@ int isbuttonSignalValid(int floor, buttonType button){
 	return 1;
 }
 int getButtonSignal(int floor, buttonType button){
-	return io_read_bit(button_channel_matrix[floor][button]);
+	return io_read_bit(buttonMatrix[floor][button]);
 }
 void setButtonLamp(int floor, buttonType button, int status){
 	if (isbuttonSignalValid(floor,button)){
 			if (status){
-				io_set_bit(lamp_channel_matrix[floor][button]);
+				io_set_bit(lampMatrix[floor][button]);
 			}else{
-				io_clear_bit(lamp_channel_matrix[floor][button]);
+				io_clear_bit(lampMatrix[floor][button]);
 			}
 	}
 }

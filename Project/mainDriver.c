@@ -24,11 +24,14 @@ void* mainDriver() {
 	int thisElevator = getLocalIP();
 	motorDirection direction;
 	buttonType buttonCall;
-	int newFloor;
+	int newFloor,floorSetCommand,floorSetDown,floorSetUp;
 
 
 
 	while(!isStopped() && !isObstructed()){
+		floorSetCommand = -1;
+		floorSetDown = -1;
+		floorSetUp = -1;
 		setMotorDirection(DIRN_STOP);
 		setFloorIndicator(getFloor());
 		setDoorOpenLamp(1);
@@ -38,29 +41,32 @@ void* mainDriver() {
 		memset(localQueue,0,sizeof(int)*N_FLOORS);
 		currentFloor = getFloor();
 		for (i = 0; i < N_FLOORS; i++){
-			if(getButtonSignal(i,BUTTON_COMMAND)){
+			if(getButtonSignal(i,BUTTON_COMMAND) && floorSetCommand != i){
 				if(i != currentFloor){
 					struct order newOrder = {.dest = i, .buttonType = BUTTON_COMMAND, .elevator = thisElevator};
 					newFloor = addNewOrder(newOrder,0,0);
-					while(getButtonSignal(i,BUTTON_COMMAND)){}
+					floorSetCommand = i;
+					//while(getButtonSignal(i,BUTTON_COMMAND)){}
 			}
 			}
 			if(i< N_FLOORS-1){
-				if (getButtonSignal(i,BUTTON_CALL_UP)){
+				if (getButtonSignal(i,BUTTON_CALL_UP) && floorSetUp != i){
 					if(i != currentFloor){
 						struct order newOrder = {.dest = i, .buttonType = BUTTON_CALL_UP, .elevator = thisElevator};
 						newFloor = addNewOrder(newOrder,0,0);
-						while(getButtonSignal(i,BUTTON_CALL_UP)){}							
+						floorSetUp = i;
+						//while(getButtonSignal(i,BUTTON_CALL_UP)){}							
 														
 					}
 				}
 			}
 			if(i>0){
-				if (getButtonSignal(i,BUTTON_CALL_DOWN)){
+				if (getButtonSignal(i,BUTTON_CALL_DOWN) && floorSetDown != i){
 					if (i != currentFloor){
 						struct order newOrder = {.dest = i, .buttonType = BUTTON_CALL_DOWN, .elevator = thisElevator};
 						newFloor = addNewOrder(newOrder,0,0);
-						while(getButtonSignal(i,BUTTON_CALL_DOWN)){}
+						floorSetDown = i;
+						//while(getButtonSignal(i,BUTTON_CALL_DOWN)){}
 					}
 				}
 			}
