@@ -23,7 +23,7 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 	backlog = 0;
 	for (i = 0; i < N_ORDERS; i++){
 		if (inUse[i] == 1){
-			cost = findCost(queue[i].dest,currentFloor, nextFloor);
+			cost = findCost(queue[i].dest,currentFloor, nextFloor,queue[i].buttonType);
 			if(cost < min){
 				min = cost;
 				minPos = queue[i].dest;
@@ -49,20 +49,21 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 		return minPos;
 	}
 }
-int findCost(int costFloor,int currentFloor, int nextFloor){
+int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType){
 	int cost;
 	int dir = nextFloor - currentFloor;
 	cost = costFloor - currentFloor;
 	if (nextFloor == -1){
 		return abs(cost);
 	}
-	if ((cost * dir) >= 0){
+	if ((cost * dir) >= 0 && ((dir>0 && (buttonType == 0 || buttonType == 2))||(dir<0 && (buttonType == 2 || buttonType == 1))){
 		return abs(cost);
 	}else{
 		return N_FLOORS + 1;
 	}
 
 }
+/*
 int checkCurrentStatus(struct order newOrder, int currentFloor,int nextFloor){
 	int newCost;
 	motorDirection direction;
@@ -94,3 +95,4 @@ int checkCurrentStatus(struct order newOrder, int currentFloor,int nextFloor){
 		return -1;
 	}
 }
+*/

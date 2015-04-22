@@ -68,8 +68,6 @@ void* mainDriver() {
 		nextFloor = getNewOrder(currentFloor, nextFloor);
 		
 		printf("nextFloor %d\n",nextFloor );
-		
-		
 		if(nextFloor != -1){
 			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
@@ -102,9 +100,7 @@ void* mainDriver() {
 							if(newFloor != -1){
 								localQueue[newFloor] = 1;
 								localQueueButtonType[newFloor] = newOrder.buttonType;
-
 							}
-							
 						}
 					}
 					if(j<N_FLOORS-1){
@@ -115,10 +111,8 @@ void* mainDriver() {
 							while(getButtonSignal(j,BUTTON_CALL_UP)){}
 							if(newFloor != -1){
 								localQueue[newFloor] = 1;
-								localQueueButtonType[newFloor] = newOrder.buttonType;
-							
-							}
-							
+								localQueueButtonType[newFloor] = newOrder.buttonType;	
+							}	
 						}
 						}
 					}
@@ -128,11 +122,7 @@ void* mainDriver() {
 					setDoorOpenLamp(1);
 					setFloorIndicator(getFloor());
 					setButtonLamp(getFloor(),localQueueButtonType[getFloor()],0);
-					//setButtonLamp(getFloor(),BUTTON_CALL_DOWN,0);
-					//setButtonLamp(getFloor(),BUTTON_CALL_UP,0);
-
 					k=0;
-					//printf("Waiting\n");
 					while((k<100000) && (!isStopped() && !isObstructed())){
 						k++;
 						setMotorDirection(DIRN_STOP);
@@ -143,7 +133,6 @@ void* mainDriver() {
 				}			
 				if (getFloor() == nextFloor){
 					k = 0;
-					//nextFloor = -1;
 					deleteOrder(getFloor(), localQueueButtonType[getFloor()]);
 					while((k<100000) && (!isStopped() && !isObstructed())){
 						k++;
