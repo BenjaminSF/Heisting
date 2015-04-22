@@ -24,7 +24,7 @@ void* mainDriver() {
 	int thisElevator = getLocalIP();
 	motorDirection direction;
 	buttonType buttonCall;
-	int newFloor,floorSetCommand,floorSetDown,floorSetUp;
+	int newFloor,floorSetCommand,floorSetDown,floorSetUp,floorSetCommandRunning,floorSetDownRunning,floorSetUpRunning;
 
 
 
@@ -85,43 +85,44 @@ void* mainDriver() {
 			}
 			setDoorOpenLamp(0);
 			goToFloor(nextFloor);
+			floorSetCommandRunning = -1;
+			floorSetUpRunning = -1;
+			floorSetDownRunning = -1;
 			while((getFloor() != nextFloor) && (!isStopped() && !isObstructed())){
 				for(j=0;j<N_FLOORS;j++){
 					
-					if(getButtonSignal(j,BUTTON_COMMAND)){
+					if(getButtonSignal(j,BUTTON_COMMAND) && floorSetCommandRunning != j){
 						struct order newOrder = {.dest = j, .buttonType = BUTTON_COMMAND, .elevator = thisElevator};
 						newFloor = addNewOrder(newOrder,lastFloor,nextFloor);
-						while(getButtonSignal(j,BUTTON_COMMAND)){}
-						if(newFloor != -1){
-							localQueue[newFloor] = 1;
-							localQueueButtonType[newFloor] = newOrder.buttonType;
-						}
+						//while(getButtonSignal(j,BUTTON_COMMAND)){}
+						floorSetCommandRunning = j;
+						
 					}
 					if(j>0){
-						if (getButtonSignal(j,BUTTON_CALL_DOWN)){
+						if (getButtonSignal(j,BUTTON_CALL_DOWN) && floorSetDownRunning != j){
 							
 							struct order newOrder = {.dest = j, .buttonType = BUTTON_CALL_DOWN, .elevator = thisElevator};
 							newFloor = addNewOrder(newOrder,lastFloor,nextFloor);
-							while(getButtonSignal(j,BUTTON_CALL_DOWN)){}
-							if(newFloor != -1){
-								localQueue[newFloor] = 1;
-								localQueueButtonType[newFloor] = newOrder.buttonType;
-							}
+							//while(getButtonSignal(j,BUTTON_CALL_DOWN)){}
+							floorSetDownRunning = j;
+							
 						}
 					}
 					if(j<N_FLOORS-1){
-						if (getButtonSignal(j,BUTTON_CALL_UP)){
-														
+						if (getButtonSignal(j,BUTTON_CALL_UP) && floorSetUpRunning != j){
 							struct order newOrder = {.dest = j, .buttonType = BUTTON_CALL_UP, .elevator = thisElevator};
 							newFloor = addNewOrder(newOrder,lastFloor,nextFloor);
-							while(getButtonSignal(j,BUTTON_CALL_UP)){}
-							if(newFloor != -1){
-								localQueue[newFloor] = 1;
-								localQueueButtonType[newFloor] = newOrder.buttonType;	
-							}	
+							//while(getButtonSignal(j,BUTTON_CALL_UP)){}
+							floorSetUpRunning = j;
+							
 						}
 						}
 					}
+			
+				newFloor = getNewOrder(lastFloor,nextFloor);
+				if(newFloor != nextFloor){
+					localQueue[newFloor] = 1;
+				}
 				if(localQueue[getFloor()]== 1 && (getFloor() != -1)){
 					setMotorDirection(DIRN_STOP);
 					deleteOrder(getFloor(),localQueueButtonType[getFloor()], thisElevator);
@@ -136,7 +137,7 @@ void* mainDriver() {
 					setDoorOpenLamp(0);
 					localQueue[getFloor()] = 0;
 					goToFloor(nextFloor);
-				}			
+				}	
 				if (getFloor() == nextFloor){
 					k = 0;
 					deleteOrder(getFloor(), localQueueButtonType[getFloor()], thisElevator);
@@ -144,6 +145,9 @@ void* mainDriver() {
 						k++;
 						setMotorDirection(DIRN_STOP);
 					}
+				}
+				if(getFloor() != -1){
+					lastFloor = getFloor();
 				}
 			}
 		}
