@@ -76,7 +76,7 @@ void* mainDriver() {
 			}
 		}
 		nextFloor = getNewOrder(currentFloor, nextFloor);
-		reportElevState(currentFloor, nextFloor);
+		//reportElevState(currentFloor, nextFloor);
 
 		//printf("nextFloor %d\n",nextFloor );
 		if(nextFloor != -1){

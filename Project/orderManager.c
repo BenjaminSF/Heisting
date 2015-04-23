@@ -176,7 +176,7 @@ void distributeOrders(){ //Master only
 		for (i = 0; i < addrsCount; i++){
 			tmpAddr = addrsList(i);
 			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr) && !elevStates.active[i]){ //Send BUTTON_COMMAND orders first
-				printf("BUTTON_COMMAND\n");
+				printf("BUTTON_COMMAND, source: %d\n", tmpAddr);
 				minCost = orderQueue.enRoute[j];
 				minFloor = orderQueue.Queue[j].dest;
 				minElev = tmpAddr;
@@ -208,8 +208,9 @@ void distributeOrders(){ //Master only
 	//printf("Release mutex\n");
 	if (minCost < N_FLOORS){
 		//printf("Sending elevator: %d, to floor: %d\n", minElev, minFloor);
-		orderQueue.enRoute[minOrderPos] = 1;
+		orderQueue.enRoute[minOrderPos] = 5;
 		elevStates.active[minPos] = 1;
+		printf("Send order to: %d\n", minElev);
 		if (minElev == getLocalIP()){
 			//printf("Go here!\n");
 			localManQueue[minFloor] = 1;
@@ -284,6 +285,10 @@ void* sortMessages(void *args){
 					if (bufOrder.buttonType == BUTTON_COMMAND){
 						BufferInfo newMsg;
 						encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
+						enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
+					}else{
+						BufferInfo newMsg;
+						encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
 						enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					}
 				}
@@ -361,6 +366,7 @@ void* masterTimeout(void *args){
 		}
 	}else{
 		printf("Timer: master\n");
+		reportElevState(getFloor(), -1);
 		ts.tv_sec = 5;
 		ts.tv_nsec = 0;
 		BufferInfo newMsg;
