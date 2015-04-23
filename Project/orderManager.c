@@ -165,8 +165,8 @@ void* sortMessages(void *args){
 		//printf("Message received, should never ever ever happen but sometimes it should\n");
 		dequeue(receiveQueue, &bufOrder);
 		int myState = bufOrder.myState;
-		int dstAddr = inet_addr(&bufOrder.dstAddr);
-		int srcAddr = inet_addr(&bufOrder.srcAddr);
+		int dstAddr = bufOrder.dstAddr;
+		int srcAddr = bufOrder.srcAddr;
 		if ((myIP == dstAddr) || (broadcast == dstAddr)){
 			if (myState == MSG_DO_ORDER){
 				printf("Receive: DO_ORDER%d\n", bufOrder.nextFloor);

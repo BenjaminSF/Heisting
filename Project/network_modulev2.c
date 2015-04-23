@@ -62,7 +62,6 @@ void* send_message(void *args){
 		wait_for_content(sendQueue);
 		dequeue(sendQueue, &msg);
 		printf("Sending message: %d\n", msg.myState);
-		msg.srcAddr = strdup("Dette er en lang test, dette er mer enn 8 byte langt.");
 		printf("Send size srcAddr: %lu, %s\n", sizeof(msg.srcAddr), msg.srcAddr);
 
 		if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
@@ -74,7 +73,7 @@ void* send_message(void *args){
 		if (setsockopt(sendSocket, SOL_SOCKET, SO_REUSEPORT, (void*)&socketPermission, sizeof(socketPermission)) < 0){
 			perror("sendSocket re-use port enable failed\n");
 		}
-		if (sendto(sendSocket, (void *)&msg, (size_t) BUFFER_SIZE, 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
+		if (sendto(sendSocket, (void *)&msg,  sizeof(BufferInfo), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
 			perror("Sending socket failed\n");
 		}
 		if (sendOnce == 1){
@@ -89,7 +88,7 @@ void* send_message(void *args){
 void *listen_for_messages(void *args){
 	printf("Listen started\n");
 	//char tempString[BUF_SIZE];
-	BufferInfo *tempMsg = (BufferInfo *)malloc(sizeof(char)* 100);
+	BufferInfo *tempMsg = (BufferInfo *)malloc(sizeof(BufferInfo));
 	int nullParam = 0;
 	int port, timeoutMs;
 	struct ListenParams *myArgs;
@@ -223,8 +222,8 @@ int init_network(){
 	//Create message to be broadcasted
 	//char connect2meMsg[BUF_SIZE];
 	BufferInfo sendInfo;
-	sendInfo.srcAddr = strdup(info.localIP);
-	sendInfo.dstAddr = strdup(info.broadcastIP);
+	sendInfo.srcAddr = inet_addr(info.localIP);
+	sendInfo.dstAddr = inet_addr(info.broadcastIP);
 	sendInfo.masterStatus = 0;
 	sendInfo.myState = MSG_CONNECT_SEND;
 	//encodeMessage(connect2meMsg, sendInfo);
@@ -260,14 +259,16 @@ int init_network(){
 		//memset(tmpResponseMsg, '\0', BUF_SIZE);
 		dequeue(receiveQueue, &bufInfo);
 		//bufInfo = decodeMessage(tmpResponseMsg);
-		printf("Received: %s\n", bufInfo.srcAddr);
+		printf("Received: %d\n", bufInfo.srcAddr);
 		printf("Received: %d\n", bufInfo.myState);
 		if (bufInfo.myState == MSG_CONNECT_RESPONSE){ //Only use related messages
 			printf("Adding to list\n");
 			//info.addrsList[addrslistCounter] = bufInfo.srcAddr;
 			if (bufInfo.masterStatus == 1){
 				info.masterStatus = 0;
-				info.masterIP = strdup(bufInfo.srcAddr);
+				struct in_addr tmp;
+				tmp.s_addr = bufInfo.srcAddr;
+				info.masterIP = strdup(inet_ntoa(tmp));
 				//master not available
 				//current master is bufInfo.srcAddr
 			}
@@ -306,8 +307,8 @@ BufferInfo decodeMessage(char *buffer){
 	printf("Helt feil!!!\n");
 	BufferInfo msg;
 	//For testing only:
-	msg.srcAddr = "192.128.187.111";
-	msg.dstAddr = "192.128.187.123";
+	msg.srcAddr = inet_addr("192.128.187.111");
+	msg.dstAddr = inet_addr("192.128.187.123");
 	msg.masterStatus = 1;
 	msg.myState = MSG_CONNECT_RESPONSE;
 	//End: Testing
@@ -315,22 +316,22 @@ BufferInfo decodeMessage(char *buffer){
 	return msg;
 }
 
-void encodeMessage(BufferInfo *msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2, int var3){
+void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int var1, int var2, int var3){
 	printf("Encoding message------------------------------------------------------\n");
 	if (srcAddr == NULL){
 		printf("strcpy: %s , %s\n",msg->srcAddr,info.localIP);
 
-		msg->srcAddr = strdup(info.localIP);
+		msg->srcAddr = inet_addr(info.localIP);
 		printf("strcpy: msg.srcAddr\n");
 	}else{
-		msg->srcAddr = strdup(srcAddr);
+		msg->srcAddr = inet_addr(srcAddr);
 	}
 	if (dstAddr == NULL){
-		msg->dstAddr = strdup(info.broadcastIP);
+		msg->dstAddr = inet_addr(info.broadcastIP);
 		printf("strcpy: dstAddr\n");
 
 	}else{
-		msg->dstAddr = strdup(dstAddr);
+		msg->dstAddr = dstAddr;
 	}
 	printf("Encode: IPs done\n");
 	msg->myState = myState;

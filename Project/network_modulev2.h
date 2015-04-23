@@ -27,8 +27,8 @@ enum bufferState{
 };
 
 typedef struct BufferInfo{
-	char *srcAddr;
-	char *dstAddr;
+	int srcAddr;
+	int dstAddr;
 	int masterStatus;
 	enum bufferState myState;
 	int active;
