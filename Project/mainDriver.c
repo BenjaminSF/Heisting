@@ -75,9 +75,11 @@ void* mainDriver() {
 			}
 		}
 		nextFloor = getNewOrder(currentFloor, nextFloor);
-		reportElevState(currentFloor, nextFloor);
+
 		//printf("nextFloor %d\n",nextFloor );
 		if(nextFloor != -1){
+			printf("Report 0\n");
+			reportElevState(currentFloor, nextFloor);
 			//printf("Kommer ikke hit\n");
 			localQueue[nextFloor] = 1;
 			lastFloor = getFloor();
@@ -100,6 +102,7 @@ void* mainDriver() {
 					if(tmp != -1 && tmp != lastFloor){
 						printf("Last lastFloor equals ------------------------------------ %d\n",lastFloor);
 						lastFloor = tmp;
+						printf("Report 1\n");
 						reportElevState(lastFloor, nextFloor);
 						setFloorIndicator(lastFloor);
 
@@ -138,9 +141,11 @@ void* mainDriver() {
 					localQueue[newFloor] = 1;
 					if(buttonCall == BUTTON_CALL_UP && newFloor>nextFloor){
 						nextFloor = newFloor;
+						printf("Report 2\n");
 						reportElevState(lastFloor, nextFloor);
 					}else if(buttonCall == BUTTON_CALL_DOWN && newFloor < nextFloor){
 						nextFloor = newFloor;
+						printf("Report 3\n");
 						reportElevState(lastFloor, nextFloor);
 					}
 
@@ -185,6 +190,7 @@ void* mainDriver() {
 			localQueue[lastFloor] = 0; 
 			printf("lastFloor: %d, currentFloor: %d\n", lastFloor, currentFloor);
 			nextFloor = -1;
+			printf("Report 4\n");
 			reportElevState(lastFloor, nextFloor);
 			k = 0;
 			printf("Dørene åpnes\n");

@@ -159,12 +159,13 @@ void distributeOrders(){ //Master only
 				minCost = 0;
 				minFloor = orderQueue.Queue[j].dest;
 				minElev = tmpAddr;
-				orderQueue.enRoute[j] = 1;
+				
 				break;
 			}
 			if (orderQueue.inUse[j]){
 				//printf("nextElevState: %d\n", elevStates.nextFloor[i]);
 				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType);
+				if (orderQueue.enRoute[j] == 1) tmpCost += orderQueue.enRoute[j];
 				//printf("tmpCost: %d\n", tmpCost);
 				if (tmpCost < minCost){
 					minCost = tmpCost;
@@ -179,6 +180,7 @@ void distributeOrders(){ //Master only
 	pthread_mutex_unlock(&(orderQueue.rwLock));
 	if (minCost != N_FLOORS){
 		//printf("Sending elevator: %d, to floor: %d\n", minElev, minFloor);
+		orderQueue.enRoute[j] = 1;
 		if (minElev == getLocalIP()){
 			//printf("Go here!\n");
 			localManQueue[minFloor] = 1;
@@ -259,12 +261,22 @@ void* sortMessages(void *args){
 					}
 				}
 				if (myState == MSG_ELEVSTATE){
+					printf("Receive: MSG_ELEVSTATE\n");
 					int i;
 					for (i = 0; i < getAddrsCount(); i++){
 						if (addrsList(i) == srcAddr){
 							elevStates.floor[i] = bufOrder.currentFloor;
 							elevStates.nextFloor[i] = bufOrder.nextFloor;
 							break;
+						}
+					}
+				}
+				if (myState == MSG_CONFIRM_ORDER){
+					printf("Receive: MSG_CONFIRM_ORDER\n");
+					int i;
+					for (i = 0; i < N_ORDERS; i++){
+						if (orderQueue.inUse[i] && (orderQueue.Queue[i].dest == bufOrder.nextFloor) && orderQueue.enRoute[i]){
+							orderQueue.enRoute[i]++;
 						}
 					}
 				}
@@ -276,6 +288,9 @@ void* sortMessages(void *args){
 				if (myState == MSG_DO_ORDER){
 					printf("Receive: DO_ORDER%d\n", bufOrder.nextFloor);
 					localManQueue[bufOrder.nextFloor] = 1;
+					BufferInfo newMsg;
+					encodeMessage(&newMsg, 0, 0, MSG_CONFIRM_ORDER,bufOrder.nextFloor, -1, -1);
+					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 				}
 			}
 		}
@@ -300,6 +315,7 @@ void* masterTimeout(void *args){
 				enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 				return;
 			}
+			printf("Aliveness confirmed\n");
 			clock_gettime(CLOCK_REALTIME, &ts);
 			ts.tv_sec = ts.tv_sec + 5;
 		}
