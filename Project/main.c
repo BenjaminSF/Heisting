@@ -19,14 +19,14 @@ void main(){
 	pthread_t driver, sendMessages, receiveMessages, manager, printsAreFun;
 	pthread_create(&driver,NULL,&mainDriver,NULL);
 	pthread_create(&manager, NULL, &orderManager, NULL);
-	pthread_create(&printsAreFun,NULL,&printFunction,NULL);
+	//pthread_create(&printsAreFun,NULL,&printFunction,NULL);
 	//pthread_create(&sendMessages, NULL, &send_message, 0);
 
 	pthread_join(driver,NULL);
 	//pthread_join(sendMessages,NULL);
 	printf("test\n");
 	pthread_join(manager,NULL);
-	pthread_join(printsAreFun,NULL);
+	//pthread_join(printsAreFun,NULL);
 	//struct ListenParams
 	//pthread_create(&receiveMessages, NULL, &listen_for_messages, NULL);
 
