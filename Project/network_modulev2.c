@@ -402,7 +402,9 @@ void addElevatorAddr(int newIP){
 	struct in_addr tmp;
 	tmp.s_addr = newIP;
 	int i;
-	for (i = 0; i < MAX_ELEVS; i++){
+
+	for (i = 0; i < info.addrslistCounter; i++){
+		printf("HEllo\n");
 		if (!strcmp(info.addrsList[i], inet_ntoa(tmp))){
 			isInList = 1;
 			break;
