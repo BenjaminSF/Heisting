@@ -208,11 +208,13 @@ void* printFunction(){
 	while(1){
 		for (i = 0; i < N_FLOORS; i++){
 			if (getButtonSignal(i,BUTTON_COMMAND) || getButtonSignal(i,BUTTON_CALL_DOWN) || getButtonSignal(i,BUTTON_CALL_UP)){
-				printf("-----------------------------------------\n");
-				printf("getFloor() = %d\n", getFloor());
-				printf("|Floor| BUTTON_COMMAND | BUTTON_CALL_UP | BUTTON_CALL_DOWN|\n");
-				for (j= 0; i < N_FLOORS; i++){
-					printf("|  %d  |  %d  |  %d  |  %d  |\n",j, getButtonLamp(j,BUTTON_COMMAND),getButtonLamp(j,BUTTON_CALL_UP),getButtonLamp(j,BUTTON_CALL_DOWN));
+				printf("------------------------------------------------------------\n");
+				printf("getFloor() = %d, floor: %d, up: %d, down: %d, command: %d\n", getFloor(), i, getButtonSignal(i, BUTTON_CALL_UP), getButtonSignal(i, BUTTON_CALL_DOWN), getButtonSignal(i, BUTTON_COMMAND));
+				printf("|Floor| BUTTON_COMMAND | BUTTON_CALL_UP | BUTTON_CALL_DOWN |\n");
+				printf("------------------------------------------------------------\n");
+
+				for (j= 0; j < N_FLOORS; j++){
+					printf("|  %d  |        %d       |        %d       |         %d        |\n",j, getButtonLamp(j,BUTTON_COMMAND),getButtonLamp(j,BUTTON_CALL_UP),getButtonLamp(j,BUTTON_CALL_DOWN));
 				}
 			}
 		}

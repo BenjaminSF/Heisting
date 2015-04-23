@@ -57,12 +57,13 @@ void* send_message(void *args){
 	sendAddr.sin_port = htons(info.port);
 	sendAddr.sin_addr.s_addr = inet_addr(info.broadcastIP);
 	int socketPermission = 1;
-	BufferInfo msg;
+	printf("BufferInfo: %lu, int: %lu, enum: %lu\n", sizeof(BufferInfo), sizeof(int), sizeof(char));
+	BufferInfo *msg = (BufferInfo *)malloc(sizeof(BufferInfo)+60);
 	while(1){
 		wait_for_content(sendQueue);
-		dequeue(sendQueue, &msg);
-		printf("Sending message: %d\n", msg.myState);
-		printf("Send size srcAddr: %lu, %d\n", sizeof(msg.srcAddr), msg.srcAddr);
+		dequeue(sendQueue, msg);
+		//printf("Sending message: %d\n", msg->myState);
+		//printf("Send size srcAddr: %lu, %d\n", sizeof(msg), msg->srcAddr);
 
 		if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
 			perror("SendSocket not created\n");
@@ -73,13 +74,14 @@ void* send_message(void *args){
 		if (setsockopt(sendSocket, SOL_SOCKET, SO_REUSEPORT, (void*)&socketPermission, sizeof(socketPermission)) < 0){
 			perror("sendSocket re-use port enable failed\n");
 		}
-		if (sendto(sendSocket, (void *)&msg,  sizeof(BufferInfo), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
+		if (sendto(sendSocket, (void *) msg,  sizeof(BufferInfo), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
 			perror("Sending socket failed\n");
 		}
 		if (sendOnce == 1){
 			break;
 		}
 	}
+	free(msg);
 	printf("Sending finished\n");
 	return;
 }
@@ -87,7 +89,6 @@ void* send_message(void *args){
 
 void *listen_for_messages(void *args){
 	printf("Listen started\n");
-	//char tempString[BUF_SIZE];
 	BufferInfo *tempMsg = (BufferInfo *)malloc(sizeof(BufferInfo));
 	int nullParam = 0;
 	int port, timeoutMs;
@@ -111,12 +112,8 @@ void *listen_for_messages(void *args){
 	}else{
 		myArgs = ((struct ListenParams*)(args));
 		port = myArgs->port;
-
 		timeoutMs = myArgs->timeoutMs;
-		printf("Test1\n");
-
 		timeout->tv_sec = 0;
-		printf("Test2\n");
 		timeout->tv_usec = timeoutMs * 1000;
 
 	}
@@ -159,9 +156,9 @@ void *listen_for_messages(void *args){
 			default:
 				//printf("Recieving\n");
 				//memset(tempString, '\0', BUF_SIZE);
-				recvfrom(recSock, tempMsg, (size_t) BUFFER_SIZE, 0, (struct sockaddr *)&remaddr, &remaddrLen);
+				recvfrom(recSock, tempMsg, sizeof(BufferInfo), 0, (struct sockaddr *)&remaddr, &remaddrLen);
 				printf("ListenReceived: %d\n", tempMsg->myState);
-				printf("size, struct: %d, srcAddr: %lu, myState: %lu\n", BUFFER_SIZE, sizeof(int*), sizeof(char));
+				//printf("size, struct: %d, srcAddr: %lu, myState: %lu\n", sizeof(tempMsg), sizeof(int*), sizeof(char));
 				enqueue(receiveQueue, tempMsg, BUFFER_SIZE);
 				if (!nullParam) sem_post(&myArgs->readReady);
 				
@@ -181,7 +178,7 @@ int init_network(){
 	sendQueue = new_fifoqueue();
 	
 	//Finds the local machine's IP address
-	printf("Start init\n");
+	printf("Start init_network()\n");
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_in *sa;
 	char *tmpIP;
@@ -201,7 +198,7 @@ int init_network(){
 	
 	//set IP info for use by other functions
 	info.localIP = strdup(tmpIP);
-	info.port = 20016; //Set to a static value for port, could implement and call a function if necessary
+	info.port = 20023; //Set to a static value for port, could implement and call a function if necessary
 	
 	//Finds broadcast-IP:
 	char *lastDot;
@@ -303,7 +300,6 @@ int init_network(){
 }
 
 BufferInfo decodeMessage(char *buffer){
-	printf("Helt feil!!!\n");
 	BufferInfo msg;
 	//For testing only:
 	msg.srcAddr = inet_addr("192.128.187.111");
@@ -321,13 +317,11 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 		printf("strcpy: %d , %s\n",msg->srcAddr,info.localIP);
 
 		msg->srcAddr = inet_addr(info.localIP);
-		printf("strcpy: msg.srcAddr\n");
 	}else{
 		msg->srcAddr = srcAddr;
 	}
 	if (dstAddr == 0){
 		msg->dstAddr = inet_addr(info.broadcastIP);
-		printf("strcpy: dstAddr\n");
 
 	}else{
 		msg->dstAddr = dstAddr;

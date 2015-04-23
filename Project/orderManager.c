@@ -33,10 +33,8 @@ void* orderManager(void* args){
 	pthread_create(&receiveMessages, 0, &listen_for_messages, 0);
 	pthread_create(&sortMessages_, 0, &sortMessages, 0);
 	while(1){
-		printf("Kanskje kommer man hit\n");
 		pthread_create(&masterTimeout_, 0, &masterTimeout, 0);
 		pthread_join(masterTimeout_, 0);
-		printf("Burde ikke komme hit\n");
 		nanosleep(&sleep, &rem);
 		if (bestProposal == getLocalIP()){
 			MASTER = 1;
@@ -46,7 +44,6 @@ void* orderManager(void* args){
 		setMasterIP(bestProposal);
 		bestProposal = getLocalIP();
 	}
-	printf("Dette er for langt\n");
 	pthread_join(sendMessages, NULL);
 	pthread_join(receiveMessages, NULL);
 	pthread_join(sortMessages_, NULL);
@@ -130,7 +127,7 @@ int getNewOrder(int currentFloor, int nextFloor){
 		} 
 		//localQueue[destFloor] = 0;
 	}
-	printf("currentFloor: %d, nextFloor: %d, destFloor: %d\n", currentFloor, nextFloor, destFloor);
+	//printf("currentFloor: %d, nextFloor: %d, destFloor: %d\n", currentFloor, nextFloor, destFloor);
 
 	return destFloor;
 }
@@ -291,7 +288,7 @@ void deleteOrder(int floor, buttonType button, int elevator){
 }
 
 int ordercmp(struct order *A, struct order *B){
-	printf("Enter ordercmp\n");
+	//printf("Enter ordercmp\n");
 	int x = 1;
 	if (A->dest != B->dest) x = 0;
 	if (A->buttonType != B->buttonType) x = 0;
