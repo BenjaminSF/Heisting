@@ -164,7 +164,7 @@ int getNewOrder(int currentFloor, int nextFloor){
 
 void distributeOrders(){ //Master only
 	//printf("Enter distributeOrders\n");
-	int addrsCount, i, j, tmpAddr, minCost, tmpCost, minFloor, minElev, minButton;
+	int addrsCount, i, j, tmpAddr, minCost, tmpCost, minFloor, minElev, minButton, minPos;
 
 	addrsCount = getAddrsCount();
 	//printf("Getting mutex\n");
@@ -175,16 +175,16 @@ void distributeOrders(){ //Master only
 		//if (orderQueue.inUse[j]) printf("Det finnes orders!\n");
 		for (i = 0; i < addrsCount; i++){
 			tmpAddr = addrsList(i);
-			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr)){ //Send BUTTON_COMMAND orders first
+			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr) && !elevStates.active[i]){ //Send BUTTON_COMMAND orders first
 				printf("BUTTON_COMMAND\n");
 				minCost = orderQueue.enRoute[j];
 				minFloor = orderQueue.Queue[j].dest;
 				minElev = tmpAddr;
 				minButton = orderQueue.Queue[j].buttonType;
-				
+				minPos = i;
 				break;
 			}
-			if (orderQueue.inUse[j]){
+			if (orderQueue.inUse[j] && !elevStates.active[i]){
 				//printf("floor: %d, nextElevState: %d\n", elevStates.floor[i], elevStates.nextFloor[i]);
 				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType);
 				//printf("tmpCost1: %d\n", tmpCost);
@@ -195,6 +195,7 @@ void distributeOrders(){ //Master only
 					minFloor = orderQueue.Queue[j].dest;
 					minElev = tmpAddr;
 					minButton = orderQueue.Queue[j].buttonType;
+					minPos = i;
 				}
 			}
 		}
@@ -206,6 +207,7 @@ void distributeOrders(){ //Master only
 	if (minCost < N_FLOORS){
 		//printf("Sending elevator: %d, to floor: %d\n", minElev, minFloor);
 		orderQueue.enRoute[j] = 1;
+		elevStates.active[minPos] = 1;
 		if (minElev == getLocalIP()){
 			//printf("Go here!\n");
 			localManQueue[minFloor] = 1;
@@ -299,6 +301,7 @@ void* sortMessages(void *args){
 						if (addrsList(i) == srcAddr){
 							elevStates.floor[i] = bufOrder.currentFloor;
 							elevStates.nextFloor[i] = bufOrder.nextFloor;
+							if (bufOrder.nextFloor == -1) elevStates.active[i] = 0;
 							break;
 						}
 					}
