@@ -30,13 +30,19 @@ void* mainDriver() {
 		floorSetCommand = -1;
 		floorSetDown = -1;
 		floorSetUp = -1;
+		currentFloor = getFloor();
 		setMotorDirection(DIRN_STOP);
-		setFloorIndicator(getFloor());
+		if (currentFloor != -1){
+			setFloorIndicator(getFloor());
+		}else{
+			setFloorIndicator(lastFloor);
+		}
+
 		setDoorOpenLamp(1);
 		//nextFloor = -1;
 
 		memset(localQueue,0,sizeof(int)*N_FLOORS);
-		currentFloor = getFloor();
+		
 		for (i = 0; i < N_FLOORS; i++){
 			if(getButtonSignal(i,BUTTON_COMMAND) && floorSetCommand != i){
 				if(i != currentFloor){

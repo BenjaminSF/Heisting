@@ -13,7 +13,7 @@ int localQueue[N_FLOORS];
 struct {
 	int active[N_ELEVATORS];
 	int floor[N_ELEVATORS];
-	int direction[N_ELEVATORS];
+	int nextFloor[N_ELEVATORS];
 } elevStates;
 sem_t timeoutSem;
 int bestProposal;
@@ -83,6 +83,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		printf("Add order: dest: %d, button: %d, elev: %d\n", storeOrder.dest, storeOrder.buttonType, storeOrder.elevator);
 		orderQueue.Queue[pos] = storeOrder;
 		orderQueue.inUse[pos] = 1;
+		orderQueue.enRoute[pos] = 0;
 		if (storeOrder.buttonType == BUTTON_COMMAND){
 			orderQueue.localPri[pos] = storeOrder.elevator;
 			setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
@@ -106,11 +107,8 @@ int getNewOrder(int currentFloor, int nextFloor){
 	int dir = nextFloor - currentFloor;
 	if (nextFloor == -1) dir = 0;
 	if (MASTER == 1){
-		//printf("Tying to get mutex\n");
 		pthread_mutex_lock(&(orderQueue.rwLock));
-		//printf("Mutex owner: getNewORder\n");
 		destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
-		//printf("Mutex released: getNewORder\n");
 		pthread_mutex_unlock(&(orderQueue.rwLock));
 	}else{
 		int i, tmp;
@@ -134,21 +132,48 @@ int getNewOrder(int currentFloor, int nextFloor){
 
 void distributeOrders(){ //Master only
 	printf("Enter distributeOrders\n");
-	int addrsCount, i, j, tmpAddr;
-	//while(1){
-		addrsCount = getAddrsCount();
-		pthread_mutex_lock(&(orderQueue.rwLock));
-		//printf("Mutex owner: distributeOrders\n");
-		for (j = 0; j < N_ORDERS; j++){
-			for (i = 0; i < addrsCount; i++){
-				tmpAddr = addrsList(i);
-				if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr)){
-					
+	int addrsCount, i, j, tmpAddr, minCost, tmpCost, minFloor, minElev;
+
+	addrsCount = getAddrsCount();
+	pthread_mutex_lock(&(orderQueue.rwLock));
+	//printf("Mutex owner: distributeOrders\n");
+	for (j = 0; j < N_ORDERS; j++){
+		minCost = N_FLOORS;
+		for (i = 0; i < addrsCount; i++){
+			tmpAddr = addrsList(i);
+			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr)){ //Send BUTTON_COMMAND orders first
+				if (tmpAddr == getLocalIP()){ //If master
+					minCost = 0;
+				}else{
+					minCost = 0;
+					minFloor = orderQueue.Queue[j].dest;
+					minElev = tmpAddr;
+				}
+				orderQueue.enRoute[j] = 1;
+				break;
+			}
+			if (orderQueue.inUse[j]){
+				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType);
+				if (tmpCost < minCost){
+					minCost = tmpCost;
+					minFloor = orderQueue.Queue[j].dest;
+					minElev = tmpAddr;
 				}
 			}
 		}
-		pthread_mutex_unlock(&(orderQueue.rwLock));
-	//}
+		if (minCost == 0) break;
+	}
+	if (minCost != N_FLOORS){
+		if (minElev == getLocalIP()){
+			localQueue[minFloor] = 1;
+		}else{
+			BufferInfo newMsg;
+			encodeMessage(&newMsg, 0, minElev, MSG_DO_ORDER, minFloor, -1, -1);
+			enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
+		}
+	}
+	pthread_mutex_unlock(&(orderQueue.rwLock));
+
 }
 
 void* sortMessages(void *args){
@@ -178,7 +203,7 @@ void* sortMessages(void *args){
 				addElevatorAddr(bufOrder.srcAddr);
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, MASTER, -1, -1);
-				enqueue(sendQueue, &newMsg, BUFFER_SIZE);
+				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 			}
 			if (myState == MSG_MASTER_REQUEST){
 				printf("Receive: MSG_MASTER_REQUEST\n");
@@ -188,7 +213,7 @@ void* sortMessages(void *args){
 				}
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, 0, 0, MSG_MASTER_PROPOSAL, candidate, -1, -1);
-				enqueue(sendQueue, &newMsg, BUFFER_SIZE);
+				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 			}
 			if (myState == MSG_MASTER_PROPOSAL){
 				printf("Receive: MSG_MASTER_PROPOSAL\n");

@@ -38,8 +38,18 @@ int elevDriver_initialize(void) {
 	// Clear stop lamp, door open lamp, and set floor indicator to current floor.
 	setStopLamp(0);
 	setDoorOpenLamp(0);
+
 	if(getFloor() == -1){
-		goToFloor(0);
+		setMotorDirection(DIRN_DOWN);
+		int k = 0;
+		while(getFloor() != 0){
+			usleep(1000);
+			k++;
+			if (k> 10000){
+				setMotorDirection(DIRN_UP);
+				k =0;
+			}
+		}
 	}
 	setFloorIndicator(getFloor());
 	setMotorDirection(DIRN_STOP);
@@ -77,9 +87,8 @@ void goToFloor(int floor){
 		direction = DIRN_UP;
 	}else if(diff < 0){
 		direction = DIRN_DOWN;
-		diff = (-1)*diff;
-	}else{
-		return;
+	}else if(diff == 0){
+		direction = DIRN_STOP;
 	}
 	setMotorDirection(direction);
 }

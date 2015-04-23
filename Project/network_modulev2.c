@@ -371,7 +371,9 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 			if (var2 != -1) msg->buttonType = var2;
 			if (var3 != -1) msg->active = var3;
 			break;
-
+		case MSG_DO_ORDER:
+			if (var1 != -1) msg->nextFloor = var1;
+			break;
 
 	}
 
