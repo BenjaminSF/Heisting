@@ -59,21 +59,22 @@ void* send_message(void *args){
 	int socketPermission = 1;
 	printf("BufferInfo: %lu, int: %lu, enum: %lu\n", sizeof(BufferInfo), sizeof(int), sizeof(char));
 	BufferInfo *msg = (BufferInfo *)malloc(sizeof(BufferInfo)+60);
+
+	//printf("Sending message: %d\n", msg->myState);
+	//printf("Send size srcAddr: %lu, %d\n", sizeof(msg), msg->srcAddr);
+
+	if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+		perror("SendSocket not created\n");
+	}
+	if (setsockopt(sendSocket, SOL_SOCKET, SO_BROADCAST, (void*)&socketPermission, sizeof(socketPermission)) < 0){
+		perror("sendSocket broadcast enable failed\n");
+	}
+	if (setsockopt(sendSocket, SOL_SOCKET, SO_REUSEPORT, (void*)&socketPermission, sizeof(socketPermission)) < 0){
+		perror("sendSocket re-use port enable failed\n");
+	}
 	while(1){
 		wait_for_content(sendQueue);
 		dequeue(sendQueue, msg);
-		//printf("Sending message: %d\n", msg->myState);
-		//printf("Send size srcAddr: %lu, %d\n", sizeof(msg), msg->srcAddr);
-
-		if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
-			perror("SendSocket not created\n");
-		}
-		if (setsockopt(sendSocket, SOL_SOCKET, SO_BROADCAST, (void*)&socketPermission, sizeof(socketPermission)) < 0){
-			perror("sendSocket broadcast enable failed\n");
-		}
-		if (setsockopt(sendSocket, SOL_SOCKET, SO_REUSEPORT, (void*)&socketPermission, sizeof(socketPermission)) < 0){
-			perror("sendSocket re-use port enable failed\n");
-		}
 		if (sendto(sendSocket, (void *) msg,  sizeof(BufferInfo), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
 			perror("Sending socket failed\n");
 		}
@@ -237,13 +238,15 @@ int init_network(){
 	pthread_t findOtherElevs, findElevsSend;
 	pthread_create(&findOtherElevs, NULL, &listen_for_messages, &params); //Listen
 	pthread_create(&findElevsSend, NULL, send_message, (void *) (intptr_t) sendOnce);	//Send
-	info.addrslistCounter = 0;
+	
 	BufferInfo bufInfo;
 
 	//char tmpResponseMsg[BUF_SIZE];
 	//printf("Mutex locked, waiting for cond\n");
 	info.masterStatus = 1;
 	info.addrsList = malloc(sizeof(char *) * MAX_ELEVS);
+	info.addrsList[0] = strdup(info.localIP);
+	info.addrslistCounter = 1;
 	int isInList;
 	while(1){//pthread_kill(findOtherElevs, 0) != ESRCH){	//Listening
 
@@ -312,10 +315,8 @@ BufferInfo decodeMessage(char *buffer){
 }
 
 void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int var1, int var2, int var3){
-	printf("Encoding message------------------------------------------------------\n");
+	//printf("Encoding message------------------------------------------------------\n");
 	if (srcAddr == 0){
-		printf("strcpy: %d , %s\n",msg->srcAddr,info.localIP);
-
 		msg->srcAddr = inet_addr(info.localIP);
 	}else{
 		msg->srcAddr = srcAddr;
@@ -326,7 +327,7 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 	}else{
 		msg->dstAddr = dstAddr;
 	}
-	printf("Encode: IPs done\n");
+	//printf("Encode: IPs done\n");
 	msg->myState = myState;
 	switch(myState){
 		case MSG_CONNECT_SEND:
@@ -336,13 +337,13 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 			if (var1 != -1) msg->masterStatus = var1;
 			break;
 		case MSG_ELEVSTATE:
-			if (var1 != -1) msg->active = var1;
-			if (var2 != -1) msg->currentFloor = var2;
-			if (var3 != -1) msg->nextFloor = var3;
-			if ((var3 != -1) && (var2 != -1)){
-				int dir = var3 - var2;
-				if (dir > 0) msg->direction = 1;
-			}
+			if (var1 != -1) msg->currentFloor = var1;
+			if (var2 != -2) msg->nextFloor = var2;
+			//if (var3 != -1) msg->nextFloor = var3;
+			//if ((var3 != -1) && (var2 != -1)){
+			//	int dir = var3 - var2;
+			//	if (dir > 0) msg->direction = 1;
+			//}
 			break;
 		case MSG_ADD_ORDER:
 			if (var1 != -1) msg->nextFloor = var1;
@@ -380,7 +381,7 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 }
 
 int getLocalIP(){
-	printf("getLocalIP\n");
+	//printf("getLocalIP\n");
 	return inet_addr(info.localIP);
 }
 
@@ -402,9 +403,13 @@ void addElevatorAddr(int newIP){
 	struct in_addr tmp;
 	tmp.s_addr = newIP;
 	int i;
+<<<<<<< HEAD
 
 	for (i = 0; i < info.addrslistCounter; i++){
 		printf("HEllo\n");
+=======
+	for (i = 0; i < info.addrslistCounter; i++){
+>>>>>>> 84adf2a01bcc67b23760d51dbfaae66f6f8a1c71
 		if (!strcmp(info.addrsList[i], inet_ntoa(tmp))){
 			isInList = 1;
 			break;
@@ -417,11 +422,11 @@ void addElevatorAddr(int newIP){
 }
 
 int getAddrsCount(){
-	printf("getAddrsCount\n");
+	//printf("getAddrsCount\n");
 	return info.addrslistCounter;
 }
 
 int addrsList(int i){
-	printf("addrsList\n");
+	//printf("addrsList\n");
 	return inet_addr(info.addrsList[i]);
 }
