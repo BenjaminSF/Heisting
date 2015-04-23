@@ -105,6 +105,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		orderQueue.enRoute[pos] = 0;
 		if (storeOrder.buttonType == BUTTON_COMMAND){
 			orderQueue.localPri[pos] = storeOrder.elevator;
+			printf("add local order from: %d\n", storeOrder.elevator);
 			setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
 		}
 		//printf("Mutex released: addNewOrder\n");
@@ -184,8 +185,7 @@ void distributeOrders(){ //Master only
 				minPos = i;
 				minOrderPos = j;
 				break;
-			}
-			if (orderQueue.inUse[j] && !elevStates.active[i]){
+			}else if (orderQueue.inUse[j] && (orderQueue.localPri[j] == -1) && !elevStates.active[i]){
 				//printf("floor: %d, nextElevState: %d\n", elevStates.floor[i], elevStates.nextFloor[i]);
 				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType);
 				//printf("tmpCost1: %d\n", tmpCost);
@@ -423,7 +423,7 @@ int ordercmp(struct order *A, struct order *B){
 }
 
 void reportElevState(int currentFloor, int nextFloor){
-	//printf("Reporting: current: %d, next: %d\n", currentFloor, nextFloor);
+	printf("Reporting: current: %d, next: %d\n", currentFloor, nextFloor);
 	if (getMaster() == 1){
 		elevStates.floor[0] = currentFloor;
 		elevStates.nextFloor[0] = nextFloor;
