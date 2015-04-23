@@ -62,7 +62,7 @@ void* send_message(void *args){
 		wait_for_content(sendQueue);
 		dequeue(sendQueue, &msg);
 		printf("Sending message: %d\n", msg.myState);
-		printf("Send size srcAddr: %lu, %s\n", sizeof(msg.srcAddr), msg.srcAddr);
+		printf("Send size srcAddr: %lu, %d\n", sizeof(msg.srcAddr), msg.srcAddr);
 
 		if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
 			perror("SendSocket not created\n");
@@ -263,11 +263,10 @@ int init_network(){
 		printf("Received: %d\n", bufInfo.myState);
 		if (bufInfo.myState == MSG_CONNECT_RESPONSE){ //Only use related messages
 			printf("Adding to list\n");
-			//info.addrsList[addrslistCounter] = bufInfo.srcAddr;
+			info.masterStatus = 0;
+			struct in_addr tmp;
+			tmp.s_addr = bufInfo.srcAddr;
 			if (bufInfo.masterStatus == 1){
-				info.masterStatus = 0;
-				struct in_addr tmp;
-				tmp.s_addr = bufInfo.srcAddr;
 				info.masterIP = strdup(inet_ntoa(tmp));
 				//master not available
 				//current master is bufInfo.srcAddr
@@ -275,13 +274,13 @@ int init_network(){
 			isInList = 0;
 			int i;
 			for (i = 0; i < MAX_ELEVS; i++){
-				if (!strcmp(info.addrsList[i], bufInfo.srcAddr)){
+				if (!strcmp(info.addrsList[i], inet_ntoa(tmp))){
 					isInList = 1;
 					break;
 				}
 			}
 			if (!isInList){
-				info.addrsList[info.addrslistCounter] = strdup(bufInfo.srcAddr);
+				info.addrsList[info.addrslistCounter] = strdup(inet_ntoa(tmp));
 				info.addrslistCounter++;
 			}
 			
@@ -319,12 +318,12 @@ BufferInfo decodeMessage(char *buffer){
 void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int var1, int var2, int var3){
 	printf("Encoding message------------------------------------------------------\n");
 	if (srcAddr == 0){
-		printf("strcpy: %s , %s\n",msg->srcAddr,info.localIP);
+		printf("strcpy: %d , %s\n",msg->srcAddr,info.localIP);
 
 		msg->srcAddr = inet_addr(info.localIP);
 		printf("strcpy: msg.srcAddr\n");
 	}else{
-		msg->srcAddr = inet_addr(srcAddr);
+		msg->srcAddr = srcAddr;
 	}
 	if (dstAddr == 0){
 		msg->dstAddr = inet_addr(info.broadcastIP);
@@ -404,15 +403,17 @@ void setMasterIP(int x){
 void addElevatorAddr(int newIP){
 	printf("addElevatorAddr\n");
 	int isInList = 0;
+	struct in_addr tmp;
+	tmp.s_addr = newIP;
 	int i;
 	for (i = 0; i < MAX_ELEVS; i++){
-		if (!strcmp(info.addrsList[i], newIP)){
+		if (!strcmp(info.addrsList[i], inet_ntoa(tmp))){
 			isInList = 1;
 			break;
 		}
 	}
 	if (!isInList){
-		info.addrsList[info.addrslistCounter] = strdup(newIP);
+		info.addrsList[info.addrslistCounter] = strdup(inet_ntoa(tmp));
 		info.addrslistCounter++;
 	}
 }
