@@ -13,7 +13,7 @@ void initPriorityQueue(){
 		orderQueue.enRoute[i] = 0;
 
 	}
-	pthread_mutex_init(&(orderQueue.rwLock), NULL);
+	
 	printf("Setup priority queue\n");
 }
 
@@ -25,7 +25,7 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 	int min = N_FLOORS * 2;
 	backlog = 0;
 	for (i = 0; i < N_ORDERS; i++){
-		if ((inUse[i] == 1)){// && (orderQueue.enRoute[i] == 0)){
+		if (inUse[i] == 1){// && (orderQueue.enRoute[i] == 0)){
 			cost = findCost(queue[i].dest,currentFloor, nextFloor,queue[i].buttonType);
 			//printf("Cost: %d, floor: %d Elev: %d  Input: current: %d, next: %d\n", cost, queue[i].dest,queue[i].elevator, currentFloor, nextFloor);
 			if(cost < min){

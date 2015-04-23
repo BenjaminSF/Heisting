@@ -1,5 +1,6 @@
 
 #include "mainDriver.h"
+#include "orderManager.h"
 #include "elevDriver.h"
 #include "network_modulev2.h"
 #include "costFunction.h"
@@ -18,7 +19,6 @@ void* mainDriver() {
 	
 	int nextFloor = -1;
 	int i, j,k;
-	int queueActive = 0;
 	int lastFloor = 0;
 	int currentFloor, tmp;
 	int thisElevator = getLocalIP();
@@ -26,6 +26,7 @@ void* mainDriver() {
 	buttonType buttonCall;
 	int newFloor,floorSetCommand,floorSetDown,floorSetUp,floorSetCommandRunning,floorSetDownRunning,floorSetUpRunning;
 	int localQueue[N_FLOORS];
+	reportElevState(getFloor(), nextFloor);
 	while(!isStopped() && !isObstructed()){
 		floorSetCommand = -1;
 		floorSetDown = -1;
@@ -75,6 +76,7 @@ void* mainDriver() {
 			}
 		}
 		nextFloor = getNewOrder(currentFloor, nextFloor);
+		reportElevState(currentFloor, nextFloor);
 
 		//printf("nextFloor %d\n",nextFloor );
 		if(nextFloor != -1){
@@ -98,7 +100,7 @@ void* mainDriver() {
 			while((lastFloor != nextFloor) && (!isStopped() && !isObstructed())){
 				tmp = getFloor();
 				currentFloor = tmp;
-				printf("LOOP\n");
+				//printf("LOOP\n");
 				if(tmp != -1 && tmp != lastFloor){
 					printf("Last lastFloor equals ------------------------------------ %d\n",lastFloor);
 					lastFloor = tmp;
@@ -142,7 +144,7 @@ void* mainDriver() {
 					}
 				}
 				newFloor = getNewOrder(lastFloor,nextFloor);
-				printf("After get\n");
+				//printf("After get\n");
 				if(newFloor != nextFloor && newFloor != -1){
 					localQueue[newFloor] = 1;
 					if(buttonCall == BUTTON_CALL_UP && newFloor>nextFloor){

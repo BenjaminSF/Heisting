@@ -26,9 +26,9 @@ void goToFloor(int floor);
 
 void setDoorOpenLamp(int status);
 
-int isElevObstructed(void);
+int isObstructed(void);
 
-int isElevStopped(void);
+int isStopped(void);
 
 void setStopLamp(int status);
 

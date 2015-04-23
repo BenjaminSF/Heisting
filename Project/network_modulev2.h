@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <pthread.h>
 #include "fifoqueue.h"
-#define BUFFER_SIZE 100
 
 fifoqueue_t* receiveQueue;
 fifoqueue_t* sendQueue;
@@ -26,6 +25,9 @@ enum bufferState{
 	MSG_MASTER_PROPOSAL,
 	MSG_CONFIRM_ORDER
 };
+
+pthread_mutex_t masterMutex;
+pthread_mutexattr_t mastermattr;
 
 typedef struct BufferInfo{
 	int srcAddr;
@@ -55,6 +57,8 @@ void setMasterIP(int IP);
 void addElevatorAddr(int newIP);
 int getAddrsCount();
 int addrsList(int pos);
+int getMaster();
+void setMaster(int x);
 
 
 #endif

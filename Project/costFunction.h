@@ -20,6 +20,7 @@ struct{
 
 
 void initPriorityQueue();
+int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType);
 //void deleteOrder(int floor, buttonType button);
 
 #endif

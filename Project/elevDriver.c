@@ -2,9 +2,11 @@
 #include "io.h"
 #include "elevDriver.h"
 #include "network_modulev2.h"
+#include "costFunction.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #define N_BUTTONS 3
 
@@ -74,20 +76,20 @@ motorDirection getMotorDirection(void){
 }
 
 void goToFloor(int floor){
-	motorDirection direction;
+	motorDirection direction = DIRN_STOP;
 	if(getFloor() == -1){
 		while(getFloor() == -1){
 			//wait
 		}
 	}
-	int i, currentFloor = getFloor(),diff = floor-currentFloor;
+	int currentFloor = getFloor(),diff = floor-currentFloor;
 
 	assert(floor>= 0 && floor < N_FLOORS);
 	if (diff > 0){
 		direction = DIRN_UP;
 	}else if(diff < 0){
 		direction = DIRN_DOWN;
-	}else if(diff == 0){
+	}else{
 		direction = DIRN_STOP;
 	}
 	setMotorDirection(direction);
