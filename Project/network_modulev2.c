@@ -404,7 +404,13 @@ void addElevatorAddr(int newIP){
 	struct in_addr tmp;
 	tmp.s_addr = newIP;
 	int i;
+<<<<<<< HEAD
+
 	for (i = 0; i < info.addrslistCounter; i++){
+		printf("HEllo\n");
+=======
+	for (i = 0; i < info.addrslistCounter; i++){
+>>>>>>> 84adf2a01bcc67b23760d51dbfaae66f6f8a1c71
 		if (!strcmp(info.addrsList[i], inet_ntoa(tmp))){
 			isInList = 1;
 			break;
