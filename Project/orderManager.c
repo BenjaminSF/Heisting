@@ -258,6 +258,16 @@ void* sortMessages(void *args){
 						enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 					}
 				}
+				if (myState == MSG_ELEVSTATE){
+					int i;
+					for (i = 0; i < getAddrsCount(); i++){
+						if (addrsList(i) == srcAddr){
+							elevStates.floor[i] = bufOrder.currentFloor;
+							elevStates.nextFloor[i] = bufOrder.nextFloor;
+							break;
+						}
+					}
+				}
 			}else{
 				if (myState == MSG_IM_ALIVE){
 					printf("Receive: MSG_IM_ALIVE\n");
@@ -355,7 +365,9 @@ void reportElevState(int currentFloor, int nextFloor){
 			elevStates.active[0] = 1;
 		}
 	}else{
-		//senere
+		BufferInfo newMsg;
+		encodeMessage(&newMsg, 0, 0, MSG_ELEVSTATE, currentFloor, nextFloor, -1);
+		enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 	}
 	
 }

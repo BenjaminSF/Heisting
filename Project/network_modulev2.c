@@ -337,13 +337,13 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 			if (var1 != -1) msg->masterStatus = var1;
 			break;
 		case MSG_ELEVSTATE:
-			if (var1 != -1) msg->active = var1;
-			if (var2 != -1) msg->currentFloor = var2;
-			if (var3 != -1) msg->nextFloor = var3;
-			if ((var3 != -1) && (var2 != -1)){
-				int dir = var3 - var2;
-				if (dir > 0) msg->direction = 1;
-			}
+			if (var1 != -1) msg->currentFloor = var1;
+			if (var2 != -2) msg->nextFloor = var2;
+			//if (var3 != -1) msg->nextFloor = var3;
+			//if ((var3 != -1) && (var2 != -1)){
+			//	int dir = var3 - var2;
+			//	if (dir > 0) msg->direction = 1;
+			//}
 			break;
 		case MSG_ADD_ORDER:
 			if (var1 != -1) msg->nextFloor = var1;
@@ -403,7 +403,7 @@ void addElevatorAddr(int newIP){
 	struct in_addr tmp;
 	tmp.s_addr = newIP;
 	int i;
-	for (i = 0; i < MAX_ELEVS; i++){
+	for (i = 0; i < info.addrslistCounter; i++){
 		if (!strcmp(info.addrsList[i], inet_ntoa(tmp))){
 			isInList = 1;
 			break;
