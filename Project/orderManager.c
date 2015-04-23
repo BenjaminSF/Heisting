@@ -80,7 +80,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 			printf("Button lamp on: floor: %d, type: %d\n", storeOrder.dest, storeOrder.buttonType);
 			setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
 			BufferInfo newMsg;
-			encodeMessage(&newMsg, NULL, NULL, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
+			encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
 			enqueue(sendQueue, &newMsg, sizeof(newMsg));
 		}
 		printf("Add order: dest: %d, button: %d, elev: %d\n", storeOrder.dest, storeOrder.buttonType, storeOrder.elevator);
@@ -96,7 +96,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	}else{ //Send new order to the master
 		printf("Dette er en slave\n");
 		BufferInfo newMsg;
-		encodeMessage(&newMsg, NULL, NULL, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, 1);
+		encodeMessage(&newMsg, 0, 0, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, 1);
 		newMsg.currentFloor = currentFloor;
 		enqueue(sendQueue, &newMsg, sizeof(newMsg));
 	}
@@ -180,7 +180,7 @@ void* sortMessages(void *args){
 				printf("Receive: MSG_CONNECT_SEND\n");
 				addElevatorAddr(bufOrder.srcAddr);
 				BufferInfo newMsg;
-				encodeMessage(&newMsg, NULL, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, MASTER, -1, -1);
+				encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, MASTER, -1, -1);
 				enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 			}
 			if (myState == MSG_MASTER_REQUEST){
@@ -190,7 +190,7 @@ void* sortMessages(void *args){
 					candidate = 0;
 				}
 				BufferInfo newMsg;
-				encodeMessage(&newMsg, NULL, NULL, MSG_MASTER_PROPOSAL, candidate, -1, -1);
+				encodeMessage(&newMsg, 0, 0, MSG_MASTER_PROPOSAL, candidate, -1, -1);
 				enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 			}
 			if (myState == MSG_MASTER_PROPOSAL){
@@ -210,7 +210,7 @@ void* sortMessages(void *args){
 					addNewOrder(newOrder, bufOrder.currentFloor,bufOrder.nextFloor);
 					if (bufOrder.buttonType == BUTTON_COMMAND){
 						BufferInfo newMsg;
-						encodeMessage(&newMsg, NULL, bufOrder.srcAddr, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
+						encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
 						enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 					}
 				}
@@ -219,7 +219,7 @@ void* sortMessages(void *args){
 					deleteOrder(bufOrder.currentFloor,bufOrder.buttonType,srcAddr);
 					if (bufOrder.buttonType != BUTTON_COMMAND){
 						BufferInfo newMsg;
-						encodeMessage(&newMsg, NULL, NULL, MSG_SET_LAMP, bufOrder.currentFloor, bufOrder.buttonType, 0);
+						encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.currentFloor, bufOrder.buttonType, 0);
 						enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 					}
 				}
@@ -247,7 +247,7 @@ void* masterTimeout(void *args){
 			if (test == -1){
 				printf("Master timeout\n");
 				BufferInfo newMsg;
-				encodeMessage(&newMsg, NULL, NULL, MSG_MASTER_REQUEST, -1, -1, -1);
+				encodeMessage(&newMsg, 0, 0, MSG_MASTER_REQUEST, -1, -1, -1);
 				enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 				return;
 			}
@@ -259,7 +259,7 @@ void* masterTimeout(void *args){
 		ts.tv_sec = 5;
 		ts.tv_nsec = 0;
 		BufferInfo newMsg;
-		encodeMessage(&newMsg, NULL, NULL, MSG_IM_ALIVE, 1, -1, -1);
+		encodeMessage(&newMsg, 0, 0, MSG_IM_ALIVE, 1, -1, -1);
 		while(1){
 			enqueue(sendQueue, &newMsg, BUFFER_SIZE);
 			nanosleep(&ts, &rem);
@@ -283,7 +283,7 @@ void deleteOrder(int floor, buttonType button, int elevator){
 		}
 	}else{
 		BufferInfo msg;
-		encodeMessage(&msg, NULL, NULL, MSG_DELETE_ORDER, floor, button, 1);
+		encodeMessage(&msg, 0, 0, MSG_DELETE_ORDER, floor, button, 1);
 		enqueue(sendQueue, &msg, BUFFER_SIZE);
 	}
 	setButtonLamp(floor, button, 0);

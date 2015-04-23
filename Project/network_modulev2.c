@@ -318,7 +318,7 @@ BufferInfo decodeMessage(char *buffer){
 
 void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int var1, int var2, int var3){
 	printf("Encoding message------------------------------------------------------\n");
-	if (srcAddr == NULL){
+	if (srcAddr == 0){
 		printf("strcpy: %s , %s\n",msg->srcAddr,info.localIP);
 
 		msg->srcAddr = inet_addr(info.localIP);
@@ -326,7 +326,7 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 	}else{
 		msg->srcAddr = inet_addr(srcAddr);
 	}
-	if (dstAddr == NULL){
+	if (dstAddr == 0){
 		msg->dstAddr = inet_addr(info.broadcastIP);
 		printf("strcpy: dstAddr\n");
 
