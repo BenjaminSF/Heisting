@@ -267,13 +267,14 @@ int init_network(){
 			struct in_addr tmp;
 			tmp.s_addr = bufInfo.srcAddr;
 			if (bufInfo.masterStatus == 1){
+				printf("Found a master\n");
 				info.masterIP = strdup(inet_ntoa(tmp));
 				//master not available
 				//current master is bufInfo.srcAddr
 			}
 			isInList = 0;
 			int i;
-			for (i = 0; i < MAX_ELEVS; i++){
+			for (i = 0; i < info.addrslistCounter; i++){
 				if (!strcmp(info.addrsList[i], inet_ntoa(tmp))){
 					isInList = 1;
 					break;
