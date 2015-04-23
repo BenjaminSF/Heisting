@@ -18,3 +18,7 @@ clean:
 rebuild:	clean all
 
 .PHONY: all rebuild clean
+
+# clang *.c -Wall -fsanitize=address -g -lcomedi -lpthread -lm
+#clang *.c -Wall -fsanitize=thread -g -lcomedi -lpthread -lm
+#clang *.c -Wall -fsanitize=memory -g -lcomedi -lpthread -lm

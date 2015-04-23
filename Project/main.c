@@ -6,7 +6,7 @@
 #define N_ELEVATORS 5
 int MASTER;
 
-void main(){
+int main(){
 	MASTER = init_network();
 	if (MASTER == -1){
 		perror("Connection and master deciding failed\n");
@@ -33,5 +33,4 @@ void main(){
 
 
 
-	return;
 }

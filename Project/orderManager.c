@@ -49,13 +49,14 @@ void* orderManager(void* args){
 	pthread_join(receiveMessages, NULL);
 	pthread_join(sortMessages_, NULL);
 
+	return NULL;
 }
 
 int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	printf("Enter addNewOrder\n");
 	if (MASTER == 1){
 		pthread_mutex_lock(&(orderQueue.rwLock));
-		//printf("Mutex owner: addNewOrder\n");
+		printf("Mutex owner: addNewOrder\n");
 		int pos = 0;
 		struct order storeOrder;
 		storeOrder.dest = newOrder.dest;
@@ -65,13 +66,15 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		while(orderQueue.inUse[pos]){
 			if(ordercmp(&(orderQueue.Queue[pos]), &storeOrder)){
 				pthread_mutex_unlock(&(orderQueue.rwLock));
+				printf("Add unlock mutex\n");
 				return -1;
 			} 
 			pos++;
 			if (pos == N_ORDERS){
 				printf("Error: orderQueue is full, order not received\n");
 				pthread_mutex_unlock(&(orderQueue.rwLock));
-				return;
+				printf("Add unlock mutex\n");
+				return -1;
 			}
 		}
 		if (storeOrder.buttonType != BUTTON_COMMAND){
@@ -90,8 +93,9 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 			setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
 		}
 		//printf("Mutex released: addNewOrder\n");
+		
 		pthread_mutex_unlock(&(orderQueue.rwLock));
-
+		printf("Add unlock mutex\n");
 	}else{ //Send new order to the master
 		printf("Dette er en slave\n");
 		BufferInfo newMsg;
@@ -103,7 +107,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 }
 
 int getNewOrder(int currentFloor, int nextFloor){
-	//printf("Enter getNewOrder: currentFloor: %d, nextFloor: %d\n", currentFloor, nextFloor);
+	printf("Enter getNewOrder: currentFloor: %d, nextFloor: %d\n", currentFloor, nextFloor);
 	int destFloor = -1;
 	int dir = nextFloor - currentFloor;
 	if (nextFloor == -1) dir = 0;
@@ -143,12 +147,13 @@ int getNewOrder(int currentFloor, int nextFloor){
 }
 
 void distributeOrders(){ //Master only
-	//printf("Enter distributeOrders\n");
+	printf("Enter distributeOrders\n");
 	int addrsCount, i, j, tmpAddr, minCost, tmpCost, minFloor, minElev;
 
 	addrsCount = getAddrsCount();
+	printf("Getting mutex\n");
 	pthread_mutex_lock(&(orderQueue.rwLock));
-	//printf("Mutex owner: distributeOrders\n");
+	printf("Mutex owner: distributeOrders, error\n");
 	minCost = N_FLOORS;
 	for (j = 0; j < N_ORDERS; j++){
 		//if (orderQueue.inUse[j]) printf("Det finnes orders!\n");
@@ -156,7 +161,7 @@ void distributeOrders(){ //Master only
 			tmpAddr = addrsList(i);
 			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr)){ //Send BUTTON_COMMAND orders first
 				printf("BUTTON_COMMAND\n");
-				minCost = 0;
+				minCost = orderQueue.enRoute[j];
 				minFloor = orderQueue.Queue[j].dest;
 				minElev = tmpAddr;
 				
@@ -176,10 +181,11 @@ void distributeOrders(){ //Master only
 		}
 		if (minCost == 0) break;
 	}
-	//printf("minCost: %d\n", minCost);
+	printf("minCost: %d\n", minCost);
 	pthread_mutex_unlock(&(orderQueue.rwLock));
-	if (minCost != N_FLOORS){
-		//printf("Sending elevator: %d, to floor: %d\n", minElev, minFloor);
+	printf("Release mutex\n");
+	if (minCost < N_FLOORS){
+		printf("Sending elevator: %d, to floor: %d\n", minElev, minFloor);
 		orderQueue.enRoute[j] = 1;
 		if (minElev == getLocalIP()){
 			//printf("Go here!\n");
@@ -313,11 +319,11 @@ void* masterTimeout(void *args){
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, 0, 0, MSG_MASTER_REQUEST, -1, -1, -1);
 				enqueue(sendQueue, &newMsg, BUFFER_SIZE);
-				return;
+				return NULL;
 			}
 			printf("Aliveness confirmed\n");
 			clock_gettime(CLOCK_REALTIME, &ts);
-			ts.tv_sec = ts.tv_sec + 5;
+			ts.tv_sec = ts.tv_sec + 15;
 		}
 	}else{
 		printf("Timer: master\n");
@@ -370,7 +376,7 @@ int ordercmp(struct order *A, struct order *B){
 }
 
 void reportElevState(int currentFloor, int nextFloor){
-	//printf("Reporting: current: %d, next: %d\n", currentFloor, nextFloor);
+	printf("Reporting: current: %d, next: %d\n", currentFloor, nextFloor);
 	int elevator = getLocalIP();
 	if (MASTER == 1){
 		elevStates.floor[0] = currentFloor;

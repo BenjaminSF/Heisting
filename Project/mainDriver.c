@@ -12,7 +12,7 @@
 void* mainDriver() {
 	if (!elevDriver_initialize()) {
 		printf("Unable to initialize elevator hardware!\n");
-		return;
+		return NULL;
 }
 	printf("Press STOP button to stop elevator and exit program.\n");
 	
@@ -20,7 +20,7 @@ void* mainDriver() {
 	int i, j,k;
 	int queueActive = 0;
 	int lastFloor = 0;
-	int currentFloor;
+	int currentFloor, tmp;
 	int thisElevator = getLocalIP();
 	motorDirection direction;
 	buttonType buttonCall;
@@ -96,29 +96,33 @@ void* mainDriver() {
 			floorSetUpRunning = -1;
 			floorSetDownRunning = -1;
 			while((lastFloor != nextFloor) && (!isStopped() && !isObstructed())){
+				tmp = getFloor();
+				currentFloor = tmp;
+				printf("LOOP\n");
+				if(tmp != -1 && tmp != lastFloor){
+					printf("Last lastFloor equals ------------------------------------ %d\n",lastFloor);
+					lastFloor = tmp;
+					printf("Report 1\n");
+					reportElevState(lastFloor, nextFloor);
+					setFloorIndicator(lastFloor);
+
+					printf("New lastFloor equals -------------------------------------- %d\n",lastFloor);
+
+				}
 				for(j=0;j<N_FLOORS;j++){
-					int tmp = getFloor();
-					currentFloor = tmp;
-					if(tmp != -1 && tmp != lastFloor){
-						printf("Last lastFloor equals ------------------------------------ %d\n",lastFloor);
-						lastFloor = tmp;
-						printf("Report 1\n");
-						reportElevState(lastFloor, nextFloor);
-						setFloorIndicator(lastFloor);
-
-						printf("New lastFloor equals -------------------------------------- %d\n",lastFloor);
-
-					}
+					
 					if(getButtonSignal(j,BUTTON_COMMAND) && floorSetCommandRunning != j){
+						printf("Add order command\n");
 						struct order newOrder = {.dest = j, .buttonType = BUTTON_COMMAND, .elevator = thisElevator};
 						newFloor = addNewOrder(newOrder,lastFloor,nextFloor);
 						//while(getButtonSignal(j,BUTTON_COMMAND)){}
 						floorSetCommandRunning = j;
+						printf("Leave add order\n");
 						
 					}
 					if(j>0){
 						if (getButtonSignal(j,BUTTON_CALL_DOWN) && floorSetDownRunning != j){
-							
+							printf("Add order down\n");
 							struct order newOrder = {.dest = j, .buttonType = BUTTON_CALL_DOWN, .elevator = thisElevator};
 							newFloor = addNewOrder(newOrder,lastFloor,nextFloor);
 							//while(getButtonSignal(j,BUTTON_CALL_DOWN)){}
@@ -128,6 +132,7 @@ void* mainDriver() {
 					}
 					if(j<N_FLOORS-1){
 						if (getButtonSignal(j,BUTTON_CALL_UP) && floorSetUpRunning != j){
+							printf("Add order up\n");
 							struct order newOrder = {.dest = j, .buttonType = BUTTON_CALL_UP, .elevator = thisElevator};
 							newFloor = addNewOrder(newOrder,lastFloor,nextFloor);
 							//while(getButtonSignal(j,BUTTON_CALL_UP)){}
@@ -137,6 +142,7 @@ void* mainDriver() {
 					}
 				}
 				newFloor = getNewOrder(lastFloor,nextFloor);
+				printf("After get\n");
 				if(newFloor != nextFloor && newFloor != -1){
 					localQueue[newFloor] = 1;
 					if(buttonCall == BUTTON_CALL_UP && newFloor>nextFloor){
@@ -216,7 +222,7 @@ void* mainDriver() {
 		setStopLamp(1);
 		printf("Elevator was stopped\n");
 	}
-	return;
+	return NULL;
 
 }
 

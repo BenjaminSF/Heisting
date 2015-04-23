@@ -42,7 +42,7 @@ int elevDriver_initialize(void) {
 	if(getFloor() == -1){
 		setMotorDirection(DIRN_DOWN);
 		int k = 0;
-		while(getFloor() != 0){
+		while(getFloor() == -1){
 			usleep(1000);
 			k++;
 			if (k> 10000){

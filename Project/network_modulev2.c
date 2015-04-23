@@ -84,7 +84,7 @@ void* send_message(void *args){
 	}
 	free(msg);
 	printf("Sending finished\n");
-	return;
+	return NULL;
 }
 
 
@@ -171,7 +171,7 @@ void *listen_for_messages(void *args){
 	}
 	printf("Listen finished\n");
 	printf("Test mottak, port: %d\n", port);
-	return;
+	return NULL;
 }
 
 int init_network(){
