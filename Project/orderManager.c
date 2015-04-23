@@ -188,7 +188,7 @@ void distributeOrders(){ //Master only
 				//printf("floor: %d, nextElevState: %d\n", elevStates.floor[i], elevStates.nextFloor[i]);
 				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType);
 				//printf("tmpCost1: %d\n", tmpCost);
-				if (orderQueue.enRoute[j] == 1) tmpCost += orderQueue.enRoute[j];
+				if (orderQueue.enRoute[j] == 1) tmpCost += orderQueue.enRoute[j]+5;
 				//printf("tmpCost: %d\n", tmpCost);
 				if (tmpCost < minCost){
 					minCost = tmpCost;
@@ -381,6 +381,13 @@ void deleteOrder(int floor, buttonType button, int elevator){
 					orderQueue.localPri[i] = -1;
 					orderQueue.enRoute[i] = 0;
 					printf("Deleting order!\n");
+					BufferInfo newMsg;
+					if (button == BUTTON_COMMAND){
+						encodeMessage(&newMsg, 0, elevator, MSG_SET_LAMP, floor, button, 0);
+					}else{
+						encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, floor, button, 0);
+					}
+					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					remainingOrders--;
 				}
 			}
