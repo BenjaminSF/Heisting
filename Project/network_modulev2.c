@@ -401,7 +401,7 @@ void setMasterIP(int x){
 	info.masterIP = strdup(inet_ntoa(tmp));
 }
 
-void addElevatorAddr(char* newIP){
+void addElevatorAddr(int newIP){
 	printf("addElevatorAddr\n");
 	int isInList = 0;
 	int i;
