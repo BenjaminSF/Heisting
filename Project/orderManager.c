@@ -164,7 +164,7 @@ int getNewOrder(int currentFloor, int nextFloor){
 
 void distributeOrders(){ //Master only
 	//printf("Enter distributeOrders\n");
-	int addrsCount, i, j, tmpAddr, minCost, tmpCost, minFloor, minElev, minButton, minPos;
+	int addrsCount, i, j, tmpAddr, minCost, tmpCost, minFloor, minElev, minButton, minPos, minOrderPos;
 
 	addrsCount = getAddrsCount();
 	//printf("Getting mutex\n");
@@ -182,6 +182,7 @@ void distributeOrders(){ //Master only
 				minElev = tmpAddr;
 				minButton = orderQueue.Queue[j].buttonType;
 				minPos = i;
+				minOrderPos = j;
 				break;
 			}
 			if (orderQueue.inUse[j] && !elevStates.active[i]){
@@ -196,6 +197,7 @@ void distributeOrders(){ //Master only
 					minElev = tmpAddr;
 					minButton = orderQueue.Queue[j].buttonType;
 					minPos = i;
+					minOrderPos = j;
 				}
 			}
 		}
@@ -206,7 +208,7 @@ void distributeOrders(){ //Master only
 	//printf("Release mutex\n");
 	if (minCost < N_FLOORS){
 		//printf("Sending elevator: %d, to floor: %d\n", minElev, minFloor);
-		orderQueue.enRoute[j] = 1;
+		orderQueue.enRoute[minOrderPos] = 1;
 		elevStates.active[minPos] = 1;
 		if (minElev == getLocalIP()){
 			//printf("Go here!\n");
