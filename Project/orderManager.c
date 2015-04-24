@@ -22,11 +22,14 @@ struct orderQueueType{
 
 int localManQueue[N_FLOORS];
 int localManButtons[N_FLOORS];
+
 struct {
 	int active[N_ELEVATORS];
 	int floor[N_ELEVATORS];
 	int nextFloor[N_ELEVATORS];
+	int button[N_ELEVATORS];
 } elevStates;
+
 sem_t timeoutSem;
 int bestProposal;
 int dummyMutex;
@@ -133,7 +136,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	return -1;
 }
 
-int getNewOrder(int currentFloor, int nextFloor){
+int getNewOrder(int currentFloor, int nextFloor, int button){
 	//printf("Enter getNewOrder: currentFloor: %d, nextFloor: %d\n", currentFloor, nextFloor);
 	int destFloor = -1;
 	int dir = nextFloor - currentFloor;
@@ -147,7 +150,7 @@ int getNewOrder(int currentFloor, int nextFloor){
 		int minCost = N_FLOORS * 2;
 		for (i = 0; i < N_FLOORS; i++){
 			if (localManQueue[i] == 1){
-				tmp = findCost(i, currentFloor, nextFloor, localManButtons[i]);
+				tmp = findCost(i, currentFloor, nextFloor, localManButtons[i], button);
 				if (tmp < minCost){
 					minCost = tmp;
 					destFloor = i;
@@ -159,7 +162,7 @@ int getNewOrder(int currentFloor, int nextFloor){
 		int minCost = N_FLOORS * 2;
 		for (i = 0; i < N_FLOORS; i++){
 			if (localManQueue[i] == 1){
-				tmp = findCost(i, currentFloor, nextFloor, localManButtons[i]);
+				tmp = findCost(i, currentFloor, nextFloor, localManButtons[i], button);
 				if (tmp < minCost){
 					minCost = tmp;
 					destFloor = i;
@@ -181,25 +184,28 @@ void distributeOrders(){ //Master only
 	//printf("Getting mutex\n");
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	//printf("Mutex owner: distributeOrders\n");
-	minCost = N_FLOORS;
+	minCost = N_FLOORS * 2;
 	for (j = 0; j < N_ORDERS; j++){
 		//if (orderQueue.inUse[j]) printf("Det finnes orders!\n");
 		for (i = 0; i < addrsCount; i++){
 			tmpAddr = addrsList(i);
-			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr) && !elevStates.active[i]){ //Send BUTTON_COMMAND orders first
+			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr)){// && !elevStates.active[i]){ //Send BUTTON_COMMAND orders first
 				printf("BUTTON_COMMAND, source: %d\n", tmpAddr);
-				minCost = orderQueue.enRoute[j];
-				minFloor = orderQueue.Queue[j].dest;
-				minElev = tmpAddr;
-				minButton = orderQueue.Queue[j].buttonType;
-				minPos = i;
-				minOrderPos = j;
-				break;
-			}else if (orderQueue.inUse[j] && (orderQueue.localPri[j] == -1) && !elevStates.active[i]){
+				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
+				if (tmpCost < minCost){
+					minCost = tmpCost;
+					minFloor = orderQueue.Queue[j].dest;
+					minElev = tmpAddr;
+					minButton = orderQueue.Queue[j].buttonType;
+					minPos = i;
+					minOrderPos = j;
+				}
+				
+			}else if (orderQueue.inUse[j] && (orderQueue.localPri[j] == -1)){// && !elevStates.active[i]){
 				//printf("floor: %d, nextElevState: %d\n", elevStates.floor[i], elevStates.nextFloor[i]);
-				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType);
+				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
 				//printf("tmpCost1: %d\n", tmpCost);
-				if (orderQueue.enRoute[j] == 1) tmpCost += orderQueue.enRoute[j]+5;
+				tmpCost += orderQueue.enRoute[j] + elevStates.active[i];
 				//printf("tmpCost: %d\n", tmpCost);
 				if (tmpCost < minCost){
 					minCost = tmpCost;
@@ -216,9 +222,9 @@ void distributeOrders(){ //Master only
 	//printf("minCost: %d\n", minCost);
 	pthread_mutex_unlock(&(orderQueue.rwLock));
 	//printf("Release mutex\n");
-	if (minCost < N_FLOORS){
+	if (minCost < N_FLOORS * 2){
 		//printf("Sending elevator: %d, to floor: %d\n", minElev, minFloor);
-		orderQueue.enRoute[minOrderPos] = 5;
+		orderQueue.enRoute[minOrderPos] = 1;
 		elevStates.active[minPos] = 1;
 		printf("Send order to: %d\n", minElev);
 		if (minElev == getLocalIP()){
@@ -319,6 +325,7 @@ void* sortMessages(void *args){
 							elevStates.floor[i] = bufOrder.currentFloor;
 							elevStates.nextFloor[i] = bufOrder.nextFloor;
 							if (bufOrder.nextFloor == -1) elevStates.active[i] = 0;
+							elevStates.button[i] = bufOrder.buttonType;
 							break;
 						}
 					}
@@ -376,7 +383,7 @@ void* masterTimeout(void *args){
 		}
 	}else{
 		printf("Timer: master\n");
-		reportElevState(getFloor(), -1);
+		reportElevState(getFloor(), -1, BUTTON_COMMAND);
 		ts.tv_sec = 5;
 		ts.tv_nsec = 0;
 		BufferInfo newMsg;
@@ -432,7 +439,7 @@ int ordercmp(struct order *A, struct order *B){
 	return x;
 }
 
-void reportElevState(int currentFloor, int nextFloor){
+void reportElevState(int currentFloor, int nextFloor, int button){
 	printf("Reporting: current: %d, next: %d\n", currentFloor, nextFloor);
 	if (getMaster() == 1){
 		elevStates.floor[0] = currentFloor;
@@ -442,9 +449,10 @@ void reportElevState(int currentFloor, int nextFloor){
 		}else{
 			elevStates.active[0] = 1;
 		}
+		elevStates.button[0] = button;
 	}else{
 		BufferInfo newMsg;
-		encodeMessage(&newMsg, 0, 0, MSG_ELEVSTATE, currentFloor, nextFloor, -1);
+		encodeMessage(&newMsg, 0, 0, MSG_ELEVSTATE, currentFloor, nextFloor, button);
 		enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 	}
 	

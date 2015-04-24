@@ -7,7 +7,7 @@
 
 
 
-int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], int currentFloor, int nextFloor){
+/*int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], int currentFloor, int nextFloor){
 	//printf("Find lowest cost\n");
 	int i, minPos,cost, backlog;
 	int queuePos = 0;
@@ -44,19 +44,24 @@ int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], i
 		//orderQueue.enRoute[minPos] = 1;
 		return minPos;
 	}
-}
-int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType){
+}*/
+int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int elevButton){
 	int cost;
 	int dir = nextFloor - currentFloor;
 	cost = costFloor - currentFloor;
 	//printf("findCost: current: %d, next: %d, cost: %d\n", currentFloor, nextFloor, cost);
-	if (nextFloor == -1){
+	if ((elevButton == BUTTON_CALL_UP) && (buttonType == BUTTON_CALL_DOWN)){
+		cost = (N_FLOORS - currentFloor) + (N_FLOORS - costFloor) - 2;
+	}else if ((elevButton == BUTTON_CALL_DOWN) && (buttonType == BUTTON_CALL_UP)){
+		cost = costFloor + currentFloor;
+	}else if (nextFloor == -1){
 		cost = abs(cost);
-		print("nextFloor = -1;\n")
+		printf("nextFloor = -1;\n");
 	}else if ((cost * dir) >= 0 && ((dir>0 && (buttonType == 0 || buttonType == 2))||(dir<0 && (buttonType == 2 || buttonType == 1)))){
 		cost = abs(cost);
 		printf("nextFloor right way\n");
 	}else{
+		printf("This should not happen!!!!!!!!!!!!!\n");
 		cost = N_FLOORS + 1;
 	}
 	//printf("cost: %d, floor: %d, button: %d\n", cost, costFloor, buttonType);

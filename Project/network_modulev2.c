@@ -243,7 +243,7 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 		case MSG_ELEVSTATE:
 			if (var1 != -1) msg->currentFloor = var1;
 			if (var2 != -2) msg->nextFloor = var2;
-			//if (var3 != -1) msg->nextFloor = var3;
+			if (var3 != -1) msg->buttonType = var3;
 			//if ((var3 != -1) && (var2 != -1)){
 			//	int dir = var3 - var2;
 			//	if (dir > 0) msg->direction = 1;
