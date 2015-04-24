@@ -26,8 +26,8 @@ enum bufferState{
 	MSG_CONFIRM_ORDER
 };
 
-pthread_mutex_t masterMutex;
-pthread_mutexattr_t mastermattr;
+//extern pthread_mutex_t masterMutex;
+//extern pthread_mutexattr_t mastermattr;
 
 typedef struct BufferInfo{
 	int srcAddr;

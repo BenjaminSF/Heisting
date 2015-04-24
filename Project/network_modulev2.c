@@ -23,6 +23,9 @@
 
 //char bufMessage[BUF_SIZE];
 //char bufSend[BUF_SIZE];
+//static pthread_mutex_t masterMutex;
+//static pthread_mutexattr_t mastermattr;
+static sem_t masterSem;
 
 //All values set by init_network
 static struct {
@@ -33,8 +36,7 @@ static struct {
 	char **addrsList; //Ikke implementert enda
 	int addrslistCounter;
 	int masterStatus; //Ikke implementert enda
-	//pthread_mutex_t masterMutex;
-	//pthread_mutexattr_t mastermattr;
+
 } info;
 
 /*struct ListenParams{
@@ -50,9 +52,13 @@ static struct {
 int init_network(){
 	receiveQueue = new_fifoqueue();
 	sendQueue = new_fifoqueue();
-	
 
-	
+	//pthread_mutexattr_init(&mastermattr);
+	//pthread_mutexattr_setpshared(&mastermattr, PTHREAD_PROCESS_SHARED);
+	//pthread_mutex_init(&masterMutex, &mastermattr);
+	sem_init(&masterSem, 0, 0);
+	sem_post(&masterSem);
+
 	//Finds the local machine's IP address
 	printf("Start init_network()\n");
 	struct ifaddrs *ifa,*ifaddr;
@@ -333,12 +339,22 @@ int addrsList(int i){
 
 int getMaster(){
 	//pthread_mutex_lock(&masterMutex);
+	int printSem;
+	sem_getvalue(&masterSem, &printSem);
+	printf("Sem value: %d\n", printSem);
+	sem_wait(&masterSem);
 	return info.masterStatus;
+	sem_post(&masterSem);
 	//pthread_mutex_unlock(&masterMutex);
 }
 
 void setMaster(int x){
 	//pthread_mutex_lock(&masterMutex);
+	int printSem;
+	sem_getvalue(&masterSem, &printSem);
+	printf("Sem value: %d\n", printSem);
+	sem_wait(&masterSem);
 	info.masterStatus = x;
+	sem_post(&masterSem);
 	//pthread_mutex_unlock(&masterMutex);
 }

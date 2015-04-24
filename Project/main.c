@@ -33,7 +33,5 @@ int main(){
 	//struct ListenParams
 	//pthread_create(&receiveMessages, NULL, &listen_for_messages, NULL);
 
-
-
-
+	return 0;
 }

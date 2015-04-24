@@ -31,18 +31,12 @@ struct {
 } elevStates;
 
 sem_t timeoutSem;
-int bestProposal;
-int dummyMutex;
+static int bestProposal;
+//int dummyMutex;
 
 void* orderManager(void* args){
-	pthread_mutexattr_init(&mastermattr);
-	//pthread_mutexattr_gettype(&mastermattr, PTHREAD_MUTEX_ERRORCHECK);
-	pthread_mutexattr_setpshared(&mastermattr, PTHREAD_PROCESS_SHARED);
-	pthread_mutex_init(&masterMutex, &mastermattr);
-	pthread_mutexattr_init(&orderQueuemattr);
-	pthread_mutexattr_setpshared(&orderQueuemattr, PTHREAD_PROCESS_SHARED);
-	pthread_mutex_init(&(orderQueue.rwLock), &orderQueuemattr);
-	dummyMutex = 0;
+
+	//dummyMutex = 0;
 	//initPriorityQueue();
 	//int masterStatus = *(int *) args);
 	//struct timespec startAnarchy;
@@ -139,8 +133,8 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 int getNewOrder(int currentFloor, int nextFloor, int button){
 	//printf("Enter getNewOrder: currentFloor: %d, nextFloor: %d\n", currentFloor, nextFloor);
 	int destFloor = -1;
-	int dir = nextFloor - currentFloor;
-	if (nextFloor == -1) dir = 0;
+	//int dir = nextFloor - currentFloor;
+	//if (nextFloor == -1) dir = 0;
 	if (getMaster() == 1){
 		//pthread_mutex_lock(&(orderQueue.rwLock));
 		//destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
@@ -467,6 +461,9 @@ void initPriorityQueue(){
 		orderQueue.enRoute[i] = 0;
 
 	}
-	
+
+	pthread_mutexattr_init(&orderQueuemattr);
+	pthread_mutexattr_setpshared(&orderQueuemattr, PTHREAD_PROCESS_SHARED);
+	pthread_mutex_init(&(orderQueue.rwLock), &orderQueuemattr);
 	printf("Setup priority queue\n");
 }

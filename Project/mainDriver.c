@@ -22,7 +22,7 @@ void* mainDriver() {
 	int lastFloor = 0;
 	int currentFloor, tmp;
 	int thisElevator = getLocalIP();
-	motorDirection direction;
+	//motorDirection direction;
 	buttonType buttonCall;
 	int newFloor,floorSetCommand,floorSetDown,floorSetUp,floorSetCommandRunning,floorSetDownRunning,floorSetUpRunning;
 	int localQueue[N_FLOORS];
@@ -85,10 +85,8 @@ void* mainDriver() {
 			localQueue[nextFloor] = 1;
 			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
-				direction = DIRN_UP;
 				buttonCall = BUTTON_CALL_UP;
-			}else{
-				direction = DIRN_DOWN;
+			}else{			
 				buttonCall = BUTTON_CALL_DOWN;
 			}
 			printf("Report 0\n");
