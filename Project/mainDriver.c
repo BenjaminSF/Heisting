@@ -18,7 +18,7 @@ void* mainDriver() {
 	int nextFloor = -1;
 	int i, j,k;
 	int lastFloor = 0;
-	int currentFloor, tmp;
+	int currentFloor, tmp, checkLocal;
 	int thisElevator = getLocalIP();
 	time_t startTime, endTime;
 	//double diffTime;
@@ -99,7 +99,7 @@ void* mainDriver() {
 			reportElevState(currentFloor, nextFloor, BUTTON_COMMAND);
 			time(&startTime);
 		}
-		nextFloor = getNewOrder(currentFloor, nextFloor, BUTTON_COMMAND);
+		if (nextFloor == -1) nextFloor = getNewOrder(currentFloor, nextFloor, BUTTON_COMMAND);
 
 		//printf("nextFloor %d\n",nextFloor );
 		if(nextFloor != -1){
@@ -241,11 +241,14 @@ void* mainDriver() {
 				setMotorDirection(DIRN_STOP);
 			}
 			printf("localQueue: %d %d %d %d\n", localQueue[0], localQueue[1], localQueue[2], localQueue[3]);
+			checkLocal = N_FLOORS;
 			for(k = 0; k < N_FLOORS; k++){
 				if (localQueue[k] != 0){
+					if (abs(lastFloor - k) < checkLocal) checkLocal = k;
 					printf("ERROR!!!! Sjekk localQueue____________________");
 				}
 			}
+			if (checkLocal != N_FLOORS) nextFloor = checkLocal;
 			//testingtime.tv_sec = 2;
 			//testingtime.tv_nsec = 0;
 			//nanosleep(&testingtime, &rem);
