@@ -63,6 +63,7 @@ int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int e
 	}else{
 		printf("This should not happen!!!!!!!!!!!!!\n");
 		cost = N_FLOORS + 1;
+		printf("N_FLOORS+1\n" );
 	}
 	//printf("cost: %d, floor: %d, button: %d\n", cost, costFloor, buttonType);
 	return cost;
