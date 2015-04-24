@@ -52,7 +52,7 @@ int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType){
 	//printf("findCost: current: %d, next: %d, cost: %d\n", currentFloor, nextFloor, cost);
 	if (nextFloor == -1){
 		cost = abs(cost);
-		print("nextFloor = -1;\n")
+		print("nextFloor = -1;\n");
 	}else if ((cost * dir) >= 0 && ((dir>0 && (buttonType == 0 || buttonType == 2))||(dir<0 && (buttonType == 2 || buttonType == 1)))){
 		cost = abs(cost);
 		printf("nextFloor right way\n");
