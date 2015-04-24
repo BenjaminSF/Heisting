@@ -10,14 +10,6 @@ struct order{
 	int buttonType;
 	int elevator;
 };
-struct{
-	struct order Queue[N_ORDERS];
-	int inUse[N_ORDERS];
-	int localPri[N_ORDERS];
-	int enRoute[N_ORDERS];
-	pthread_mutex_t rwLock;
-}orderQueue;
-
 
 void initPriorityQueue();
 int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType);

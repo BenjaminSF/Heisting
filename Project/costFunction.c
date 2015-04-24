@@ -4,18 +4,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 //#define N_ORDERS 100
-void initPriorityQueue(){
-	int i;
-	for (i = 0; i < N_ORDERS; i++){
-		orderQueue.inUse[i] = 0;
-		orderQueue.localPri[i] = -1;
-		orderQueue.Queue[i].dest = 100;
-		orderQueue.enRoute[i] = 0;
 
-	}
-	
-	printf("Setup priority queue\n");
-}
 
 
 int findLowestCost(int priority[100] ,int inUse[100], struct order queue[100], int currentFloor, int nextFloor){

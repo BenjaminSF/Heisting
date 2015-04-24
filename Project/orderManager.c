@@ -12,6 +12,14 @@
 void distributeOrders();
 int ordercmp(struct order *A, struct order *B);
 
+struct orderQueueType{
+	struct order Queue[N_ORDERS];
+	int inUse[N_ORDERS];
+	int localPri[N_ORDERS];
+	int enRoute[N_ORDERS];
+	pthread_mutex_t rwLock;
+}orderQueue;
+
 int localManQueue[N_FLOORS];
 int localManButtons[N_FLOORS];
 struct {
@@ -25,12 +33,14 @@ int dummyMutex;
 
 void* orderManager(void* args){
 	pthread_mutexattr_init(&mastermattr);
+	//pthread_mutexattr_gettype(&mastermattr, PTHREAD_MUTEX_ERRORCHECK);
 	pthread_mutexattr_setpshared(&mastermattr, PTHREAD_PROCESS_SHARED);
 	pthread_mutex_init(&masterMutex, &mastermattr);
 	pthread_mutexattr_init(&orderQueuemattr);
 	pthread_mutexattr_setpshared(&orderQueuemattr, PTHREAD_PROCESS_SHARED);
 	pthread_mutex_init(&(orderQueue.rwLock), &orderQueuemattr);
 	dummyMutex = 0;
+	//initPriorityQueue();
 	//int masterStatus = *(int *) args);
 	//struct timespec startAnarchy;
 	printf("Master: %d\n", getMaster());
@@ -66,10 +76,10 @@ void* orderManager(void* args){
 int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	printf("Enter addNewOrder---------------------------------------------------\n");
 	if (getMaster() == 1){
-		printf("Trying to get mutex\n");
-		//pthread_mutex_lock(&(orderQueue.rwLock));
-		dummyMutex++;
-		printf("Mutex owner: addNewOrder: %d\n", dummyMutex);
+		//printf("Trying to get mutex\n");
+		pthread_mutex_lock(&(orderQueue.rwLock));
+		//dummyMutex++;
+		//printf("Mutex owner: addNewOrder: %d\n", dummyMutex);
 		int pos = 0;
 		struct order storeOrder;
 		storeOrder.dest = newOrder.dest;
@@ -78,17 +88,17 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		
 		while(orderQueue.inUse[pos]){
 			if(ordercmp(&(orderQueue.Queue[pos]), &storeOrder)){
-				//pthread_mutex_unlock(&(orderQueue.rwLock));
-				dummyMutex--;
-				printf("Add unlock mutex: %d\n", dummyMutex);
+				pthread_mutex_unlock(&(orderQueue.rwLock));
+				//dummyMutex--;
+				//printf("Add unlock mutex: %d\n", dummyMutex);
 				return -1;
 			} 
 			pos++;
 			if (pos == N_ORDERS){
 				printf("Error: orderQueue is full, order not received\n");
-				//pthread_mutex_unlock(&(orderQueue.rwLock));
-				dummyMutex--;
-				printf("Add unlock mutex: %d\n", dummyMutex);
+				pthread_mutex_unlock(&(orderQueue.rwLock));
+				//dummyMutex--;
+				//printf("Add unlock mutex: %d\n", dummyMutex);
 				return -1;
 			}
 		}
@@ -110,9 +120,9 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		}
 		//printf("Mutex released: addNewOrder\n");
 		
-		//pthread_mutex_unlock(&(orderQueue.rwLock));
-		dummyMutex--;
-		printf("Add unlock mutex, %d\n", dummyMutex);
+		pthread_mutex_unlock(&(orderQueue.rwLock));
+		//dummyMutex--;
+		//printf("Add unlock mutex, %d\n", dummyMutex);
 	}else{ //Send new order to the master
 		printf("Dette er en slave\n");
 		BufferInfo newMsg;
@@ -169,7 +179,7 @@ void distributeOrders(){ //Master only
 
 	addrsCount = getAddrsCount();
 	//printf("Getting mutex\n");
-	//pthread_mutex_lock(&(orderQueue.rwLock));
+	pthread_mutex_lock(&(orderQueue.rwLock));
 	//printf("Mutex owner: distributeOrders\n");
 	minCost = N_FLOORS;
 	for (j = 0; j < N_ORDERS; j++){
@@ -204,7 +214,7 @@ void distributeOrders(){ //Master only
 		if (minCost == 0) break;
 	}
 	//printf("minCost: %d\n", minCost);
-	//pthread_mutex_unlock(&(orderQueue.rwLock));
+	pthread_mutex_unlock(&(orderQueue.rwLock));
 	//printf("Release mutex\n");
 	if (minCost < N_FLOORS){
 		//printf("Sending elevator: %d, to floor: %d\n", minElev, minFloor);
@@ -438,4 +448,17 @@ void reportElevState(int currentFloor, int nextFloor){
 		enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 	}
 	
+}
+
+void initPriorityQueue(){
+	int i;
+	for (i = 0; i < N_ORDERS; i++){
+		orderQueue.inUse[i] = 0;
+		orderQueue.localPri[i] = -1;
+		orderQueue.Queue[i].dest = 100;
+		orderQueue.enRoute[i] = 0;
+
+	}
+	
+	printf("Setup priority queue\n");
 }
