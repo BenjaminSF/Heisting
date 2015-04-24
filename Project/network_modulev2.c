@@ -21,11 +21,7 @@
 #define BUF_SIZE 1024
 #define MAX_ELEVS 5
 
-//char bufMessage[BUF_SIZE];
-//char bufSend[BUF_SIZE];
-//static pthread_mutex_t masterMutex;
-//static pthread_mutexattr_t mastermattr;
-static sem_t masterSem;
+//static sem_t masterSem;
 
 //All values set by init_network
 static struct {
@@ -33,21 +29,14 @@ static struct {
 	char *broadcastIP;
 	char *masterIP;
 	int port;
-	char **addrsList; //Ikke implementert enda
+	char **addrsList;
 	int addrslistCounter;
-	int masterStatus; //Ikke implementert enda
+	int masterStatus;
+	sem_t masterSem;
+	sem_t addrslistSem;
 
 } info;
 
-/*struct ListenParams{
-	int port;
-	int timeoutMs;
-	int finished;
-	//struct lock rwLock;
-	//struct condition available;
-	//pthread_mutex_t rwLock;
-	sem_t readReady;
-};*/
 
 int init_network(){
 	struct in_addr ipSak;
@@ -59,10 +48,9 @@ int init_network(){
 	receiveQueue = new_fifoqueue();
 	sendQueue = new_fifoqueue();
 
-	//pthread_mutexattr_init(&mastermattr);
-	//pthread_mutexattr_setpshared(&mastermattr, PTHREAD_PROCESS_SHARED);
-	//pthread_mutex_init(&masterMutex, &mastermattr);
-	sem_init(&masterSem, 0, 1);
+	sem_init(&(info.addrslistSem), 0, 1);
+	sem_init(&(info.masterSem), 0, 1);
+	//sem_init(&masterSem, 0, 1);
 	//sem_post(&masterSem);
 
 	//Finds the local machine's IP address
@@ -298,20 +286,26 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 }
 
 int getLocalIP(){
-	//printf("getLocalIP\n");
-	return inet_addr(info.localIP);
+	sem_wait(&(info.addrslistSem));
+	int tmp = inet_addr(info.localIP);
+	sem_post(&(info.addrslistSem));
+	return tmp;
 }
 
 int getBroadcastIP(){
-	printf("getBroadcastIP\n");
-	return inet_addr(info.broadcastIP);
+	sem_wait(&(info.addrslistSem));
+	int tmp = inet_addr(info.broadcastIP);
+	sem_post(&(info.addrslistSem));
+	return tmp;
 }
 
 void setMasterIP(int x){
 	printf("setMasterIP\n");
 	struct in_addr tmp;
 	tmp.s_addr = x;
+	sem_wait(&(info.addrslistSem));
 	info.masterIP = strdup(inet_ntoa(tmp));
+	sem_post(&(info.addrslistSem));
 }
 
 void addElevatorAddr(int newIP){
@@ -320,6 +314,7 @@ void addElevatorAddr(int newIP){
 	struct in_addr tmp;
 	tmp.s_addr = newIP;
 	int i;
+	sem_wait(&(info.addrslistSem));
 	for (i = 0; i < info.addrslistCounter; i++){
 		printf("HEllo\n");
 		if (!strcmp(info.addrsList[i], inet_ntoa(tmp))){
@@ -331,31 +326,38 @@ void addElevatorAddr(int newIP){
 		info.addrsList[info.addrslistCounter] = strdup(inet_ntoa(tmp));
 		info.addrslistCounter++;
 	}
+	sem_post(&(info.addrslistSem));
 }
 
 int getAddrsCount(){
-	//printf("getAddrsCount\n");
-	return info.addrslistCounter;
+	sem_wait(&(info.addrslistSem));
+	int tmp = info.addrslistCounter;
+	sem_post(&(info.addrslistSem));
+	return tmp;
 }
 
 int addrsList(int i){
-	//printf("addrsList\n");
-	return inet_addr(info.addrsList[i]);
+	sem_wait(&(info.addrslistSem));
+	int tmp = inet_addr(info.addrsList[i]);
+	sem_post(&(info.addrslistSem));
+	return tmp;
 }
 
 int getMaster(){
-	sem_wait(&masterSem);
+	sem_wait(&(info.masterSem));
 	int tmp = info.masterStatus;
-	sem_post(&masterSem);
+	sem_post(&(info.masterSem));
 	return tmp;
 }
 
 void setMaster(int x){
-	sem_wait(&masterSem);
+	sem_wait(&(info.masterSem));
 	info.masterStatus = x;
-	sem_post(&masterSem);
+	sem_post(&(info.masterSem));
 }
 
 void resetAddrsList(){
+	sem_wait(&(info.addrslistSem));
 	info.addrslistCounter = 1;
+	sem_post(&(info.addrslistSem));
 }

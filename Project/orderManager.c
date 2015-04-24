@@ -11,6 +11,7 @@
 
 void distributeOrders();
 int ordercmp(struct order *A, struct order *B);
+void* orderTimeout();
 
 struct orderQueueType{
 	struct order Queue[N_ORDERS];
@@ -46,9 +47,9 @@ void* orderManager(void* args){
 	bestProposal = getLocalIP();
 	sem_init(&timeoutSem, 0, 0);
 	//initPriorityQueue();
-	pthread_t sortMessages_, masterTimeout_;
+	pthread_t sortMessages_, masterTimeout_, orderTimeout_;
 
-
+	pthread_create(&orderTimeout_, 0, &orderTimeout, 0);
 	pthread_create(&sortMessages_, 0, &sortMessages, 0);
 	while(1){
 		pthread_create(&masterTimeout_, 0, &masterTimeout, 0);
@@ -64,7 +65,7 @@ void* orderManager(void* args){
 		setMasterIP(bestProposal);
 		bestProposal = getLocalIP();
 	}
-
+	pthread_join(orderTimeout_, NULL);
 	pthread_join(sortMessages_, NULL);
 
 	return NULL;
@@ -291,6 +292,16 @@ void* sortMessages(void *args){
 				}
 				addElevatorAddr(srcAddr);
 			}
+			if (myState == MSG_ADDR_REQUEST){
+				printf("Receive: MSG_ADDR_REQUEST\n");
+				BufferInfo newMsg;
+				encodeMessage(&newMsg, 0, srcAddr, MSG_ADDR_RESPONSE,-1, -1, -1);
+				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
+			}
+			if (myState == MSG_ADDR_RESPONSE){
+				printf("Receive: MSG_ADDR_RESPONSE\n");
+				addElevatorAddr(srcAddr);
+			}
 
 			if (getMaster() == 1){
 				if (myState == MSG_ADD_ORDER){
@@ -476,4 +487,28 @@ void initPriorityQueue(){
 	pthread_mutexattr_setpshared(&orderQueuemattr, PTHREAD_PROCESS_SHARED);
 	pthread_mutex_init(&(orderQueue.rwLock), &orderQueuemattr);
 	printf("Setup priority queue\n");
+}
+
+void* orderTimeout(){
+	struct timespec ts, rem;
+	int i;
+	while(1){
+		for (i = 0; i < N_ORDERS; i++){
+			if (orderQueue.inUse[i] && orderQueue.enRoute[i]){
+				orderQueue.enRoute[i]++;
+			}
+			if (orderQueue.enRoute[i] > 12){
+				printf("Order timed out!!\n");
+				orderQueue.enRoute[i] = 0;
+				resetAddrsList();
+				BufferInfo newMsg;
+				encodeMessage(&newMsg, 0, 0, MSG_ADDR_REQUEST, -1, -1, -1);
+				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
+			}
+		}
+		ts.tv_sec = 1;
+		ts.tv_nsec = 0;
+		nanosleep(&ts, &rem);
+	}
+	return NULL;
 }

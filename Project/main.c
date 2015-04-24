@@ -2,6 +2,7 @@
 #include "mainDriver.h"
 #include "network_modulev2.h"
 #include "orderManager.h"
+#include "elevDriver.h"
 #define N_FLOORS 4
 #define N_ELEVATORS 5
 
@@ -14,6 +15,11 @@ int main(){
 	}else{
 		printf("Master\n");
 	}
+	if (!elevDriver_initialize()) {
+		printf("Unable to initialize elevator hardware!\n");
+		return 0;
+	}
+
 
 	pthread_t driver, sendMessages, receiveMessages, manager;
 	pthread_create(&driver,NULL,&mainDriver,NULL);

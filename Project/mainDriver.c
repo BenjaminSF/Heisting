@@ -12,10 +12,7 @@
 
 #define N_FLOORS 4
 void* mainDriver() {
-	if (!elevDriver_initialize()) {
-		printf("Unable to initialize elevator hardware!\n");
-		return NULL;
-}
+	
 	printf("Press STOP button to stop elevator and exit program.\n");
 	//struct timespec testingtime, rem;
 	int nextFloor = -1;
