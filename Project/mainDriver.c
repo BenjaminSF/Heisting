@@ -17,7 +17,7 @@ void* mainDriver() {
 		return NULL;
 }
 	printf("Press STOP button to stop elevator and exit program.\n");
-	struct timespec testingtime, rem;
+	//struct timespec testingtime, rem;
 	int nextFloor = -1;
 	int i, j,k;
 	int lastFloor = 0;
@@ -242,9 +242,9 @@ void* mainDriver() {
 					printf("ERROR!!!! Sjekk localQueue____________________");
 				}
 			}
-			testingtime.tv_sec = 2;
-			testingtime.tv_nsec = 0;
-			nanosleep(&testingtime, &rem);
+			//testingtime.tv_sec = 2;
+			//testingtime.tv_nsec = 0;
+			//nanosleep(&testingtime, &rem);
 		}
 	}
 	if(isObstructed()){
