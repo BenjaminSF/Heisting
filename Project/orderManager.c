@@ -506,7 +506,7 @@ void* orderTimeout(){
 				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 			}
 		}
-		ts.tv_sec = 1;
+		ts.tv_sec = 2;
 		ts.tv_nsec = 0;
 		nanosleep(&ts, &rem);
 	}

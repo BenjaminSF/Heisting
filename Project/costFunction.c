@@ -51,16 +51,16 @@ int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int e
 	cost = costFloor - currentFloor;
 	//printf("findCost: current: %d, next: %d, cost: %d\n", currentFloor, nextFloor, cost);
 	if ((elevButton == BUTTON_CALL_UP) && ((buttonType == BUTTON_CALL_DOWN) || (costFloor < currentFloor))){
-		cost = (N_FLOORS - currentFloor) + (N_FLOORS - costFloor) - 2;
+		cost = (N_FLOORS - currentFloor) + (N_FLOORS - costFloor) - 2 + N_FLOORS;
 	}else if ((elevButton == BUTTON_CALL_DOWN) && ((buttonType == BUTTON_CALL_UP) || (costFloor > currentFloor))){
-		cost = costFloor + currentFloor;
+		cost = costFloor + currentFloor + N_FLOORS;
 	}else if (nextFloor == -1){
 		cost = abs(cost);
 		//printf("nextFloor = -1;\n");
 	}else if ((buttonType == BUTTON_COMMAND) && (elevButton == BUTTON_CALL_UP) && (currentFloor > costFloor)){
-		cost = (N_FLOORS - currentFloor) + (N_FLOORS - costFloor) - 2;
+		cost = (N_FLOORS - currentFloor) + (N_FLOORS - costFloor) - 2 + N_FLOORS;
 	}else if ((buttonType == BUTTON_COMMAND) && (elevButton == BUTTON_CALL_DOWN) && (currentFloor < costFloor)){
-		cost = costFloor + currentFloor;
+		cost = costFloor + currentFloor + N_FLOORS;
 	}else if (buttonType == BUTTON_COMMAND){
 		cost = abs(cost);
 	}else if (elevButton == buttonType){
