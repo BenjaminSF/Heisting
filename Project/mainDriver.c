@@ -262,7 +262,6 @@ void* mainDriver() {
 		printf("Elevator was stopped\n");
 	}
 	return NULL;
-
 }
 
 /*
