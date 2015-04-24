@@ -168,7 +168,7 @@ int getNewOrder(int currentFloor, int nextFloor, int button){
 			}
 		} 
 		//localManQueue[destFloor] = 0;
-		printf("Slave go to: %d\n", destFloor);
+		//printf("Slave go to: %d\n", destFloor);
 	}
 	//printf("currentFloor: %d, nextFloor: %d, destFloor: %d\n", currentFloor, nextFloor, destFloor);
 
@@ -275,6 +275,7 @@ void* sortMessages(void *args){
 			}
 			if (myState == MSG_MASTER_REQUEST){
 				printf("Receive: MSG_MASTER_REQUEST\n");
+				resetAddrsList();
 				int candidate = 1;
 				if (srcAddr > myIP){
 					candidate = 0;
@@ -288,6 +289,7 @@ void* sortMessages(void *args){
 				if (srcAddr > bestProposal){
 					bestProposal = srcAddr;
 				}
+				addElevatorAddr(srcAddr);
 			}
 
 			if (getMaster() == 1){
@@ -366,18 +368,19 @@ void* masterTimeout(void *args){
 	if (masterStatus == 0){
 		printf("Timer: slave\n");
 		clock_gettime(CLOCK_REALTIME, &ts);
-		ts.tv_sec = ts.tv_sec + 15;
+		ts.tv_sec = ts.tv_sec + 6;
 		int test;
-		while(1){
+		while(getMaster() == 0){
 			test = sem_timedwait(&timeoutSem, &ts);
 			if (test == -1){
 				printf("Master timeout\n");
+				resetAddrsList();
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, 0, 0, MSG_MASTER_REQUEST, -1, -1, -1);
 				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 				return NULL;
 			}
-			printf("Aliveness confirmed\n");
+			//printf("Aliveness confirmed\n");
 			clock_gettime(CLOCK_REALTIME, &ts);
 			ts.tv_sec = ts.tv_sec + 15;
 		}
@@ -388,12 +391,13 @@ void* masterTimeout(void *args){
 		ts.tv_nsec = 0;
 		BufferInfo newMsg;
 		encodeMessage(&newMsg, 0, 0, MSG_IM_ALIVE, 1, -1, -1);
-		while(1){
+		while(getMaster() == 1){
 			enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 			nanosleep(&ts, &rem);
 
 		}
 	}
+	return NULL;
 }
 
 void deleteOrder(int floor, buttonType button, int elevator){

@@ -355,3 +355,7 @@ void setMaster(int x){
 	info.masterStatus = x;
 	sem_post(&masterSem);
 }
+
+void resetAddrsList(){
+	info.addrslistCounter = 1;
+}

@@ -59,6 +59,7 @@ int getAddrsCount();
 int addrsList(int pos);
 int getMaster();
 void setMaster(int x);
+void resetAddrsList();
 
 
 #endif
