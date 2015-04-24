@@ -50,6 +50,12 @@ static struct {
 };*/
 
 int init_network(){
+	struct in_addr ipSak;
+	ipSak.s_addr = 1869573190;
+	printf("Banker på vår dør: %s\n", inet_ntoa(ipSak));
+
+
+
 	receiveQueue = new_fifoqueue();
 	sendQueue = new_fifoqueue();
 
@@ -82,7 +88,7 @@ int init_network(){
 	
 	//set IP info for use by other functions
 	info.localIP = strdup(tmpIP);
-	info.port = 20012; //Set to a static value for port, could implement and call a function if necessary
+	info.port = 20042; //Set to a static value for port, could implement and call a function if necessary
 	
 	//Finds broadcast-IP:
 	char *lastDot;

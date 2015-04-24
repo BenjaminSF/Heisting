@@ -7,7 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-
+#include <unistd.h>
+#include <time.h>
 
 #define N_FLOORS 4
 void* mainDriver() {
@@ -16,7 +17,7 @@ void* mainDriver() {
 		return NULL;
 }
 	printf("Press STOP button to stop elevator and exit program.\n");
-	
+	struct timespec testingtime, rem;
 	int nextFloor = -1;
 	int i, j,k;
 	int lastFloor = 0;
@@ -164,6 +165,7 @@ void* mainDriver() {
 				//printf("After get\n");
 				if(newFloor != nextFloor && newFloor != -1){
 					localQueue[newFloor] = 1;
+					printf("localQueue___: %d %d %d %d\n", localQueue[0], localQueue[1], localQueue[2], localQueue[3]);
 					if(buttonCall == BUTTON_CALL_UP && newFloor>nextFloor){
 						nextFloor = newFloor;
 						printf("Report 2\n");
@@ -173,7 +175,7 @@ void* mainDriver() {
 						printf("Report 3\n");
 						reportElevState(lastFloor, nextFloor, buttonCall);
 					}
-
+					//usleep(800000);
 					//printf("Enter new != next\n");
 				}
 				if((localQueue[lastFloor]== 1) && (currentFloor == lastFloor)){
@@ -198,6 +200,14 @@ void* mainDriver() {
 					setDoorOpenLamp(0);
 					localQueue[lastFloor] = 0;
 					goToFloor(nextFloor);
+					newFloor = getNewOrder(lastFloor,nextFloor, buttonCall);
+					if ((newFloor != -1) && (newFloor != nextFloor) && ((currentFloor != 0)||(currentFloor != N_FLOORS-1))){
+						if (((newFloor < nextFloor) && (buttonCall == BUTTON_CALL_DOWN)) || ((newFloor > nextFloor) && (buttonCall == BUTTON_CALL_UP))){
+							nextFloor = newFloor;
+							goToFloor(nextFloor);
+							localQueue[nextFloor] = 1;
+						}
+					}
 				}	
 				//printf("getFloor: %d\n", lastFloor);
 				/*if (getFloor() == nextFloor){
@@ -232,6 +242,9 @@ void* mainDriver() {
 					printf("ERROR!!!! Sjekk localQueue____________________");
 				}
 			}
+			testingtime.tv_sec = 2;
+			testingtime.tv_nsec = 0;
+			nanosleep(&testingtime, &rem);
 		}
 	}
 	if(isObstructed()){

@@ -140,27 +140,31 @@ int getNewOrder(int currentFloor, int nextFloor, int button){
 		//destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
 		//pthread_mutex_unlock(&(orderQueue.rwLock));
 		distributeOrders();
-		int i, tmp;
-		int minCost = N_FLOORS * 2;
+		int i;
+		//int minCost = N_FLOORS * 2;
 		for (i = 0; i < N_FLOORS; i++){
 			if (localManQueue[i] == 1){
-				tmp = findCost(i, currentFloor, nextFloor, localManButtons[i], button);
-				if (tmp < minCost){
-					minCost = tmp;
-					destFloor = i;
-				}
+				//tmp = findCost(i, currentFloor, nextFloor, localManButtons[i], button);
+				//if (tmp < minCost){
+				//	minCost = tmp;
+				//	destFloor = i;
+				//}
+				destFloor = i;
+				localManQueue[i] = 0;
 			}
 		} 
 	}else{
-		int i, tmp;
-		int minCost = N_FLOORS * 2;
+		int i;
+		//int minCost = N_FLOORS * 2;
 		for (i = 0; i < N_FLOORS; i++){
 			if (localManQueue[i] == 1){
-				tmp = findCost(i, currentFloor, nextFloor, localManButtons[i], button);
-				if (tmp < minCost){
-					minCost = tmp;
-					destFloor = i;
-				}
+				//tmp = findCost(i, currentFloor, nextFloor, localManButtons[i], button);
+				//if (tmp < minCost){
+				//	minCost = tmp;
+				//	destFloor = i;
+				//}
+				destFloor = i;
+				localManQueue[i] = 0;
 			}
 		} 
 		//localManQueue[destFloor] = 0;
@@ -184,8 +188,9 @@ void distributeOrders(){ //Master only
 		for (i = 0; i < addrsCount; i++){
 			tmpAddr = addrsList(i);
 			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr)){// && !elevStates.active[i]){ //Send BUTTON_COMMAND orders first
-				printf("BUTTON_COMMAND, source: %d\n", tmpAddr);
+				//printf("BUTTON_COMMAND, source: %d\n", tmpAddr);
 				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
+				printf("tmpCostButton: %d, to: %d, from: %d, going to: %d, orderButton: %d, elevButton: %d\n", tmpCost, orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
 				if (tmpCost < minCost){
 					minCost = tmpCost;
 					minFloor = orderQueue.Queue[j].dest;
@@ -198,8 +203,8 @@ void distributeOrders(){ //Master only
 			}else if (orderQueue.inUse[j] && (orderQueue.localPri[j] == -1)){// && !elevStates.active[i]){
 				//printf("floor: %d, nextElevState: %d\n", elevStates.floor[i], elevStates.nextFloor[i]);
 				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
-				//printf("tmpCost1: %d\n", tmpCost);
-				tmpCost += orderQueue.enRoute[j] + elevStates.active[i];
+				printf("tmpCost: %d, to: %d, from: %d, going to: %d, orderButton: %d, elevButton: %d\n", tmpCost, orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
+				//tmpCost += orderQueue.enRoute[j] + elevStates.active[i];
 				//printf("tmpCost: %d\n", tmpCost);
 				if (tmpCost < minCost){
 					minCost = tmpCost;
@@ -220,7 +225,7 @@ void distributeOrders(){ //Master only
 		//printf("Sending elevator: %d, to floor: %d\n", minElev, minFloor);
 		orderQueue.enRoute[minOrderPos] = 1;
 		elevStates.active[minPos] = 1;
-		printf("Send order to: %d\n", minElev);
+		printf("Send order to: %d, floor: %d, cost: %d\n", minElev, minFloor, minCost);
 		if (minElev == getLocalIP()){
 			//printf("Go here!\n");
 			localManQueue[minFloor] = 1;
