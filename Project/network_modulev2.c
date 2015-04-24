@@ -56,8 +56,8 @@ int init_network(){
 	//pthread_mutexattr_init(&mastermattr);
 	//pthread_mutexattr_setpshared(&mastermattr, PTHREAD_PROCESS_SHARED);
 	//pthread_mutex_init(&masterMutex, &mastermattr);
-	sem_init(&masterSem, 0, 0);
-	sem_post(&masterSem);
+	sem_init(&masterSem, 0, 1);
+	//sem_post(&masterSem);
 
 	//Finds the local machine's IP address
 	printf("Start init_network()\n");
@@ -338,23 +338,14 @@ int addrsList(int i){
 }
 
 int getMaster(){
-	//pthread_mutex_lock(&masterMutex);
-	int printSem;
-	sem_getvalue(&masterSem, &printSem);
-	printf("Sem value: %d\n", printSem);
 	sem_wait(&masterSem);
-	return info.masterStatus;
+	int tmp = info.masterStatus;
 	sem_post(&masterSem);
-	//pthread_mutex_unlock(&masterMutex);
+	return tmp;
 }
 
 void setMaster(int x){
-	//pthread_mutex_lock(&masterMutex);
-	int printSem;
-	sem_getvalue(&masterSem, &printSem);
-	printf("Sem value: %d\n", printSem);
 	sem_wait(&masterSem);
 	info.masterStatus = x;
 	sem_post(&masterSem);
-	//pthread_mutex_unlock(&masterMutex);
 }

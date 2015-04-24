@@ -39,7 +39,7 @@ void* mainDriver() {
 			setFloorIndicator(lastFloor);
 		}
 
-		setDoorOpenLamp(1);
+		//setDoorOpenLamp(1);
 		//nextFloor = -1;
 
 		memset(localQueue,0,sizeof(int)*N_FLOORS);
@@ -51,7 +51,13 @@ void* mainDriver() {
 					newFloor = addNewOrder(newOrder,0,0);
 					floorSetCommand = i;
 					//while(getButtonSignal(i,BUTTON_COMMAND)){}
-			}
+				}else{
+					setDoorOpenLamp(1);
+					for (k = 0; k < 100000; k++){
+						setMotorDirection(DIRN_STOP);
+					}
+					setDoorOpenLamp(0);
+				}
 			}
 			if(i< N_FLOORS-1){
 				if (getButtonSignal(i,BUTTON_CALL_UP) && floorSetUp != i){
@@ -61,6 +67,12 @@ void* mainDriver() {
 						floorSetUp = i;
 						//while(getButtonSignal(i,BUTTON_CALL_UP)){}							
 														
+					}else{
+						setDoorOpenLamp(1);
+						for (k = 0; k < 100000; k++){
+							setMotorDirection(DIRN_STOP);
+						}
+						setDoorOpenLamp(0);
 					}
 				}
 			}
@@ -71,6 +83,12 @@ void* mainDriver() {
 						newFloor = addNewOrder(newOrder,0,0);
 						floorSetDown = i;
 						//while(getButtonSignal(i,BUTTON_CALL_DOWN)){}
+					}else{
+						setDoorOpenLamp(1);
+						for (k = 0; k < 100000; k++){
+							setMotorDirection(DIRN_STOP);
+						}
+						setDoorOpenLamp(0);
 					}
 				}
 			}
