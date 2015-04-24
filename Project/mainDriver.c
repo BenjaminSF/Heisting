@@ -20,10 +20,13 @@ void* mainDriver() {
 	int lastFloor = 0;
 	int currentFloor, tmp;
 	int thisElevator = getLocalIP();
+	time_t startTime, endTime;
+	//double diffTime;
 	//motorDirection direction;
 	buttonType buttonCall;
 	int newFloor,floorSetCommand,floorSetDown,floorSetUp,floorSetCommandRunning,floorSetDownRunning,floorSetUpRunning;
 	int localQueue[N_FLOORS];
+	time(&startTime);
 	reportElevState(getFloor(), nextFloor, BUTTON_COMMAND);
 	while(!isStopped() && !isObstructed()){
 		floorSetCommand = -1;
@@ -91,8 +94,12 @@ void* mainDriver() {
 				}
 			}
 		}
+		time(&endTime);
+		if (difftime(endTime, startTime) > 2.0){
+			reportElevState(currentFloor, nextFloor, BUTTON_COMMAND);
+			time(&startTime);
+		}
 		nextFloor = getNewOrder(currentFloor, nextFloor, BUTTON_COMMAND);
-		//reportElevState(currentFloor, nextFloor);
 
 		//printf("nextFloor %d\n",nextFloor );
 		if(nextFloor != -1){

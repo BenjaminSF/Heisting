@@ -208,7 +208,7 @@ void distributeOrders(){ //Master only
 				printf("tmpCost: %d, to: %d, from: %d, going to: %d, orderButton: %d, elevButton: %d\n", tmpCost, orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
 				//tmpCost += orderQueue.enRoute[j] + elevStates.active[i];
 				//printf("tmpCost: %d\n", tmpCost);
-				if (tmpCost < minCost){
+				if (tmpCost < minCost && !orderQueue.enRoute[j]){
 					minCost = tmpCost;
 					minFloor = orderQueue.Queue[j].dest;
 					minElev = tmpAddr;
