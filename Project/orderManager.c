@@ -111,7 +111,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		orderQueue.Queue[pos] = storeOrder;
 		orderQueue.inUse[pos] = 1;
 		orderQueue.enRoute[pos] = 0;
-		if (storeOrder.buttonType == BUTTON_COMMAND && storeOrder.elevator == getLocalIP()){
+		if (storeOrder.buttonType == BUTTON_COMMAND){
 			orderQueue.localPri[pos] = storeOrder.elevator;
 			printf("add local order from: %d\n", storeOrder.elevator);
 			setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
@@ -193,7 +193,7 @@ void distributeOrders(){ //Master only
 				//printf("BUTTON_COMMAND, source: %d\n", tmpAddr);
 				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
 				//printf("tmpCostButton: %d, to: %d, from: %d, going to: %d, orderButton: %d, elevButton: %d\n", tmpCost, orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
-				if (tmpCost < minCost){
+				if (tmpCost < minCost && !orderQueue.enRoute[j]){
 					minCost = tmpCost;
 					minFloor = orderQueue.Queue[j].dest;
 					minElev = tmpAddr;
@@ -506,7 +506,7 @@ void* orderTimeout(){
 				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 			}
 		}
-		ts.tv_sec = 2;
+		ts.tv_sec = 1;
 		ts.tv_nsec = 0;
 		nanosleep(&ts, &rem);
 	}

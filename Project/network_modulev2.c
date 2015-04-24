@@ -39,12 +39,6 @@ static struct {
 
 
 int init_network(){
-	struct in_addr ipSak;
-	ipSak.s_addr = 1869573190;
-	printf("Banker på vår dør: %s\n", inet_ntoa(ipSak));
-
-
-
 	receiveQueue = new_fifoqueue();
 	sendQueue = new_fifoqueue();
 
@@ -309,7 +303,6 @@ void setMasterIP(int x){
 }
 
 void addElevatorAddr(int newIP){
-	printf("addElevatorAddr\n");
 	int isInList = 0;
 	struct in_addr tmp;
 	tmp.s_addr = newIP;
@@ -326,6 +319,7 @@ void addElevatorAddr(int newIP){
 		info.addrsList[info.addrslistCounter] = strdup(inet_ntoa(tmp));
 		info.addrslistCounter++;
 	}
+	printf("Elevator count: %d\n", info.addrslistCounter);
 	sem_post(&(info.addrslistSem));
 }
 
