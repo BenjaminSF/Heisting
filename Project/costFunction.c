@@ -56,7 +56,7 @@ int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int e
 		cost = costFloor + currentFloor;
 	}else if (nextFloor == -1){
 		cost = abs(cost);
-		printf("nextFloor = -1;\n");
+		//printf("nextFloor = -1;\n");
 	}else if ((buttonType == BUTTON_COMMAND) && (elevButton == BUTTON_CALL_UP) && (currentFloor > costFloor)){
 		cost = (N_FLOORS - currentFloor) + (N_FLOORS - costFloor) - 2;
 	}else if ((buttonType == BUTTON_COMMAND) && (elevButton == BUTTON_CALL_DOWN) && (currentFloor < costFloor)){
