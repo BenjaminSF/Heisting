@@ -497,7 +497,7 @@ void* orderTimeout(){
 	return NULL;
 }
 
-void importBackupOrders(struct order x){
+void importBackupOrders(struct order backupOrder){
 	int i = 0;
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	while(orderQueue.inUse[i]){
@@ -508,9 +508,9 @@ void importBackupOrders(struct order x){
 		}
 	}
 	orderQueue.inUse[i] = 1;
-	orderQueue.Queue[i] = x;
-	if (x.buttonType == BUTTON_COMMAND){
-		orderQueue.localPri[i] = x.elevator;
+	orderQueue.Queue[i] = backupOrder;
+	if (backupOrder.buttonType == BUTTON_COMMAND){
+		orderQueue.localPri[i] = backupOrder.elevator;
 	}else{
 		orderQueue.localPri[i] = -1;
 	}
