@@ -169,7 +169,6 @@ int getNewOrder(int currentFloor, int nextFloor, int button){
 				localManQueue[i] = 0;
 			}
 		} 
-		//localManQueue[destFloor] = 0;
 		//printf("Slave go to: %d\n", destFloor);
 	}
 	//printf("currentFloor: %d, nextFloor: %d, destFloor: %d\n", currentFloor, nextFloor, destFloor);

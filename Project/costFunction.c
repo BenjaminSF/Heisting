@@ -3,7 +3,6 @@
 #include "network_modulev2.h"
 #include <stdlib.h>
 #include <pthread.h>
-//#define N_ORDERS 100
 
 
 
@@ -75,38 +74,4 @@ int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int e
 	}
 	//printf("cost: %d, floor: %d, button: %d\n", cost, costFloor, buttonType);
 	return cost;
-
 }
-/*
-int checkCurrentStatus(struct order newOrder, int currentFloor,int nextFloor){
-	int newCost;
-	motorDirection direction;
-	direction = getMotorDirection();
-
-	int cost;
-	if(direction == DIRN_DOWN){
-		cost = currentFloor- nextFloor;
-		if(newOrder.buttonType == BUTTON_CALL_DOWN && newOrder.buttonType == BUTTON_COMMAND){
-			if(newOrder.dest < currentFloor){
-				newCost = currentFloor -newOrder.dest;
-			}
-		}else if(newOrder.buttonType == BUTTON_COMMAND){
-
-		}
-	}else{
-		cost = nextFloor - currentFloor;
-		printf("Hallo\n");
-		if(newOrder.buttonType == BUTTON_CALL_UP && newOrder.buttonType == BUTTON_COMMAND){
-			if(newOrder.dest > currentFloor){
-				newCost = newOrder.dest -currentFloor;
-			}
-		}
-	}
-	printf("Cost: %d and newCost: %d\n", cost,newCost);
-	if (newCost < cost){
-		return newOrder.dest;
-	}else{
-		return -1;
-	}
-}
-*/
