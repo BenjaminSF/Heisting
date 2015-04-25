@@ -3,6 +3,6 @@
 
 #include <stdio.h>
 
-int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int elevButton);
+int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int elevButton, int elevDirection);
 
 #endif

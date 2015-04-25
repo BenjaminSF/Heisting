@@ -33,6 +33,7 @@ struct {
 	int floor[N_ELEVATORS];
 	int nextFloor[N_ELEVATORS];
 	int button[N_ELEVATORS];
+	int direction[N_ELEVATORS];
 } elevStates;
 
 sem_t timeoutSem;
@@ -154,7 +155,7 @@ void distributeOrders(){ //Master only
 		for (i = 0; i < addrsCount; i++){
 			tmpAddr = addrsList(i);
 			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr)){
-				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
+				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i], elevStates.direction[i]);
 				if (tmpCost < minCost && !orderQueue.enRoute[j]){
 					minCost = tmpCost;
 					minFloor = orderQueue.Queue[j].dest;
@@ -164,7 +165,7 @@ void distributeOrders(){ //Master only
 					minOrderPos = j;
 				}
 			}else if (orderQueue.inUse[j] && (orderQueue.localPri[j] == -1)){// && !elevStates.active[i]){
-				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
+				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i], elevStates.direction[i]);
 				if (tmpCost < minCost && !orderQueue.enRoute[j]){
 					minCost = tmpCost;
 					minFloor = orderQueue.Queue[j].dest;
@@ -292,9 +293,11 @@ void* sortMessages(void *args){
 							if (addrsList(i) == srcAddr){
 								elevStates.floor[i] = bufOrder.currentFloor;
 								elevStates.nextFloor[i] = bufOrder.nextFloor;
+								if (bufOrder.currentFloor == N_FLOORS-1) elevStates.direction[i] = -1;
+								if (bufOrder.currentFloor == 0) elevStates.direction[i] = 1;
 								if (bufOrder.nextFloor == -1) elevStates.active[i] = 0;
-									elevStates.button[i] = bufOrder.buttonType;
-									break;
+								elevStates.button[i] = bufOrder.buttonType;
+								break;
 							}
 						}
 					}
@@ -451,14 +454,23 @@ int orderCompare(struct order *orderA, struct order *orderB){
 void reportElevState(int currentFloor, int nextFloor, int button){
 	printf("Reporting: current: %d, next: %d\n", currentFloor, nextFloor);
 	if (getMaster() == 1){
-		elevStates.floor[0] = currentFloor;
-		elevStates.nextFloor[0] = nextFloor;
-		if (nextFloor == -1){
-			elevStates.active[0] = 0;
-		}else{
-			elevStates.active[0] = 1;
+		int i;
+		int myIP = getLocalIP();
+		for (i = 0; i < getAddrsCount(); i++){
+			if (addrsList(i) == myIP){
+				elevStates.floor[i] = currentFloor;
+				elevStates.nextFloor[i] = nextFloor;
+				if (nextFloor == -1){
+					elevStates.active[i] = 0;
+				}else{
+					elevStates.active[i] = 1;
+				}
+				elevStates.button[i] = button;
+				if (currentFloor == N_FLOORS -1) elevStates.direction[i] = -1;
+				if (currentFloor == 0) elevStates.direction[i] = 1;
+				break;
+			}
 		}
-		elevStates.button[0] = button;
 	}else{
 		BufferInfo newMsg;
 		encodeMessage(&newMsg, 0, 0, MSG_ELEVSTATE, currentFloor, nextFloor, button);

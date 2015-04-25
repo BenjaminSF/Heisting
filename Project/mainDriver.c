@@ -192,13 +192,13 @@ void* mainDriver(void *args) {
 				setMotorDirection(DIRN_STOP);
 			}
 			printf("localQueue: %d %d %d %d\n", localQueue[0], localQueue[1], localQueue[2], localQueue[3]);
-			checkLocal = 0;
+			checkLocal = -1;
 			for(k = 0; k < N_FLOORS; k++){
 				if (localQueue[k] == 1){
 					if (abs(lastFloor - k) > checkLocal) checkLocal = k;
 				}
 			}
-			if (checkLocal != 0) nextFloor = checkLocal;
+			if (checkLocal > -1) nextFloor = checkLocal;
 		} //End if nextFloor != -1
 	}
 	if(isObstructed()){
