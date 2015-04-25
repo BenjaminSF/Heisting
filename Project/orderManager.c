@@ -20,11 +20,13 @@ struct orderQueueType{
 	int inUse[N_ORDERS];
 	int localPri[N_ORDERS];
 	int enRoute[N_ORDERS];
+	int elevatorIP[N_ORDERS];
 	pthread_mutex_t rwLock;
 }orderQueue;
 
 int localManQueue[N_FLOORS];
 int localManButtons[N_FLOORS];
+int localIPlist[N_FLOORS*N_BUTTONS];
 
 struct {
 	int active[N_ELEVATORS];
@@ -176,7 +178,9 @@ void distributeOrders(){ //Master only
 		if (minCost == 0) break;
 	}
 	pthread_mutex_unlock(&(orderQueue.rwLock));
-	if (minCost < N_FLOORS * 2){
+
+	if (minCost < N_FLOORS){
+		localIPlist[minFloor+minButton] = minElev;
 		orderQueue.enRoute[minOrderPos] = 1;
 		elevStates.active[minPos] = j;
 		printf("Send order to: %d, floor: %d, cost: %d\n", minElev, minFloor, minCost);
@@ -487,8 +491,10 @@ void* orderTimeout(){
 			}
 			if (orderQueue.enRoute[i] > 12){
 				printf("Order timed out!!\n");
+				resetAddr(localIPlist[orderQueue.Queue[i].dest+orderQueue[i].Queue.buttonType]);
 				orderQueue.enRoute[i] = 0;
-				resetAddrsList();
+
+				//resetAddrsList();
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, 0, 0, MSG_ADDR_REQUEST, -1, -1, -1);
 				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
