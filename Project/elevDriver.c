@@ -1,10 +1,6 @@
 #include "channels.h"
 #include "io.h"
 #include "elevDriver.h"
-<<<<<<< HEAD
-=======
-#include "networkModule.h"
->>>>>>> ef257bd75d6bf65ef5a5f179180a7beab2f2664b
 #include "orderManager.h"
 #include <stdlib.h>
 #include <stdio.h>
