@@ -263,14 +263,14 @@ void* sortMessages(void *args){
 						newOrder.buttonType = bufOrder.buttonType;
 						newOrder.elevator = bufOrder.active;
 						addNewOrder(newOrder);
-						if (bufOrder.buttonType == BUTTON_COMMAND){
+						/*if (bufOrder.buttonType == BUTTON_COMMAND){
 							encodeMessage(&newMsg, 0, bufOrder.active, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
 							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 						}else{
 							BufferInfo newMsg;
 							encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
 							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
-						}
+						}*/
 					}
 					break;
 				case MSG_DELETE_ORDER:
@@ -281,9 +281,9 @@ void* sortMessages(void *args){
 							encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.currentFloor, bufOrder.buttonType, 0);
 							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 						}
-					BufferInfo backupMsg;
-					encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_DELETE, bufOrder.currentFloor, bufOrder.buttonType, srcAddr);
-					enqueue(sendQueue, &backupMsg, sizeof(BufferInfo));
+						BufferInfo backupMsg;
+						encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_DELETE, bufOrder.currentFloor, bufOrder.buttonType, srcAddr);
+						enqueue(sendQueue, &backupMsg, sizeof(BufferInfo));
 					}
 					break;
 				case MSG_ELEVSTATE:
@@ -550,7 +550,7 @@ void importBackupOrders(struct order backupOrder){
 }
 
 void sendPriorityQueue(int dstAddr, int masterStatus){
-	printf("Send copy of priorityQueue to new slave\n");
+	printf("Send copy of priorityQueue\n");
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	int i;
 	BufferInfo msg;

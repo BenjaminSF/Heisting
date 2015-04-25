@@ -33,7 +33,7 @@ int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int e
 		cost = 2*N_FLOORS + 1;
 	}
 	if (direction * costDir < 0){
-		cost += 2;
+	//	cost += 2;
 	}
 	//printf("findCost: current: %d, next: %d, cost: %d\n", currentFloor, nextFloor, cost);
 	return cost;
