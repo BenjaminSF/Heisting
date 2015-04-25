@@ -15,7 +15,7 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <linux/if_link.h>
-#include "network_modulev2.h"
+#include "networkModule.h"
 #include "fifoqueue.h"
 #include "costFunction.h"
 #define BUF_SIZE 1024

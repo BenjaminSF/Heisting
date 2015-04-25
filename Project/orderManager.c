@@ -4,7 +4,7 @@
 #include <time.h>
 #include <semaphore.h>
 #include "orderManager.h"
-#include "network_modulev2.h"
+#include "networkModule.h"
 #include "mainDriver.h"
 #include "costFunction.h"
 #include "elevDriver.h"

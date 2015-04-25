@@ -1,7 +1,7 @@
 #include "channels.h"
 #include "io.h"
 #include "elevDriver.h"
-#include "network_modulev2.h"
+#include "networkModule.h"
 #include "orderManager.h"
 #include <assert.h>
 #include <stdlib.h>

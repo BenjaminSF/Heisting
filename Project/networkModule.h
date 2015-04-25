@@ -1,5 +1,5 @@
-#ifndef _network_modulev2_
-#define _network_modulev2_
+#ifndef _networkModule_
+#define _networkModule_
 
 #include <stdio.h>
 #include <pthread.h>
