@@ -8,9 +8,10 @@
 #include "mainDriver.h"
 #include "costFunction.h"
 #include "elevDriver.h"
+#include "backupManager.h"
 
 void distributeOrders();
-int ordercmp(struct order *A, struct order *B);
+void sendPriorityQueue(int dstAddr);
 void* orderTimeout();
 
 struct orderQueueType{
@@ -263,6 +264,7 @@ void* sortMessages(void *args){
 			if (myState == MSG_CONNECT_SEND){
 				printf("Receive: MSG_CONNECT_SEND\n");
 				addElevatorAddr(bufOrder.srcAddr);
+				if (getMaster()) sendPriorityQueue(srcAddr);
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, getMaster(), -1, -1);
 				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
@@ -320,6 +322,9 @@ void* sortMessages(void *args){
 						encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
 						enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					}
+					BufferInfo backupMsg;
+					encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_ADD, bufOrder.nextFloor, bufOrder.buttonType, srcAddr);
+					enqueue(sendQueue, &backupMsg, sizeof(BufferInfo));
 				}
 				if(myState == MSG_DELETE_ORDER){
 					printf("Receive: MSG_DELETE_ORDER\n");
@@ -329,6 +334,9 @@ void* sortMessages(void *args){
 						encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.currentFloor, bufOrder.buttonType, 0);
 						enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					}
+					BufferInfo backupMsg;
+					encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_DELETE, bufOrder.currentFloor, bufOrder.buttonType, srcAddr);
+					enqueue(sendQueue, &backupMsg, sizeof(BufferInfo));
 				}
 				if (myState == MSG_ELEVSTATE){
 					printf("Receive: MSG_ELEVSTATE\n");
@@ -365,6 +373,12 @@ void* sortMessages(void *args){
 					encodeMessage(&newMsg, 0, 0, MSG_CONFIRM_ORDER,bufOrder.nextFloor, -1, -1);
 					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 				}
+				if (myState == MSG_BACKUP_ADD){
+					addBackupOrder(bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
+				}
+				if (myState == MSG_BACKUP_DELETE){
+					deleteBackupOrder(bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
+				}
 			}
 		}
 	}
@@ -397,6 +411,7 @@ void* masterTimeout(void *args){
 		}
 	}else{
 		printf("Timer: master\n");
+		transferBackupOrders();
 		reportElevState(getFloor(), -1, BUTTON_COMMAND);
 		ts.tv_sec = 5;
 		ts.tv_nsec = 0;
@@ -487,6 +502,7 @@ void initPriorityQueue(){
 	pthread_mutexattr_setpshared(&orderQueuemattr, PTHREAD_PROCESS_SHARED);
 	pthread_mutex_init(&(orderQueue.rwLock), &orderQueuemattr);
 	printf("Setup priority queue\n");
+	initBackupQueue();
 }
 
 void* orderTimeout(){
@@ -511,4 +527,39 @@ void* orderTimeout(){
 		nanosleep(&ts, &rem);
 	}
 	return NULL;
+}
+
+void importBackupOrders(struct order x){
+	int i = 0;
+	pthread_mutex_lock(&(orderQueue.rwLock));
+	while(orderQueue.inUse[i]){
+		i++;
+		if (i == N_ORDERS){
+			pthread_mutex_unlock(&(orderQueue.rwLock));
+			return;
+		}
+	}
+	orderQueue.inUse[i] = 1;
+	orderQueue.Queue[i] = x;
+	if (x.buttonType == BUTTON_COMMAND){
+		orderQueue.localPri[i] = x.elevator;
+	}else{
+		orderQueue.localPri[i] = -1;
+	}
+	pthread_mutex_unlock(&(orderQueue.rwLock));
+	return;
+}
+
+void sendPriorityQueue(int dstAddr){
+	pthread_mutex_lock(&(orderQueue.rwLock));
+	int i;
+	BufferInfo msg;
+	for (i = 0; i < N_ORDERS; i++){
+		if (orderQueue.inUse[i]){
+			encodeMessage(&msg, 0, dstAddr, MSG_BACKUP_ADD, orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, orderQueue.Queue[i].elevator);
+			enqueue(sendQueue, &msg, sizeof(BufferInfo));
+		}
+	}
+	pthread_mutex_unlock(&(orderQueue.rwLock));
+	return;
 }

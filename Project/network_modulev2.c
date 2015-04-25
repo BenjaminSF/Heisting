@@ -243,11 +243,13 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 			//	if (dir > 0) msg->direction = 1;
 			//}
 			break;
+		case MSG_BACKUP_ADD:
+			if (var3 != -1) msg->active = var3;
 		case MSG_ADD_ORDER:
 			if (var1 != -1) msg->nextFloor = var1;
 			if (var2 != -1) msg->buttonType = var2;
 			break;
-		case MSG_GET_ORDER:
+		/*case MSG_GET_ORDER:
 			if (var1 != -1) msg->active = var1;
 			if (var2 != -1) msg->currentFloor = var2;
 			if (var3 != -1) msg->nextFloor = var3;
@@ -255,16 +257,16 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 				int dir = var3 - var2;
 				if (dir > 0) msg->direction = 1;
 			}
-			break;
+			break;*/
 		case MSG_SET_LAMP:
 			if (var1 != -1) msg->currentFloor = var1;
 			if (var2 != -1) msg->buttonType = var2;
 			if (var3 != -1) msg->active = var3;
 			break;
 		case MSG_IM_ALIVE:
-			printf("Encode: I'm alive\n");
 			if (var1 != -1) msg->masterStatus = var1;
 			break;
+		case MSG_BACKUP_DELETE:
 		case MSG_DELETE_ORDER:
 			if (var1 != -1) msg->currentFloor = var1;
 			if (var2 != -1) msg->buttonType = var2;
@@ -302,7 +304,7 @@ void setMasterIP(int x){
 	sem_post(&(info.addrslistSem));
 }
 
-void addElevatorAddr(int newIP){
+int addElevatorAddr(int newIP){
 	int isInList = 0;
 	struct in_addr tmp;
 	tmp.s_addr = newIP;
@@ -321,6 +323,7 @@ void addElevatorAddr(int newIP){
 	}
 	printf("Elevator count: %d\n", info.addrslistCounter);
 	sem_post(&(info.addrslistSem));
+	return isInList;
 }
 
 int getAddrsCount(){

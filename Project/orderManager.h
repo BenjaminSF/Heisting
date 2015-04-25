@@ -17,6 +17,8 @@ void* masterTimeout(void *args);
 void deleteOrder(int floor, buttonType button, int elevator);
 void reportElevState(int currentFloor, int nextFloor, int button);
 void initPriorityQueue();
+int ordercmp(struct order *A, struct order *B);
+void importBackupOrders(struct order x);
 //void distributeOrders();
 
 #endif
