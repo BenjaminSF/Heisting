@@ -115,7 +115,12 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		if (storeOrder.buttonType == BUTTON_COMMAND){
 			orderQueue.localPri[pos] = storeOrder.elevator;
 			printf("add local order from: %d\n", storeOrder.elevator);
-			setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
+			if (storeOrder.elevator == getLocalIP()){
+				setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
+			}else{
+				BufferInfo commandMsg;
+				encodeMessage(&commandMsg, 0, storeOrder.elevator, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
+			}
 		}
 		//printf("Mutex released: addNewOrder\n");
 		
@@ -454,10 +459,13 @@ void deleteOrder(int floor, buttonType button, int elevator){
 					orderQueue.enRoute[i] = 0;
 					printf("Deleting order!\n");
 					BufferInfo newMsg;
-					if (button == BUTTON_COMMAND){
+					if (button == BUTTON_COMMAND && elevator != getLocalIP()){
 						encodeMessage(&newMsg, 0, elevator, MSG_SET_LAMP, floor, button, 0);
-					}else{
+					}else if (button != BUTTON_COMMAND){
 						encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, floor, button, 0);
+						setButtonLamp(floor, button, 0);
+					}else{
+						setButtonLamp(floor, button, 0);
 					}
 					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					remainingOrders--;
@@ -470,8 +478,8 @@ void deleteOrder(int floor, buttonType button, int elevator){
 		encodeMessage(&msg, 0, 0, MSG_DELETE_ORDER, floor, button, 1);
 		enqueue(sendQueue, &msg, sizeof(BufferInfo));
 	}
-	setButtonLamp(floor, button, 0);
-	localManQueue[floor] = 0;
+	//setButtonLamp(floor, button, 0);
+	//localManQueue[floor] = 0;
 }
 
 int ordercmp(struct order *A, struct order *B){
