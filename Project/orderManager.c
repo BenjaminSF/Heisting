@@ -338,7 +338,7 @@ void* sortMessages(void *args){
 					printf("Receive: MSG_BACKUP_ADD\n");
 					newBackupOrder.dest = bufOrder.nextFloor;
 					newBackupOrder.buttonType = bufOrder.buttonType;
-					newbackupOrder.elevator = bufOrder.active;
+					newBackupOrder.elevator = bufOrder.active;
 					addBackupOrder(newBackupOrder);
 					}
 					break;
@@ -347,8 +347,8 @@ void* sortMessages(void *args){
 					printf("Receive: MSG_BACKUP_DELETE\n");
 					newBackupOrder.dest = bufOrder.nextFloor;
 					newBackupOrder.buttonType = bufOrder.buttonType;
-					newbackupOrder.elevator = bufOrder.active;
-					deleteBackupOrder(newbackupOrder);
+					newBackupOrder.elevator = bufOrder.active;
+					deleteBackupOrder(newBackupOrder);
 					}
 					break;
 				default:
@@ -429,7 +429,11 @@ void deleteOrder(int floor, buttonType button, int elevator){
 		BufferInfo msg;
 		encodeMessage(&msg, 0, 0, MSG_DELETE_ORDER, floor, button, 1);
 		enqueue(sendQueue, &msg, sizeof(BufferInfo));
-		deleteBackupOrder(floor, button, elevator);
+		struct order newBackupOrder;
+		newBackupOrder.dest = floor;
+		newBackupOrder.buttonType = button;
+		newBackupOrder.elevator = elevator;
+		deleteBackupOrder(newBackupOrder);
 	}
 }
 int orderCompare(struct order *orderA, struct order *orderB){

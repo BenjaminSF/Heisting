@@ -42,8 +42,8 @@ void addBackupOrder(struct order storeOrder){
 	}
 	backupQueue.Queue[pos] = storeOrder;
 	backupQueue.inUse[pos] = 1;
-	if (button == BUTTON_COMMAND){
-		backupQueue.localPri[pos] = elevator;
+	if (storeOrder.buttonType == BUTTON_COMMAND){
+		backupQueue.localPri[pos] = storeOrder.elevator;
 	}else{
 		backupQueue.localPri[pos] = -1;
 	}
