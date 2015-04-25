@@ -446,6 +446,7 @@ void deleteOrder(int floor, buttonType button, int elevator){
 		newBackupOrder.dest = floor;
 		newBackupOrder.buttonType = button;
 		newBackupOrder.elevator = elevator;
+		setButtonLamp(floor, button, 0);
 		deleteBackupOrder(newBackupOrder);
 	}
 }
