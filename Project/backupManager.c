@@ -21,11 +21,7 @@ void initBackupQueue(){
 	printf("Init backup queue\n");
 }
 
-void addBackupOrder(int floor, int button, int elevator){
-	struct order storeOrder;
-	storeOrder.dest = floor;
-	storeOrder.buttonType = button;
-	storeOrder.elevator = elevator;
+void addBackupOrder(struct order storeOrder){
 	pthread_mutex_lock(&(backupQueue.rwLock));
 	int i = 0;
 	int pos = N_ORDERS;
@@ -55,12 +51,12 @@ void addBackupOrder(int floor, int button, int elevator){
 	return;
 }
 
-void deleteBackupOrder(int floor, int button, int elevator){
+void deleteBackupOrder(struct order storeOrder){
 	pthread_mutex_lock(&(backupQueue.rwLock));
 	int i;
 	for (i = 0; i < N_ORDERS; i++){
-		if (backupQueue.inUse[i] && backupQueue.Queue[i].dest == floor){ //Nesting for readability
-			if (backupQueue.Queue[i].buttonType == button && (backupQueue.Queue[i].elevator == elevator || backupQueue.localPri[i] == -1)){
+		if (backupQueue.inUse[i] && backupQueue.Queue[i].dest == storeOrder.dest){ //Nesting for readability
+			if (backupQueue.Queue[i].buttonType == storeOrder.buttonType && (backupQueue.Queue[i].elevator == storeOrder.elevator || backupQueue.localPri[i] == -1)){
 				backupQueue.inUse[i] = 0;
 				backupQueue.localPri[i] = -1;
 				break;

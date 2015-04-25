@@ -2,7 +2,7 @@
 #define _orderManager_
 #include "elevDriver.h"
 #include "costFunction.h"
-
+#include <pthread.h>
 extern struct orderQueueType orderQueue;
 pthread_mutexattr_t orderQueuemattr;
 
