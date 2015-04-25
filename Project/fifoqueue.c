@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <semaphore.h>
-#include "network_modulev2.h"
+#include "networkModule.h"
 
 fifoqueue_t* new_fifoqueue(void){
     fifoqueue_t* q = malloc(sizeof(fifoqueue_t));

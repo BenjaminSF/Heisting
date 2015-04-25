@@ -78,6 +78,7 @@ void transferBackupOrders(){
 	for (i = 0; i < N_ORDERS; i++){
 		if (backupQueue.inUse[i]){
 			importBackupOrders(backupQueue.Queue[i]);
+			backupQueue.inUse[i] = 0;
 		}
 	}
 	pthread_mutex_unlock(&(backupQueue.rwLock));

@@ -1,6 +1,6 @@
 #include <pthread.h>
 #include "mainDriver.h"
-#include "network_modulev2.h"
+#include "networkModule.h"
 #include "orderManager.h"
 #include "elevDriver.h"
 #define N_FLOORS 4

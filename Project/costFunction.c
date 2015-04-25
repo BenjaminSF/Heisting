@@ -1,6 +1,6 @@
 #include "elevDriver.h"
 #include "costFunction.h"
-#include "network_modulev2.h"
+#include "networkModule.h"
 #include <stdlib.h>
 #include <pthread.h>
 
