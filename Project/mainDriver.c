@@ -6,23 +6,19 @@
 #include "networkModule.h"
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
+//#include <assert.h>
 #include <unistd.h>
 #include <time.h>
 
-#define N_FLOORS 4
 void* mainDriver() {
 	
 	printf("Press STOP button to stop elevator and exit program.\n");
-	//struct timespec testingtime, rem;
 	int nextFloor = -1;
 	int i, j,k;
 	int lastFloor = 0;
 	int currentFloor, tmp, checkLocal;
 	int thisElevator = getLocalIP();
 	time_t startTime, endTime;
-	//double diffTime;
-	//motorDirection direction;
 	buttonType buttonCall;
 	int newFloor,floorSetCommand,floorSetDown,floorSetUp,floorSetCommandRunning,floorSetDownRunning,floorSetUpRunning;
 	int localQueue[N_FLOORS];
@@ -213,19 +209,8 @@ void* mainDriver() {
 						}
 					}
 				}	
-				//printf("getFloor: %d\n", lastFloor);
-				/*if (getFloor() == nextFloor){
-					k = 0;
-					printf("Dørene åpnes\n");
-					deleteOrder(getFloor(), buttonCall, thisElevator);
-					deleteOrder(getFloor(),BUTTON_COMMAND,thisElevator);
-					while((k<100000) && (!isStopped() && !isObstructed())){
-						k++;
-						setMotorDirection(DIRN_STOP);
-					}
-				}*/
 				
-			}
+			} // End While lastFloor != nextFloor
 			localQueue[lastFloor] = 0; 
 			printf("lastFloor: %d, currentFloor: %d\n", lastFloor, currentFloor);
 			nextFloor = -1;
@@ -249,10 +234,7 @@ void* mainDriver() {
 				}
 			}
 			if (checkLocal != N_FLOORS) nextFloor = checkLocal;
-			//testingtime.tv_sec = 2;
-			//testingtime.tv_nsec = 0;
-			//nanosleep(&testingtime, &rem);
-		}
+		} //End if nextFloor != -1
 	}
 	if(isObstructed()){
 		printf("Elevator was obstructed\n");
@@ -282,5 +264,3 @@ void* printFunction(){
 		}
 	}
 }*/
-
-
