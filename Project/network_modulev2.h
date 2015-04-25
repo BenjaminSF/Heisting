@@ -25,7 +25,9 @@ enum bufferState{
 	MSG_MASTER_PROPOSAL,
 	MSG_CONFIRM_ORDER,
 	MSG_ADDR_REQUEST,
-	MSG_ADDR_RESPONSE
+	MSG_ADDR_RESPONSE,
+	MSG_BACKUP_ADD,
+	MSG_BACKUP_DELETE
 };
 
 typedef struct BufferInfo{
@@ -36,7 +38,7 @@ typedef struct BufferInfo{
 	int active;
 	int currentFloor;
 	int nextFloor;
-	int direction; //?
+	//int elevator; //?
 	int buttonType;
 } BufferInfo;
 
@@ -50,7 +52,7 @@ void encodeMessage(BufferInfo *msg, int srcAddr,int dstAddr, int myState, int va
 int getLocalIP();
 int getBroadcastIP();
 void setMasterIP(int IP);
-void addElevatorAddr(int newIP);
+int addElevatorAddr(int newIP);
 int getAddrsCount();
 int addrsList(int pos);
 int getMaster();

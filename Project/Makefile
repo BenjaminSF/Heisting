@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -lpthread -lcomedi -lm -Wall
-DEPS = mainDriver.h elevDriver.h io.h fifoqueue.h costFunction.h orderManager.h network_modulev2.h channels.h
-SRC = main.c mainDriver.c elevDriver.c io.c fifoqueue.c costFunction.c orderManager.c network_modulev2.c
+DEPS = mainDriver.h elevDriver.h io.h fifoqueue.h costFunction.h orderManager.h network_modulev2.h channels.h backupManager.h
+SRC = main.c mainDriver.c elevDriver.c io.c fifoqueue.c costFunction.c orderManager.c network_modulev2.c backupManager.c
 TARGET = test
 
 all: $(TARGET)
