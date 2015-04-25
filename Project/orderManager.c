@@ -105,10 +105,11 @@ int addNewOrder(struct order newOrder){
 			printf("add local order from: %d\n", storeOrder.elevator);
 			if (storeOrder.elevator == getLocalIP()){
 				setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
-			}//else{
-			//	BufferInfo commandMsg;
-			//	encodeMessage(&commandMsg, 0, storeOrder.elevator, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
-			//}
+			}else{
+				BufferInfo commandMsg;
+				encodeMessage(&commandMsg, 0, storeOrder.elevator, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
+				enqueue(sendQueue, &commandMsg, sizeof(BufferInfo));
+			}
 		}		
 		pthread_mutex_unlock(&(orderQueue.rwLock));
 		BufferInfo backupMsg;
