@@ -477,6 +477,7 @@ void deleteOrder(int floor, buttonType button, int elevator){
 		BufferInfo msg;
 		encodeMessage(&msg, 0, 0, MSG_DELETE_ORDER, floor, button, 1);
 		enqueue(sendQueue, &msg, sizeof(BufferInfo));
+		deleteBackupOrder(floor, button, elevator);
 	}
 	//setButtonLamp(floor, button, 0);
 	//localManQueue[floor] = 0;
