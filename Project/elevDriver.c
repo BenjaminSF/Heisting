@@ -1,10 +1,7 @@
 #include "channels.h"
 #include "io.h"
 #include "elevDriver.h"
-<<<<<<< HEAD
-=======
 #include "networkModule.h"
->>>>>>> e6bb44c786e1efac13f8ade8bc41000278c3f031
 #include "orderManager.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -79,10 +76,10 @@ motorDirection getMotorDirection(void){
 void goToFloor(int floor){
 	motorDirection direction = DIRN_STOP;
 	if(getFloor() == -1) while(getFloor() == -1){}
-	int currentFloor = getFloor()
+	int currentFloor = getFloor();
 	int diff = floor-currentFloor;
 
-	if(getFloor != -1){
+	if(getFloor() != -1){
 		if (diff > 0){
 			direction = DIRN_UP;
 		}else if(diff < 0){
