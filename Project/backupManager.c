@@ -74,6 +74,7 @@ void deleteBackupOrder(int floor, int button, int elevator){
 }
 
 void transferBackupOrders(){
+	printf("Transfer backup on new master\n");
 	pthread_mutex_lock(&(backupQueue.rwLock));
 	int i;
 	for (i = 0; i < N_ORDERS; i++){

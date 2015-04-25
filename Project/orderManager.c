@@ -373,9 +373,11 @@ void* sortMessages(void *args){
 					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 				}
 				if (myState == MSG_BACKUP_ADD){
+					printf("MSG_BACKUP_ADD\n");
 					addBackupOrder(bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
 				}
 				if (myState == MSG_BACKUP_DELETE){
+					printf("MSG_BACKUP_DELETE\n");
 					deleteBackupOrder(bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
 				}
 			}
@@ -550,6 +552,7 @@ void importBackupOrders(struct order x){
 }
 
 void sendPriorityQueue(int dstAddr){
+	printf("Send copy of priorityQueue to new slave\n");
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	int i;
 	BufferInfo msg;
