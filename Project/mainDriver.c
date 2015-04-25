@@ -195,7 +195,7 @@ void* mainDriver(void *args) {
 			printf("localQueue: %d %d %d %d\n", localQueue[0], localQueue[1], localQueue[2], localQueue[3]);
 			checkLocal = 0;
 			for(k = 0; k < N_FLOORS; k++){
-				if (localQueue[k] != 0){
+				if (localQueue[k] == 1){
 					if (abs(lastFloor - k) > checkLocal) checkLocal = k;
 				}
 			}

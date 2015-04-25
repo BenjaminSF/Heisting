@@ -102,10 +102,10 @@ int addNewOrder(struct order newOrder){
 			printf("add local order from: %d\n", storeOrder.elevator);
 			if (storeOrder.elevator == getLocalIP()){
 				setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
-			}else{
-				BufferInfo commandMsg;
-				encodeMessage(&commandMsg, 0, storeOrder.elevator, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
-			}
+			}//else{
+			//	BufferInfo commandMsg;
+			//	encodeMessage(&commandMsg, 0, storeOrder.elevator, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
+			//}
 		}		
 		pthread_mutex_unlock(&(orderQueue.rwLock));
 		BufferInfo backupMsg;
@@ -147,7 +147,7 @@ void distributeOrders(){ //Master only
 	int addrsCount, i, j, tmpAddr, minCost, tmpCost, minFloor, minElev, minButton, minPos, minOrderPos;
 	addrsCount = getAddrsCount();
 	pthread_mutex_lock(&(orderQueue.rwLock));
-	minCost = N_FLOORS * 2;
+	minCost = N_FLOORS * 4;
 	for (j = 0; j < N_ORDERS; j++){
 		for (i = 0; i < addrsCount; i++){
 			tmpAddr = addrsList(i);
@@ -176,9 +176,9 @@ void distributeOrders(){ //Master only
 		if (minCost == 0) break;
 	}
 	pthread_mutex_unlock(&(orderQueue.rwLock));
-	if (minCost < N_FLOORS){
+	if (minCost < N_FLOORS * 2){
 		orderQueue.enRoute[minOrderPos] = 1;
-		elevStates.active[minPos] = 1;
+		elevStates.active[minPos] = j;
 		printf("Send order to: %d, floor: %d, cost: %d\n", minElev, minFloor, minCost);
 		if (minElev == getLocalIP()){
 			localManQueue[minFloor] = 1;
@@ -260,12 +260,12 @@ void* sortMessages(void *args){
 						if (bufOrder.buttonType == BUTTON_COMMAND){
 							encodeMessage(&newMsg, 0, bufOrder.active, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
 							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
+						}else{
+							BufferInfo newMsg;
+							encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
+							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 						}
-					}else{
-						BufferInfo newMsg;
-						encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
-						enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
-						}
+					}
 					break;
 				case MSG_DELETE_ORDER:
 					if(getMaster() == 1){
@@ -424,6 +424,7 @@ void deleteOrder(int floor, buttonType button, int elevator){
 				}
 			}
 		}
+
 		printf("remainingOrders: %d\n", remainingOrders);
 	}else{
 		BufferInfo msg;
