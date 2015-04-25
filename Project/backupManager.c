@@ -18,7 +18,7 @@ void initBackupQueue(){
 	pthread_mutexattr_init(&backupAttr);
 	pthread_mutexattr_setpshared(&backupAttr, PTHREAD_PROCESS_SHARED);
 	pthread_mutex_init(&(backupQueue.rwLock), &backupAttr);
-	printf("Setup backup queue\n");
+	printf("Init backup queue\n");
 }
 
 void addBackupOrder(int floor, int button, int elevator){
@@ -44,7 +44,6 @@ void addBackupOrder(int floor, int button, int elevator){
 		pthread_mutex_unlock(&(backupQueue.rwLock));
 		return;
 	}
-
 	backupQueue.Queue[pos] = storeOrder;
 	backupQueue.inUse[pos] = 1;
 	if (button == BUTTON_COMMAND){
@@ -54,7 +53,6 @@ void addBackupOrder(int floor, int button, int elevator){
 	}
 	pthread_mutex_unlock(&(backupQueue.rwLock));
 	return;
-
 }
 
 void deleteBackupOrder(int floor, int button, int elevator){
@@ -65,7 +63,7 @@ void deleteBackupOrder(int floor, int button, int elevator){
 			if (backupQueue.Queue[i].buttonType == button && (backupQueue.Queue[i].elevator == elevator || backupQueue.localPri[i] == -1)){
 				backupQueue.inUse[i] = 0;
 				backupQueue.localPri[i] = -1;
-				break; //There should not be any duplicates here, so this is fine
+				break;
 			}
 		}
 	}

@@ -1,9 +1,11 @@
 #include "channels.h"
 #include "io.h"
 #include "elevDriver.h"
+<<<<<<< HEAD
+=======
 #include "networkModule.h"
+>>>>>>> e6bb44c786e1efac13f8ade8bc41000278c3f031
 #include "orderManager.h"
-#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -25,7 +27,6 @@ static const int buttonMatrix[N_FLOORS][N_BUTTONS] = {
 
 int elevDriver_initialize(void) {
 	int i;
-
 	// Init hardware
 	if (!io_init())
 		return 0;
@@ -40,7 +41,6 @@ int elevDriver_initialize(void) {
 	// Clear stop lamp, door open lamp, and set floor indicator to current floor.
 	setStopLamp(0);
 	setDoorOpenLamp(0);
-
 	if(getFloor() == -1){
 		setMotorDirection(DIRN_DOWN);
 		int k = 0;
@@ -49,7 +49,7 @@ int elevDriver_initialize(void) {
 			k++;
 			if (k> 10000){
 				setMotorDirection(DIRN_UP);
-				k =0;
+				k=0;
 			}
 		}
 	}
@@ -59,17 +59,18 @@ int elevDriver_initialize(void) {
 
 	return 1;
 }
-void setMotorDirection(motorDirection direction) {
+void setMotorDirection(motorDirection direction){
 	if (direction < 0){
 		io_set_bit(MOTORDIR);
 		io_write_analog(MOTOR, 2800);
-}	else if (direction > 0) {
+	}else if (direction > 0){
 		io_clear_bit(MOTORDIR);
 		io_write_analog(MOTOR, 2800);
-} 	else{
+	}else{
 		io_write_analog(MOTOR, 0);
+	}
 }
-}
+
 motorDirection getMotorDirection(void){
 	motorDirection direction = io_read_bit(MOTORDIR);
 	return direction;
@@ -77,24 +78,21 @@ motorDirection getMotorDirection(void){
 
 void goToFloor(int floor){
 	motorDirection direction = DIRN_STOP;
-	if(getFloor() == -1){
-		while(getFloor() == -1){
-			//wait
+	if(getFloor() == -1) while(getFloor() == -1){}
+	int currentFloor = getFloor()
+	int diff = floor-currentFloor;
+
+	if(getFloor != -1){
+		if (diff > 0){
+			direction = DIRN_UP;
+		}else if(diff < 0){
+			direction = DIRN_DOWN;
+		}else{
+			direction = DIRN_STOP;
 		}
+		setMotorDirection(direction);
 	}
-	int currentFloor = getFloor(),diff = floor-currentFloor;
-
-	assert(floor>= 0 && floor < N_FLOORS);
-	if (diff > 0){
-		direction = DIRN_UP;
-	}else if(diff < 0){
-		direction = DIRN_DOWN;
-	}else{
-		direction = DIRN_STOP;
-	}
-	setMotorDirection(direction);
 }
-
 
 void setDoorOpenLamp(int status){
 	if (status){
@@ -139,8 +137,6 @@ int getFloor(void){
 }
 
 void setFloorIndicator(int floor){
-	assert(floor >= 0);
-	assert(floor < N_FLOORS);
 	// Binary encoding. One light must always be on.
 	if (floor & 0x02)
 		io_set_bit(LIGHT_FLOOR_IND1);
@@ -151,28 +147,18 @@ void setFloorIndicator(int floor){
 	else
 		io_clear_bit(LIGHT_FLOOR_IND2);
 }
-/*
-int isbuttonSignalValid(int floor, buttonType button){
-	//printf("Assert: Floor: %d, type: %d\n", floor, button);
-	assert(floor>= 0 && floor < N_FLOORS);
-	assert(!(button == BUTTON_CALL_UP && floor == N_FLOORS-1) && !(button == BUTTON_CALL_DOWN && floor == 0));
-	assert(button == BUTTON_CALL_DOWN || button == BUTTON_CALL_UP || button == BUTTON_COMMAND);
-	return 1;
-}*/
+
 int getButtonSignal(int floor, buttonType button){
 	return io_read_bit(buttonMatrix[floor][button]);
 }
+
 void setButtonLamp(int floor, buttonType button, int status){
-	//if (isbuttonSignalValid(floor,button)){
 	if (status){
 		io_set_bit(lampMatrix[floor][button]);
 	}else{
 		io_clear_bit(lampMatrix[floor][button]);
 	}
-	//}
 }
 int getButtonLamp(int floor,buttonType button){
 	return io_read_bit(lampMatrix[floor][button]);
 }
-
-
