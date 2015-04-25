@@ -11,7 +11,7 @@
 #include "backupManager.h"
 
 void distributeOrders();
-void sendPriorityQueue(int dstAddr);
+void sendPriorityQueue(int dstAddr, int masterStatus);
 void* orderTimeout();
 
 struct orderQueueType{
@@ -266,7 +266,7 @@ void* sortMessages(void *args){
 			if (myState == MSG_CONNECT_SEND){
 				printf("Receive: MSG_CONNECT_SEND\n");
 				addElevatorAddr(bufOrder.srcAddr);
-				if (getMaster()) sendPriorityQueue(srcAddr);
+				if (getMaster()) sendPriorityQueue(srcAddr, 1);
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, getMaster(), -1, -1);
 				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
@@ -313,11 +313,11 @@ void* sortMessages(void *args){
 					struct order newOrder;
 					newOrder.dest = bufOrder.nextFloor;
 					newOrder.buttonType = bufOrder.buttonType;
-					newOrder.elevator = srcAddr;
+					newOrder.elevator = bufOrder.active;
 					addNewOrder(newOrder, bufOrder.currentFloor,bufOrder.nextFloor);
 					if (bufOrder.buttonType == BUTTON_COMMAND){
 						BufferInfo newMsg;
-						encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
+						encodeMessage(&newMsg, 0, bufOrder.active, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
 						enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					}else{
 						BufferInfo newMsg;
@@ -359,6 +359,19 @@ void* sortMessages(void *args){
 						}
 					}
 				}
+				if(myState == MSG_IM_ALIVE){
+					if (srcAddr != getLocalIP()){ // Master conflict
+						BufferInfo newMsg;
+						encodeMessage(&newMsg, 0, 0, MSG_MASTER_REQUEST, -1, -1, -1);
+						enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
+						if (getLocalIP() != bestProposal){ // Give up master status
+							sendPriorityQueue(bestProposal, 0);
+							setMasterIP(bestProposal);
+							setMaster(0);
+						}
+					}
+				}
+			
 			}else{
 				if (myState == MSG_IM_ALIVE){
 					printf("Receive: MSG_IM_ALIVE\n");
@@ -373,11 +386,11 @@ void* sortMessages(void *args){
 					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 				}
 				if (myState == MSG_BACKUP_ADD){
-					printf("MSG_BACKUP_ADD\n");
+					printf("Receive: MSG_BACKUP_ADD\n");
 					addBackupOrder(bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
 				}
 				if (myState == MSG_BACKUP_DELETE){
-					printf("MSG_BACKUP_DELETE\n");
+					printf("Receive: MSG_BACKUP_DELETE\n");
 					deleteBackupOrder(bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
 				}
 			}
@@ -551,14 +564,18 @@ void importBackupOrders(struct order x){
 	return;
 }
 
-void sendPriorityQueue(int dstAddr){
+void sendPriorityQueue(int dstAddr, int masterStatus){
 	printf("Send copy of priorityQueue to new slave\n");
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	int i;
 	BufferInfo msg;
 	for (i = 0; i < N_ORDERS; i++){
 		if (orderQueue.inUse[i]){
-			encodeMessage(&msg, 0, dstAddr, MSG_BACKUP_ADD, orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, orderQueue.Queue[i].elevator);
+			if (!masterStatus){
+				encodeMessage(&msg, 0, dstAddr, MSG_ADD_ORDER, orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, orderQueue.Queue[i].elevator);
+			}else{
+				encodeMessage(&msg, 0, dstAddr, MSG_BACKUP_ADD, orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, orderQueue.Queue[i].elevator);
+			}
 			enqueue(sendQueue, &msg, sizeof(BufferInfo));
 		}
 	}

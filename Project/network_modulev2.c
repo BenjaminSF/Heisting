@@ -244,10 +244,10 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 			//}
 			break;
 		case MSG_BACKUP_ADD:
-			if (var3 != -1) msg->active = var3;
 		case MSG_ADD_ORDER:
 			if (var1 != -1) msg->nextFloor = var1;
 			if (var2 != -1) msg->buttonType = var2;
+			if (var3 != -1) msg->active = var3;
 			break;
 		/*case MSG_GET_ORDER:
 			if (var1 != -1) msg->active = var1;
