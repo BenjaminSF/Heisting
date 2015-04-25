@@ -168,7 +168,7 @@ void *listen_for_messages(void *args){
 	printf("Test mottak, port: %d\n", port);
 
 	fd_set readfds;
-	//prepare socket
+	//Prepare socket
 	int notDone = 1;
 	while (notDone){
 		FD_ZERO(&readfds);
@@ -185,11 +185,10 @@ void *listen_for_messages(void *args){
 				printf("Timed out\n");
 				break;
 			default:
-				//printf("Recieving\n");
 				recvfrom(recSock, tempMsg, sizeof(BufferInfo), 0, (struct sockaddr *)&remaddr, &remaddrLen);
 				printf("ListenReceived: %d\n", tempMsg->myState);
-				//printf("size, struct: %d, srcAddr: %lu, myState: %lu\n", sizeof(tempMsg), sizeof(int*), sizeof(char));
 				enqueue(receiveQueue, tempMsg, sizeof(BufferInfo));
+				break;
 				
 		}
 	}
@@ -198,22 +197,7 @@ void *listen_for_messages(void *args){
 	return NULL;
 }
 
-
-/*
-BufferInfo decodeMessage(char *buffer){
-	BufferInfo msg;
-	//For testing only:
-	msg.srcAddr = inet_addr("192.128.187.111");
-	msg.dstAddr = inet_addr("192.128.187.123");
-	msg.masterStatus = 1;
-	msg.myState = MSG_CONNECT_RESPONSE;
-	//End: Testing
-
-	return msg;
-}
-*/
 void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int var1, int var2, int var3){
-	//printf("Encoding message------------------------------------------------------\n");
 	if (srcAddr == 0){
 		msg->srcAddr = inet_addr(info.localIP);
 	}else{
@@ -225,7 +209,6 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 	}else{
 		msg->dstAddr = dstAddr;
 	}
-	//printf("Encode: IPs done\n");
 	msg->myState = myState;
 	switch(myState){
 		case MSG_CONNECT_SEND:
@@ -238,10 +221,6 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 			if (var1 != -1) msg->currentFloor = var1;
 			if (var2 != -2) msg->nextFloor = var2;
 			if (var3 != -1) msg->buttonType = var3;
-			//if ((var3 != -1) && (var2 != -1)){
-			//	int dir = var3 - var2;
-			//	if (dir > 0) msg->direction = 1;
-			//}
 			break;
 		case MSG_BACKUP_ADD:
 		case MSG_ADD_ORDER:
@@ -250,15 +229,6 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 			if (var3 != -1) msg->active = var3;
 			if (var3 == 0) msg->active = getLocalIP();
 			break;
-		/*case MSG_GET_ORDER:
-			if (var1 != -1) msg->active = var1;
-			if (var2 != -1) msg->currentFloor = var2;
-			if (var3 != -1) msg->nextFloor = var3;
-			if ((var3 != -1) && (var2 != -1)){
-				int dir = var3 - var2;
-				if (dir > 0) msg->direction = 1;
-			}
-			break;*/
 		case MSG_SET_LAMP:
 			if (var1 != -1) msg->currentFloor = var1;
 			if (var2 != -1) msg->buttonType = var2;
@@ -279,7 +249,6 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 			break;
 
 	}
-
 }
 
 int getLocalIP(){
@@ -296,10 +265,10 @@ int getBroadcastIP(){
 	return tmp;
 }
 
-void setMasterIP(int x){
+void setMasterIP(int newMasterIP){
 	printf("setMasterIP\n");
 	struct in_addr tmp;
-	tmp.s_addr = x;
+	tmp.s_addr = newMasterIP;
 	sem_wait(&(info.addrslistSem));
 	info.masterIP = strdup(inet_ntoa(tmp));
 	sem_post(&(info.addrslistSem));
@@ -312,7 +281,6 @@ int addElevatorAddr(int newIP){
 	int i;
 	sem_wait(&(info.addrslistSem));
 	for (i = 0; i < info.addrslistCounter; i++){
-		printf("HEllo\n");
 		if (!strcmp(info.addrsList[i], inet_ntoa(tmp))){
 			isInList = 1;
 			break;
@@ -334,9 +302,9 @@ int getAddrsCount(){
 	return tmp;
 }
 
-int addrsList(int i){
+int addrsList(int pos){
 	sem_wait(&(info.addrslistSem));
-	int tmp = inet_addr(info.addrsList[i]);
+	int tmp = inet_addr(info.addrsList[pos]);
 	sem_post(&(info.addrslistSem));
 	return tmp;
 }
@@ -348,9 +316,9 @@ int getMaster(){
 	return tmp;
 }
 
-void setMaster(int x){
+void setMaster(int newMaster){
 	sem_wait(&(info.masterSem));
-	info.masterStatus = x;
+	info.masterStatus = newMaster;
 	sem_post(&(info.masterSem));
 }
 
