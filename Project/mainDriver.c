@@ -15,6 +15,7 @@ void* mainDriver(void *args) {
 	time_t startTime, endTime;
 	buttonType buttonCall;
 	int localQueue[N_FLOORS];
+	memset(localQueue,0,sizeof(int)*N_FLOORS);
 	int lastFloor = 0;
 	int nextFloor = -1;
 	int thisElevator = *(int *) args;
@@ -28,8 +29,6 @@ void* mainDriver(void *args) {
 		}else{
 			setFloorIndicator(lastFloor);
 		}
-
-		//memset(localQueue,0,sizeof(int)*N_FLOORS);
 		
 		for (i = 0; i < N_FLOORS; i++){ //Check button presses
 			if(getButtonSignal(i,BUTTON_COMMAND)){
