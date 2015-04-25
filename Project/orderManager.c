@@ -128,7 +128,7 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	}else{ //Send new order to the master
 		printf("Dette er en slave\n");
 		BufferInfo newMsg;
-		encodeMessage(&newMsg, 0, 0, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, -1);
+		encodeMessage(&newMsg, 0, 0, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, 0);
 		newMsg.currentFloor = currentFloor;
 		enqueue(sendQueue, &newMsg, sizeof(newMsg));
 	}
