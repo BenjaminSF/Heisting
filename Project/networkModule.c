@@ -17,11 +17,7 @@
 #include <linux/if_link.h>
 #include "networkModule.h"
 #include "fifoqueue.h"
-#include "costFunction.h"
-#define BUF_SIZE 1024
-#define MAX_ELEVS 5
 
-//static sem_t masterSem;
 
 //All values set by init_network
 static struct {
@@ -97,7 +93,7 @@ int init_network(){
 	enqueue(sendQueue, &sendInfo, sizeof(BufferInfo));
 
 	info.masterStatus = 0;
-	info.addrsList = malloc(sizeof(char *) * MAX_ELEVS);
+	info.addrsList = malloc(sizeof(char *) * N_ELEVATORS);
 	info.addrsList[0] = strdup(info.localIP);
 	info.addrslistCounter = 1;
 	

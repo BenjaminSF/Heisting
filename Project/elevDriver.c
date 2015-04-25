@@ -6,8 +6,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define N_BUTTONS 3
-
 static const int lampMatrix[N_FLOORS][N_BUTTONS] = {
 	{LIGHT_UP1, LIGHT_DOWN1, LIGHT_COMMAND1},
 	{LIGHT_UP2, LIGHT_DOWN2, LIGHT_COMMAND2},
@@ -23,10 +21,8 @@ static const int buttonMatrix[N_FLOORS][N_BUTTONS] = {
 
 int elevDriver_initialize(void) {
 	int i;
-	// Init hardware
 	if (!io_init())
 		return 0;
-	// Zero all floor button lamps
 	for (i = 0; i < N_FLOORS; ++i) {
 		if (i != 0)
 			setButtonLamp(i, BUTTON_CALL_DOWN, 0);
@@ -34,7 +30,6 @@ int elevDriver_initialize(void) {
 			setButtonLamp(i, BUTTON_CALL_UP, 0);
 			setButtonLamp(i, BUTTON_COMMAND, 0);
 	}
-	// Clear stop lamp, door open lamp, and set floor indicator to current floor.
 	setStopLamp(0);
 	setDoorOpenLamp(0);
 	if(getFloor() == -1){
@@ -52,7 +47,6 @@ int elevDriver_initialize(void) {
 	setFloorIndicator(getFloor());
 	setMotorDirection(DIRN_STOP);
 	initPriorityQueue();
-
 	return 1;
 }
 void setMotorDirection(motorDirection direction){

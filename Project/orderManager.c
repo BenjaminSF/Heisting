@@ -9,6 +9,7 @@
 #include "costFunction.h"
 #include "elevDriver.h"
 #include "backupManager.h"
+#include "publicTypes.h"
 
 void distributeOrders();
 void sendPriorityQueue(int dstAddr, int masterStatus);
@@ -34,22 +35,14 @@ struct {
 
 sem_t timeoutSem;
 static int bestProposal;
-//int dummyMutex;
 
 void* orderManager(void* args){
-
-	//dummyMutex = 0;
-	//initPriorityQueue();
-	//int masterStatus = *(int *) args);
-	//struct timespec startAnarchy;
 	printf("Master: %d\n", getMaster());
 	struct timespec sleep = {.tv_sec = 2, .tv_nsec = 0};
 	struct timespec rem;
 	bestProposal = getLocalIP();
 	sem_init(&timeoutSem, 0, 0);
-	//initPriorityQueue();
 	pthread_t sortMessages_, masterTimeout_, orderTimeout_;
-
 	pthread_create(&orderTimeout_, 0, &orderTimeout, 0);
 	pthread_create(&sortMessages_, 0, &sortMessages, 0);
 	while(1){
@@ -60,7 +53,7 @@ void* orderManager(void* args){
 			printf("I AM MASTER\n");
 			setMaster(1);
 		}else{
-			printf("I am still slave :(\n");
+			printf("I AM SLAVE\n");
 			setMaster(0);
 		}
 		setMasterIP(bestProposal);
@@ -68,17 +61,13 @@ void* orderManager(void* args){
 	}
 	pthread_join(orderTimeout_, NULL);
 	pthread_join(sortMessages_, NULL);
-
 	return NULL;
 }
 
 int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 	printf("Enter addNewOrder---------------------------------------------------\n");
 	if (getMaster() == 1){
-		//printf("Trying to get mutex\n");
 		pthread_mutex_lock(&(orderQueue.rwLock));
-		//dummyMutex++;
-		//printf("Mutex owner: addNewOrder: %d\n", dummyMutex);
 		int pos = 0;
 		struct order storeOrder;
 		storeOrder.dest = newOrder.dest;
@@ -88,16 +77,12 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		while(orderQueue.inUse[pos]){
 			if(orderCompare(&(orderQueue.Queue[pos]), &storeOrder)){
 				pthread_mutex_unlock(&(orderQueue.rwLock));
-				//dummyMutex--;
-				//printf("Add unlock mutex: %d\n", dummyMutex);
 				return -1;
 			} 
 			pos++;
 			if (pos == N_ORDERS){
 				printf("Error: orderQueue is full, order not received\n");
 				pthread_mutex_unlock(&(orderQueue.rwLock));
-				//dummyMutex--;
-				//printf("Add unlock mutex: %d\n", dummyMutex);
 				return -1;
 			}
 		}
@@ -121,15 +106,11 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 				BufferInfo commandMsg;
 				encodeMessage(&commandMsg, 0, storeOrder.elevator, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
 			}
-		}
-		//printf("Mutex released: addNewOrder\n");
-		
+		}		
 		pthread_mutex_unlock(&(orderQueue.rwLock));
 		BufferInfo backupMsg;
 		encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_ADD, storeOrder.dest, storeOrder.buttonType, storeOrder.elevator);
 		enqueue(sendQueue, &backupMsg, sizeof(BufferInfo));
-		//dummyMutex--;
-		//printf("Add unlock mutex, %d\n", dummyMutex);
 	}else{ //Send new order to the master
 		printf("Dette er en slave\n");
 		BufferInfo newMsg;
@@ -141,66 +122,38 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 }
 
 int getNewOrder(int currentFloor, int nextFloor, int button){
-	//printf("Enter getNewOrder: currentFloor: %d, nextFloor: %d\n", currentFloor, nextFloor);
 	int destFloor = -1;
-	//int dir = nextFloor - currentFloor;
-	//if (nextFloor == -1) dir = 0;
 	if (getMaster() == 1){
-		//pthread_mutex_lock(&(orderQueue.rwLock));
-		//destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
-		//pthread_mutex_unlock(&(orderQueue.rwLock));
 		distributeOrders();
 		int i;
-		//int minCost = N_FLOORS * 2;
 		for (i = 0; i < N_FLOORS; i++){
 			if (localManQueue[i] == 1){
-				//tmp = findCost(i, currentFloor, nextFloor, localManButtons[i], button);
-				//if (tmp < minCost){
-				//	minCost = tmp;
-				//	destFloor = i;
-				//}
 				destFloor = i;
 				localManQueue[i] = 0;
 			}
 		} 
 	}else{
 		int i;
-		//int minCost = N_FLOORS * 2;
 		for (i = 0; i < N_FLOORS; i++){
 			if (localManQueue[i] == 1){
-				//tmp = findCost(i, currentFloor, nextFloor, localManButtons[i], button);
-				//if (tmp < minCost){
-				//	minCost = tmp;
-				//	destFloor = i;
-				//}
 				destFloor = i;
 				localManQueue[i] = 0;
 			}
 		} 
-		//printf("Slave go to: %d\n", destFloor);
 	}
-	//printf("currentFloor: %d, nextFloor: %d, destFloor: %d\n", currentFloor, nextFloor, destFloor);
-
 	return destFloor;
 }
 
 void distributeOrders(){ //Master only
-	//printf("Enter distributeOrders\n");
 	int addrsCount, i, j, tmpAddr, minCost, tmpCost, minFloor, minElev, minButton, minPos, minOrderPos;
-
 	addrsCount = getAddrsCount();
-	//printf("Getting mutex\n");
 	pthread_mutex_lock(&(orderQueue.rwLock));
-	//printf("Mutex owner: distributeOrders\n");
 	minCost = N_FLOORS * 2;
 	for (j = 0; j < N_ORDERS; j++){
-		//if (orderQueue.inUse[j]) printf("Det finnes orders!\n");
 		for (i = 0; i < addrsCount; i++){
 			tmpAddr = addrsList(i);
-			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr)){// && !elevStates.active[i]){ //Send BUTTON_COMMAND orders first
-				//printf("BUTTON_COMMAND, source: %d\n", tmpAddr);
+			if (orderQueue.inUse[j] && (orderQueue.localPri[j] == tmpAddr)){
 				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
-				//printf("tmpCostButton: %d, to: %d, from: %d, going to: %d, orderButton: %d, elevButton: %d\n", tmpCost, orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
 				if (tmpCost < minCost && !orderQueue.enRoute[j]){
 					minCost = tmpCost;
 					minFloor = orderQueue.Queue[j].dest;
@@ -209,7 +162,6 @@ void distributeOrders(){ //Master only
 					minPos = i;
 					minOrderPos = j;
 				}
-				
 			}else if (orderQueue.inUse[j] && (orderQueue.localPri[j] == -1)){// && !elevStates.active[i]){
 				tmpCost = findCost(orderQueue.Queue[j].dest, elevStates.floor[i], elevStates.nextFloor[i], orderQueue.Queue[j].buttonType, elevStates.button[i]);
 				if (tmpCost < minCost && !orderQueue.enRoute[j]){
@@ -506,7 +458,6 @@ void initPriorityQueue(){
 		orderQueue.localPri[i] = -1;
 		orderQueue.Queue[i].dest = 100;
 		orderQueue.enRoute[i] = 0;
-
 	}
 	pthread_mutexattr_init(&orderQueuemattr);
 	pthread_mutexattr_setpshared(&orderQueuemattr, PTHREAD_PROCESS_SHARED);

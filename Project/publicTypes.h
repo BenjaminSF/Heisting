@@ -3,6 +3,8 @@
 
 #define N_ORDERS 100
 #define N_FLOORS 4
+#define N_ELEVATORS 5
+#define N_BUTTONS 3
 
 typedef enum tag_motorDirection {
 DIRN_DOWN = -1,
@@ -21,7 +23,34 @@ struct order{
 	int buttonType;
 	int elevator;
 };
+enum bufferState{
+	MSG_CONNECT_SEND,
+	MSG_CONNECT_RESPONSE,
+	MSG_ELEVSTATE,
+	MSG_ADD_ORDER,
+	MSG_DO_ORDER,
+	MSG_SET_LAMP,
+	MSG_IM_ALIVE,
+	MSG_DELETE_ORDER,
+	MSG_MASTER_REQUEST,
+	MSG_MASTER_PROPOSAL,
+	MSG_CONFIRM_ORDER,
+	MSG_ADDR_REQUEST,
+	MSG_ADDR_RESPONSE,
+	MSG_BACKUP_ADD,
+	MSG_BACKUP_DELETE
+};
 
+typedef struct BufferInfo{
+	int srcAddr;
+	int dstAddr;
+	int masterStatus;
+	enum bufferState myState;
+	int active;
+	int currentFloor;
+	int nextFloor;
+	int buttonType;
+} BufferInfo;
 
 
 #endif
