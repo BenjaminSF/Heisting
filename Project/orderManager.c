@@ -491,7 +491,8 @@ void* orderTimeout(){
 			}
 			if (orderQueue.enRoute[i] > 12){
 				printf("Order timed out!!\n");
-				resetAddr(localIPlist[orderQueue.Queue[i].dest+orderQueue[i].Queue.buttonType]);
+				int pos = orderQueue.Queue[i].dest + orderQueue.Queue[i].buttonType;
+				resetAddr(localIPlist[pos]);
 				orderQueue.enRoute[i] = 0;
 
 				//resetAddrsList();

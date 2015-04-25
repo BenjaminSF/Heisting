@@ -23,5 +23,6 @@ int getMaster();
 void resetAddrsList();
 void setMasterIP(int newMasterIP);
 void setMaster(int newMaster);
+void resetAddr(int IP);
 
 #endif
