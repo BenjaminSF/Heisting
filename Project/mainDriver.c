@@ -1,9 +1,9 @@
 
 #include "mainDriver.h"
+#include "publicTypes.h"
 #include "orderManager.h"
 #include "elevDriver.h"
 #include "networkModule.h"
-#include "costFunction.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>

@@ -1,6 +1,6 @@
 #ifndef _orderManager_
 #define _orderManager_
-
+#include <pthread.h>
 #include "elevDriver.h"
 #include "costFunction.h"
 #define N_ELEVATORS 5
