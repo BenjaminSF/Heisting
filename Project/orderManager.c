@@ -196,6 +196,7 @@ void* sortMessages(void *args){
 	int myIP = getLocalIP();
 	int broadcast = getBroadcastIP();
 	BufferInfo newMsg;
+	struct order newBackupOrder;
 	while(1){
 		wait_for_content(receiveQueue);
 		dequeue(receiveQueue, &bufOrder);
@@ -335,13 +336,19 @@ void* sortMessages(void *args){
 				case MSG_BACKUP_ADD:
 					if(getMaster() == 0){
 					printf("Receive: MSG_BACKUP_ADD\n");
-					addBackupOrder(bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
+					newBackupOrder.dest = bufOrder.nextFloor;
+					newBackupOrder.buttonType = bufOrder.buttonType;
+					newbackupOrder.elevator = bufOrder.active;
+					addBackupOrder(newBackupOrder);
 					}
 					break;
 				case MSG_BACKUP_DELETE:
 					if(getMaster() == 0){
 					printf("Receive: MSG_BACKUP_DELETE\n");
-					deleteBackupOrder(bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
+					newBackupOrder.dest = bufOrder.nextFloor;
+					newBackupOrder.buttonType = bufOrder.buttonType;
+					newbackupOrder.elevator = bufOrder.active;
+					deleteBackupOrder(newbackupOrder);
 					}
 					break;
 				default:
@@ -489,7 +496,7 @@ void* orderTimeout(){
 	return NULL;
 }
 
-void importBackupOrders(struct order x){
+void importBackupOrders(struct order backupOrder){
 	int i = 0;
 	pthread_mutex_lock(&(orderQueue.rwLock));
 	while(orderQueue.inUse[i]){
@@ -500,9 +507,9 @@ void importBackupOrders(struct order x){
 		}
 	}
 	orderQueue.inUse[i] = 1;
-	orderQueue.Queue[i] = x;
-	if (x.buttonType == BUTTON_COMMAND){
-		orderQueue.localPri[i] = x.elevator;
+	orderQueue.Queue[i] = backupOrder;
+	if (backupOrder.buttonType == BUTTON_COMMAND){
+		orderQueue.localPri[i] = backupOrder.elevator;
 	}else{
 		orderQueue.localPri[i] = -1;
 	}

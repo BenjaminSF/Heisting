@@ -16,6 +16,6 @@ void deleteOrder(int floor, buttonType button, int elevator);
 void reportElevState(int currentFloor, int nextFloor, int button);
 void initPriorityQueue();
 int orderCompare(struct order *orderA, struct order *orderB);
-void importBackupOrders(struct order x);
+void importBackupOrders(struct order backupOrder);
 
 #endif
