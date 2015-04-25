@@ -430,6 +430,9 @@ void deleteOrder(int floor, buttonType button, int elevator){
 					}
 					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					remainingOrders--;
+					BufferInfo backupMsg;
+					encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_DELETE, floor, button, elevator);
+					enqueue(sendQueue, &backupMsg, sizeof(BufferInfo));
 				}
 			}
 		}
