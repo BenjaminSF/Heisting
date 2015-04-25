@@ -316,3 +316,21 @@ void resetAddrsList(){
 	info.addrslistCounter = 1;
 	sem_post(&(info.addrslistSem));
 }
+
+void resetAddr(int IP){
+	int i,pos,tmp;
+	sem_wait(&(info.addrslistSem));
+	for(pos=0;pos<info.addrslistCounter;pos++){
+		if (info.addrsList[pos] == IP){
+			break;
+		}
+	}
+	for(i = pos+1; i< info.addrslistCounter;i++){
+		tmp = info.addrsList[i-1];
+		info.addrsList[i-1] = info.addrsList[i];
+		info.addrsList[i] = tmp;
+	}
+	addrslistCounter--;
+	sem_post(&(info.addrslistSem));
+}
+
