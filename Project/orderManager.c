@@ -360,7 +360,7 @@ void* sortMessages(void *args){
 					}
 				}
 				if(myState == MSG_IM_ALIVE){
-					if (srcAddr != getLocalIP()){ // Master conflict
+					if (srcAddr != myIP){ // Master conflict
 						BufferInfo newMsg;
 						encodeMessage(&newMsg, 0, 0, MSG_MASTER_REQUEST, -1, -1, -1);
 						enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
