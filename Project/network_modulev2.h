@@ -28,9 +28,6 @@ enum bufferState{
 	MSG_ADDR_RESPONSE
 };
 
-//extern pthread_mutex_t masterMutex;
-//extern pthread_mutexattr_t mastermattr;
-
 typedef struct BufferInfo{
 	int srcAddr;
 	int dstAddr;
@@ -46,9 +43,6 @@ typedef struct BufferInfo{
 int init_network();
 void* send_message(void *args);
 void* listen_for_messages(void *args);
-BufferInfo decodeMessage(char *buffer);
-//int addNewOrder(struct order newOrder, int currentFloor, int nextFloor);
-//int getNewOrder(int currentFloor, int nextFloor);
 
 //encodeMessage: Set the relevant fields in a BufferInfo struct all at once
 //Set var# = -1 when not applicable

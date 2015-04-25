@@ -199,7 +199,7 @@ void *listen_for_messages(void *args){
 }
 
 
-
+/*
 BufferInfo decodeMessage(char *buffer){
 	BufferInfo msg;
 	//For testing only:
@@ -211,7 +211,7 @@ BufferInfo decodeMessage(char *buffer){
 
 	return msg;
 }
-
+*/
 void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int var1, int var2, int var3){
 	//printf("Encoding message------------------------------------------------------\n");
 	if (srcAddr == 0){
