@@ -120,12 +120,15 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		//printf("Mutex released: addNewOrder\n");
 		
 		pthread_mutex_unlock(&(orderQueue.rwLock));
+		BufferInfo backupMsg;
+		encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_ADD, storeOrder.dest, storeOrder.buttonType, storeOrder.elevator);
+		enqueue(sendQueue, &backupMsg, sizeof(BufferInfo));
 		//dummyMutex--;
 		//printf("Add unlock mutex, %d\n", dummyMutex);
 	}else{ //Send new order to the master
 		printf("Dette er en slave\n");
 		BufferInfo newMsg;
-		encodeMessage(&newMsg, 0, 0, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, 1);
+		encodeMessage(&newMsg, 0, 0, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, -1);
 		newMsg.currentFloor = currentFloor;
 		enqueue(sendQueue, &newMsg, sizeof(newMsg));
 	}
@@ -321,9 +324,6 @@ void* sortMessages(void *args){
 						encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
 						enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					}
-					BufferInfo backupMsg;
-					encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_ADD, bufOrder.nextFloor, bufOrder.buttonType, srcAddr);
-					enqueue(sendQueue, &backupMsg, sizeof(BufferInfo));
 				}
 				if(myState == MSG_DELETE_ORDER){
 					printf("Receive: MSG_DELETE_ORDER\n");
