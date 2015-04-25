@@ -414,6 +414,7 @@ void deleteOrder(int floor, buttonType button, int elevator){
 		for (i = 0; i < N_ORDERS; i++){
 			if (orderQueue.inUse[i] == 1){
 				remainingOrders++;
+				printf("In queue: floor: %d, button: %d, elev: %d\n", orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, orderQueue.Queue[i].elevator);
 				if (orderQueue.Queue[i].dest == floor && orderQueue.Queue[i].buttonType == button && (orderQueue.localPri[i] == elevator || orderQueue.localPri[i] == -1)){
 					orderQueue.inUse[i] = 0;
 					orderQueue.localPri[i] = -1;
