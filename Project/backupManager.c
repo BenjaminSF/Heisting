@@ -31,7 +31,7 @@ void addBackupOrder(int floor, int button, int elevator){
 	int pos = N_ORDERS;
 	for (i = 0; i < N_ORDERS; i++){
 		if (backupQueue.inUse[i]){
-			if (ordercmp(&storeOrder, &(backupQueue.Queue[i]))){
+			if (orderCompare(&storeOrder, &(backupQueue.Queue[i]))){
 				pthread_mutex_unlock(&(backupQueue.rwLock));
 				return;
 			}
