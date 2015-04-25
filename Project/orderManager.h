@@ -2,12 +2,13 @@
 #define _orderManager_
 #include "elevDriver.h"
 #include "costFunction.h"
+#include <pthread.h>
 
 extern struct orderQueueType orderQueue;
 pthread_mutexattr_t orderQueuemattr;
 
 void* orderManager(void *args);
-int addNewOrder(struct order newOrder, int currentFloor, int nextFloor);
+int addNewOrder(struct order newOrder);
 int getNewOrder(int currentFloor, int nextFloor, int button);
 void* sortMessages(void *args);
 void* masterTimeout(void *args);

@@ -64,7 +64,7 @@ void* orderManager(void* args){
 	return NULL;
 }
 
-int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
+int addNewOrder(struct order newOrder){
 	printf("Enter addNewOrder---------------------------------------------------\n");
 	if (getMaster() == 1){
 		pthread_mutex_lock(&(orderQueue.rwLock));
@@ -115,7 +115,6 @@ int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
 		printf("Dette er en slave\n");
 		BufferInfo newMsg;
 		encodeMessage(&newMsg, 0, 0, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, 0);
-		newMsg.currentFloor = currentFloor;
 		enqueue(sendQueue, &newMsg, sizeof(newMsg));
 	}
 	return -1;
@@ -255,10 +254,10 @@ void* sortMessages(void *args){
 						struct order newOrder;
 						newOrder.dest = bufOrder.nextFloor;
 						newOrder.buttonType = bufOrder.buttonType;
-						newOrder.elevator = srcAddr;
-						addNewOrder(newOrder, bufOrder.currentFloor,bufOrder.nextFloor);
+						newOrder.elevator = bufOrder.active;
+						addNewOrder(newOrder);
 						if (bufOrder.buttonType == BUTTON_COMMAND){
-							encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
+							encodeMessage(&newMsg, 0, bufOrder.active, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
 							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 						}
 					}else{

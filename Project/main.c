@@ -20,9 +20,9 @@ int main(){
 		return 0;
 	}
 
-
+	int localIP = getLocalIP();
 	pthread_t driver, sendMessages, receiveMessages, manager;
-	pthread_create(&driver,NULL,&mainDriver,NULL);
+	pthread_create(&driver,NULL,&mainDriver,(void *) &localIP);
 	pthread_create(&receiveMessages, 0, &listen_for_messages, 0);
 	pthread_create(&sendMessages, 0, &send_message, 0);
 	pthread_create(&manager, NULL, &orderManager, NULL);
