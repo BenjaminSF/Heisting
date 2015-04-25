@@ -59,7 +59,7 @@ void deleteBackupOrder(struct order storeOrder){
 			if (backupQueue.Queue[i].buttonType == storeOrder.buttonType && (backupQueue.Queue[i].elevator == storeOrder.elevator || backupQueue.localPri[i] == -1)){
 				backupQueue.inUse[i] = 0;
 				backupQueue.localPri[i] = -1;
-				break;
+				//break;
 			}
 		}
 	}
