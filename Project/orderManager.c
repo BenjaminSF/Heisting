@@ -174,14 +174,15 @@ void distributeOrders(){ //Master only
 					minPos = i;
 					minOrderPos = j;
 				}
+				printf("Cost: %d, floor: %d, button: %d, elev: %d\n", tmpCost, orderQueue.Queue[j].dest, orderQueue.Queue[j].buttonType, tmpAddr);
 			}
 		}
 		if (minCost == 0) break;
 	}
 	pthread_mutex_unlock(&(orderQueue.rwLock));
 
-	if (minCost < N_FLOORS){
-		localIPlist[minFloor+minButton] = minElev;
+	if (minCost < N_FLOORS *2){
+		localIPlist[N_BUTTONS*minFloor+minButton] = minElev;
 		orderQueue.enRoute[minOrderPos] = 1;
 		elevStates.active[minPos] = j;
 		printf("Send order to: %d, floor: %d, cost: %d\n", minElev, minFloor, minCost);
@@ -399,6 +400,7 @@ void* masterTimeout(void *args){
 		while(getMaster() == 1){
 			enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 			nanosleep(&ts, &rem);
+			printf("Addresses in list: %d\n", getAddrsCount());
 		}
 	}
 	return NULL;
@@ -452,7 +454,7 @@ int orderCompare(struct order *orderA, struct order *orderB){
 	return check;
 }
 void reportElevState(int currentFloor, int nextFloor, int button){
-	printf("Reporting: current: %d, next: %d\n", currentFloor, nextFloor);
+	
 	if (getMaster() == 1){
 		int i;
 		int myIP = getLocalIP();
@@ -468,9 +470,12 @@ void reportElevState(int currentFloor, int nextFloor, int button){
 				elevStates.button[i] = button;
 				if (currentFloor == N_FLOORS -1) elevStates.direction[i] = -1;
 				if (currentFloor == 0) elevStates.direction[i] = 1;
+				printf("Reporting: current: %d, next: %d, direction: %d\n", currentFloor, nextFloor, elevStates.direction[i]);
 				break;
 			}
+
 		}
+		
 	}else{
 		BufferInfo newMsg;
 		encodeMessage(&newMsg, 0, 0, MSG_ELEVSTATE, currentFloor, nextFloor, button);
@@ -503,7 +508,7 @@ void* orderTimeout(){
 			}
 			if (orderQueue.enRoute[i] > 12){
 				printf("Order timed out!!\n");
-				int pos = orderQueue.Queue[i].dest + orderQueue.Queue[i].buttonType;
+				int pos = N_BUTTONS*orderQueue.Queue[i].dest + orderQueue.Queue[i].buttonType;
 				resetAddr(localIPlist[pos]);
 				orderQueue.enRoute[i] = 0;
 

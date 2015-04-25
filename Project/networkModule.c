@@ -322,18 +322,14 @@ void resetAddr(int IP){
 	sem_wait(&(info.addrslistSem));
 	for(pos=0;pos<info.addrslistCounter;pos++){
 		if (inet_addr(info.addrsList[pos]) == IP){
+			char* tmpChar = strdup(info.addrsList[info.addrslistCounter-1]);
+			info.addrsList[info.addrslistCounter-1] = strdup(info.addrsList[pos]);
+			info.addrsList[pos] = strdup(tmpChar);
+			info.addrslistCounter--;
 			break;
 		}
 	}
-	char* tmpChar = strdup(info.addrsList[info.addrslistCounter-1]);
-	info.addrsList[info.addrslistCounter-1] = strdup(info.addrsList[pos]);
-	info.addrsList[pos] = strdup(tmpChar);
-	//for(i = pos+1; i< info.addrsListCounter;i++){
-	//	tmp = inet_addr(info.addrsList[i-1]);
-	//	info.addrsList[i-1] = info.addrsList[i];
-	//	info.addrsList[i] = tmp;
-	//}
-	info.addrslistCounter--;
+	
 	sem_post(&(info.addrslistSem));
 }
 
