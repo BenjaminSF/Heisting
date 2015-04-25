@@ -40,8 +40,6 @@ int init_network(){
 
 	sem_init(&(info.addrslistSem), 0, 1);
 	sem_init(&(info.masterSem), 0, 1);
-	//sem_init(&masterSem, 0, 1);
-	//sem_post(&masterSem);
 
 	//Finds the local machine's IP address
 	printf("Start init_network()\n");
@@ -114,9 +112,6 @@ void* send_message(void *args){
 	printf("BufferInfo: %lu, int: %lu, enum: %lu\n", sizeof(BufferInfo), sizeof(int), sizeof(char));
 	BufferInfo *msg = (BufferInfo *)malloc(sizeof(BufferInfo)+60);
 
-	//printf("Sending message: %d\n", msg->myState);
-	//printf("Send size srcAddr: %lu, %d\n", sizeof(msg), msg->srcAddr);
-
 	if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
 		perror("SendSocket not created\n");
 	}
@@ -160,9 +155,7 @@ void *listen_for_messages(void *args){
 	if (bind(recSock, (struct sockaddr *)&myaddr, myaddrLen) < 0){
 		perror("Failed to bind recSocket.\n");
 	}
-
 	printf("Test mottak, port: %d\n", port);
-
 	fd_set readfds;
 	//Prepare socket
 	int notDone = 1;
