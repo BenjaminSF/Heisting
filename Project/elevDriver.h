@@ -8,7 +8,6 @@ motorDirection getMotorDirection(void);
 void setMotorDirection(motorDirection direction);
 void goToFloor(int floor);
 void setDoorOpenLamp(int status);
-//void* elevatorBlocked();
 void setStopLamp(int status);
 int getFloor(void);
 void setFloorIndicator(int status);

@@ -8,7 +8,6 @@
 #include <pthread.h>
 
 
-
 static const int lampMatrix[N_FLOORS][N_BUTTONS] = {
 	{LIGHT_UP1, LIGHT_DOWN1, LIGHT_COMMAND1},
 	{LIGHT_UP2, LIGHT_DOWN2, LIGHT_COMMAND2},
@@ -22,19 +21,17 @@ static const int buttonMatrix[N_FLOORS][N_BUTTONS] = {
 	{BUTTON_UP4, BUTTON_DOWN4, BUTTON_COMMAND4},
 };
 
-
 int elevDriver_initialize(void) {
 	int i;
 	if (!io_init())
 		return 0;
 	for (i = 0; i < N_FLOORS; ++i) {
-		if (i != 0)
-			setButtonLamp(i, BUTTON_CALL_DOWN, 0);
+		if (i != 0) setButtonLamp(i, BUTTON_CALL_DOWN, 0);
 		if (i != N_FLOORS - 1)
 			setButtonLamp(i, BUTTON_CALL_UP, 0);
 			setButtonLamp(i, BUTTON_COMMAND, 0);
 	}
-	setStopLamp(0);
+	io_clear_bit(LIGHT_STOP);
 	setDoorOpenLamp(0);
 	if(getFloor() == -1){
 		setMotorDirection(DIRN_DOWN);
@@ -53,6 +50,7 @@ int elevDriver_initialize(void) {
 	initPriorityQueue();
 	return 1;
 }
+
 void setMotorDirection(motorDirection direction){
 	if (direction < 0){
 		io_set_bit(MOTORDIR);
@@ -96,44 +94,6 @@ void setDoorOpenLamp(int status){
 
 	}
 }
-/*
-int isObstructed(void){
-	return io_read_bit(OBSTRUCTION);
-}
-
-int isStopped(void){
-	return io_read_bit(STOP);
-}
-
-
-int elevatorBlocked(){
-	if(isObstructed() && isStopped()){
-		setMotorDirection(DIRN_STOP);
-		return 0;
-	}else if(isObstructed()){
-		setMotorDirection(DIRN_STOP);
-		while(isObstructed()){}
-	}else if(isStopped()){
-		setStopLamp(1);
-		setMotorDirection(DIRN_STOP);
-		while(isStopped()){}
-		while(!isStopped()){}
-		setStopLamp(0);
-		struct timespec ts, rem;
-		ts.tv_sec = 0;
-		ts.tv_nsec = 300000000;
-		nanosleep(&ts, &rem);
-	}
-	return 1;
-}
-*/
-void setStopLamp(int status){
-	if (status){
-		io_set_bit(LIGHT_STOP);
-	}else{
-		io_clear_bit(LIGHT_STOP);
-	}
-}
 
 int getFloor(void){
 	int sensorFloors[4] = {SENSOR_FLOOR1,SENSOR_FLOOR2,SENSOR_FLOOR3,SENSOR_FLOOR4};
@@ -149,7 +109,6 @@ int getFloor(void){
 }
 
 void setFloorIndicator(int floor){
-	// Binary encoding. One light must always be on.
 	if (floor & 0x02)
 		io_set_bit(LIGHT_FLOOR_IND1);
 	else
@@ -171,6 +130,7 @@ void setButtonLamp(int floor, buttonType button, int status){
 		io_clear_bit(lampMatrix[floor][button]);
 	}
 }
+
 int getButtonLamp(int floor,buttonType button){
 	return io_read_bit(lampMatrix[floor][button]);
 }

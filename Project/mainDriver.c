@@ -25,10 +25,6 @@ void* mainDriver(void *args) {
 	struct timespec ts,rem;
 	ts.tv_sec = 1;
 	ts.tv_nsec = 0;
-	/*
-	pthread_t blockage;
-	pthread_create(&blockage,NULL,&elevatorBlocked,NULL);
-*/
 	while(1){
 		currentFloor = getFloor();
 		setMotorDirection(DIRN_STOP);
@@ -37,7 +33,6 @@ void* mainDriver(void *args) {
 		}else{
 			setFloorIndicator(lastFloor);
 		}
-		
 		for (i = 0; i < N_FLOORS; i++){ //Check button presses
 			if(getButtonSignal(i,BUTTON_COMMAND)){
 				if(i != currentFloor){
@@ -83,9 +78,7 @@ void* mainDriver(void *args) {
 			time(&startTime);
 		}
 		if (nextFloor == -1) nextFloor = getNewOrder(currentFloor, nextFloor, BUTTON_COMMAND);
-
 		if(nextFloor != -1){
-			
 			localQueue[nextFloor] = 1;
 			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
@@ -107,15 +100,12 @@ void* mainDriver(void *args) {
 			floorSetDown = -1;
 			while(lastFloor != nextFloor){
 				currentFloor = getFloor();
-				//printf("LOOP\n");
 				if(currentFloor != -1 && currentFloor != lastFloor){
 					lastFloor = currentFloor;
 					reportElevState(lastFloor, nextFloor, buttonCall);
 					setFloorIndicator(lastFloor);
 				}
-
-				for(j=0;j<N_FLOORS;j++){ //Check button presses
-					
+				for(j=0;j<N_FLOORS;j++){
 					if(getButtonSignal(j,BUTTON_COMMAND) && floorSetCommand != j){
 						printf("Add order command\n");
 						struct order newOrder = {.dest = j, .buttonType = BUTTON_COMMAND, .elevator = thisElevator};
@@ -140,7 +130,6 @@ void* mainDriver(void *args) {
 						}
 					}
 				}
-
 				newFloor = getNewOrder(lastFloor,nextFloor, buttonCall);
 				if(newFloor != nextFloor && newFloor != -1){
 					localQueue[newFloor] = 1;
@@ -183,7 +172,7 @@ void* mainDriver(void *args) {
 					}
 				}	
 				
-			} // End While lastFloor != nextFloor
+			} 
 			localQueue[lastFloor] = 0; 
 			nextFloor = -1;
 			reportElevState(lastFloor, nextFloor, BUTTON_COMMAND);
@@ -202,9 +191,8 @@ void* mainDriver(void *args) {
 				}
 			}
 			if (checkLocal < N_FLOORS) nextFloor = checkLocal;
-		} //End if nextFloor != -1
+		} 
 	}
-	//pthread_join(blockage,NULL);
 	
 	return NULL;
 }
