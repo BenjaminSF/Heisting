@@ -1,21 +1,15 @@
 #ifndef _orderManager_
 #define _orderManager_
-#include "elevDriver.h"
-#include "costFunction.h"
-#include <pthread.h>
-
-extern struct orderQueueType orderQueue;
-pthread_mutexattr_t orderQueuemattr;
+#include "publicTypes.h"
 
 void* orderManager(void *args);
-int addNewOrder(struct order newOrder);
+int addNewOrder(struct Order newOrder);
 int getNewOrder(int currentFloor, int nextFloor, int button);
 void* sortMessages(void *args);
-void* masterTimeout(void *args);
 void deleteOrder(int floor, buttonType button, int elevator);
 void reportElevState(int currentFloor, int nextFloor, int button);
 void initPriorityQueue();
-int orderCompare(struct order *orderA, struct order *orderB);
-void importBackupOrders(struct order backupOrder);
+int orderCompare(struct Order *orderA, struct Order *orderB);
+void importBackupOrders(struct Order backupOrder);
 
 #endif

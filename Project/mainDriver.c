@@ -36,7 +36,7 @@ void* mainDriver(void *args) {
 		for (i = 0; i < N_FLOORS; i++){ //Check button presses
 			if(getButtonSignal(i,BUTTON_COMMAND)){
 				if(i != currentFloor){
-					struct order newOrder = {.dest = i, .buttonType = BUTTON_COMMAND, .elevator = thisElevator};
+					Order newOrder = {.dest = i, .buttonType = BUTTON_COMMAND, .elevator = thisElevator};
 					addNewOrder(newOrder);
 				}else{
 					setDoorOpenLamp(1);
@@ -48,7 +48,7 @@ void* mainDriver(void *args) {
 			if(i< N_FLOORS-1){
 				if (getButtonSignal(i,BUTTON_CALL_UP)){
 					if(i != currentFloor){
-						struct order newOrder = {.dest = i, .buttonType = BUTTON_CALL_UP, .elevator = thisElevator};
+						Order newOrder = {.dest = i, .buttonType = BUTTON_CALL_UP, .elevator = thisElevator};
 						addNewOrder(newOrder);								
 					}else{
 						setDoorOpenLamp(1);
@@ -61,7 +61,7 @@ void* mainDriver(void *args) {
 			if(i>0){
 				if (getButtonSignal(i,BUTTON_CALL_DOWN)){
 					if (i != currentFloor){
-						struct order newOrder = {.dest = i, .buttonType = BUTTON_CALL_DOWN, .elevator = thisElevator};
+						Order newOrder = {.dest = i, .buttonType = BUTTON_CALL_DOWN, .elevator = thisElevator};
 						addNewOrder(newOrder);
 					}else{
 						setDoorOpenLamp(1);
@@ -108,7 +108,7 @@ void* mainDriver(void *args) {
 				for(j=0;j<N_FLOORS;j++){
 					if(getButtonSignal(j,BUTTON_COMMAND) && floorSetCommand != j){
 						printf("Add order command\n");
-						struct order newOrder = {.dest = j, .buttonType = BUTTON_COMMAND, .elevator = thisElevator};
+						Order newOrder = {.dest = j, .buttonType = BUTTON_COMMAND, .elevator = thisElevator};
 						addNewOrder(newOrder);
 						floorSetCommand = j;
 						printf("Leave add order\n");
@@ -116,7 +116,7 @@ void* mainDriver(void *args) {
 					if(j>0){
 						if (getButtonSignal(j,BUTTON_CALL_DOWN) && floorSetDown != j){
 							printf("Add order down\n");
-							struct order newOrder = {.dest = j, .buttonType = BUTTON_CALL_DOWN, .elevator = thisElevator};
+							Order newOrder = {.dest = j, .buttonType = BUTTON_CALL_DOWN, .elevator = thisElevator};
 							addNewOrder(newOrder);
 							floorSetDown = j;
 						}
@@ -124,7 +124,7 @@ void* mainDriver(void *args) {
 					if(j<N_FLOORS-1){
 						if (getButtonSignal(j,BUTTON_CALL_UP) && floorSetUp != j){
 							printf("Add order up\n");
-							struct order newOrder = {.dest = j, .buttonType = BUTTON_CALL_UP, .elevator = thisElevator};
+							Order newOrder = {.dest = j, .buttonType = BUTTON_CALL_UP, .elevator = thisElevator};
 							addNewOrder(newOrder);
 							floorSetUp = j;
 						}

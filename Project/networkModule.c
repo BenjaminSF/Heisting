@@ -290,9 +290,9 @@ int getMasterStatus(){
 }
 
 void setMasterIP(int newMasterIP){
+	printf("Set master IP: %d\n", newMasterIP);
 	struct in_addr tmp;
 	tmp.s_addr = newMasterIP;
-	sem_wait(&(info.addrslistSem));
 	sem_wait(&(info.masterSem));
 	info.masterIP = strdup(inet_ntoa(tmp));
 	if (newMasterIP == getLocalIP()){
@@ -303,5 +303,4 @@ void setMasterIP(int newMasterIP){
 		printf("This elevator is slave.\n");
 	}
 	sem_post(&(info.masterSem));
-	sem_post(&(info.addrslistSem));
 }

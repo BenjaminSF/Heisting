@@ -15,7 +15,8 @@ int main(){
 		printf("Unable to initialize elevator hardware!\n");
 		return 0;
 	}
-
+	getMasterStatus();
+	getAddrsCount();
 	pthread_t driver, sendMessages_, receiveMessages_, manager;
 	pthread_create(&driver,NULL,&mainDriver,(void *) &localIP);
 	pthread_create(&receiveMessages_, 0, &receiveMessages, 0);

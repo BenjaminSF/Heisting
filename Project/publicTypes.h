@@ -18,11 +18,12 @@ typedef enum tag_lampType {
 	BUTTON_COMMAND = 2
 } buttonType;
 
-struct order{
+typedef struct Order{
 	int dest;
 	int buttonType;
 	int elevator;
-};
+}Order;
+
 enum bufferState{
 	MSG_CONNECT_SEND,
 	MSG_CONNECT_RESPONSE,

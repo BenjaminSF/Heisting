@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include "orderManager.h"
+#include "publicTypes.h"
+#include <pthread.h>
 
 static struct backupQueue{
-	struct order Queue[N_ORDERS];
+	Order Queue[N_ORDERS];
 	int inUse[N_ORDERS];
 	int localPri[N_ORDERS];
 	pthread_mutex_t rwLock;
@@ -21,7 +23,7 @@ void initBackupQueue(){
 	printf("Init backup queue\n");
 }
 
-void addBackupOrder(struct order storeOrder){
+void addBackupOrder(Order storeOrder){
 	pthread_mutex_lock(&(backupQueue.rwLock));
 	int i = 0;
 	int pos = N_ORDERS;
@@ -51,7 +53,7 @@ void addBackupOrder(struct order storeOrder){
 	return;
 }
 
-void deleteBackupOrder(struct order storeOrder){
+void deleteBackupOrder(Order storeOrder){
 	pthread_mutex_lock(&(backupQueue.rwLock));
 	printf("Trying to delete in backup: floor: %d, button: %d, elev: %d\n", storeOrder.dest, storeOrder.buttonType, storeOrder.elevator);
 	int i;

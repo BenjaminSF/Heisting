@@ -2,7 +2,7 @@
 #include "publicTypes.h"
 #include <stdlib.h>
 
-int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int elevButton, int direction){
+int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int elevButton){
 	int cost;
 	int costDir = nextFloor - currentFloor;
 	cost = costFloor - currentFloor;
@@ -27,33 +27,9 @@ int findCost(int costFloor,int currentFloor, int nextFloor,int buttonType, int e
 		cost = abs(cost);
 	}else if ((cost * costDir) >= 0 && ((costDir>0 && (buttonType == 0 || buttonType == 2))||(costDir<0 && (buttonType == 2 || buttonType == 1)))){
 		cost = abs(cost);
-		printf("nextFloor right way\n");
 	}else{
-		printf("This should not happen!!!!!!!!!!!!!\n");
+		printf("This should not happen!\n");
 		cost = 2*N_FLOORS + 1;
 	}
-	if (direction * costDir < 0){
-	//	cost += 2;
-	}
-	//printf("findCost: current: %d, next: %d, cost: %d\n", currentFloor, nextFloor, cost);
 	return cost;
 }
-
-/*int findCost(int costFloor, int currentFloor, int nextFloor, int buttonType, int elevButton){
-	int cost;
-	cost = 2* abs(costFloor - currentFloor);
-	if (nextFloor > currentFloor && elevButton == BUTTON_CALL_DOWN){
-		cost += costFloor + currentFloor;
-	}else if (nextFloor < currentFloor && elevButton == BUTTON_CALL_UP){
-		cost += 2* N_FLOORS - currentFloor - nextFloor -2;
-	}
-	if (buttonType == BUTTON_CALL_DOWN && costFloor > currentFloor){
-		cost++;
-	}else if(buttonType == BUTTON_CALL_UP && costFloor < currentFloor){
-		cost++;
-	}	
-	if (buttonType != BUTTON_COMMAND){
-		cost++;
-	}
-	return cost;
-}*/

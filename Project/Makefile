@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -lpthread -lcomedi -lm -Wall
+CFLAGS = -lpthread -lcomedi -lm -Wall -g
 DEPS = mainDriver.h elevDriver.h io.h fifoqueue.h costFunction.h orderManager.h networkModule.h channels.h backupManager.h publicTypes.h
 SRC = main.c mainDriver.c elevDriver.c io.c fifoqueue.c costFunction.c orderManager.c networkModule.c backupManager.c
 TARGET = test
