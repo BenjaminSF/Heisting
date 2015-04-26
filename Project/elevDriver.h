@@ -6,12 +6,11 @@
 int elevDriver_initialize(void);
 motorDirection getMotorDirection(void);
 void setMotorDirection(motorDirection direction);
-void goToFloor(int floor);
-void setDoorOpenLamp(int status);
-void setStopLamp(int status);
 int getFloor(void);
-void setFloorIndicator(int status);
+void goToFloor(int floor);
 int getButtonSignal(int floor, buttonType button);
+void setDoorOpenLamp(int status);
+void setFloorIndicator(int status);
 void setButtonLamp(int floor, buttonType button, int status);
 
 #endif

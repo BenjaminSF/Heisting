@@ -10,6 +10,8 @@
 #include "elevDriver.h"
 #include "backupManager.h"
 #include "publicTypes.h"
+#define MASTER_TIMEOUT 15
+#define IM_ALIVE_INTERVALS 5
 
 // Private functions
 void distributeOrders();
@@ -165,7 +167,7 @@ void* sortMessages(void *args){
 	int broadcast = getBroadcastIP();
 	BufferInfo newMsg;
 	while(1){
-		wait_for_content(receiveQueue);
+		waitForContent(receiveQueue);
 		dequeue(receiveQueue, &bufOrder);
 		int myState = bufOrder.myState;
 		int dstAddr = bufOrder.dstAddr;
@@ -286,18 +288,14 @@ void* sortMessages(void *args){
 }
 
 void* masterTimeout(void *args){
-	printf("Enter timeout\n");
 	struct timespec ts, rem;
 	int masterStatus = getMasterStatus();
 	if (masterStatus == 0){
-		printf("Timer: slave\n");
 		clock_gettime(CLOCK_REALTIME, &ts);
-		ts.tv_sec = ts.tv_sec + 6;
-		int test;
+		ts.tv_sec = ts.tv_sec + IM_ALIVE_INTERVALS + 1;
 		while(getMasterStatus() == 0){
-			test = sem_timedwait(&timeoutSem, &ts);
-			if (test == -1){
-				printf("Master timeout\n");
+			if (sem_timedwait(&timeoutSem, &ts) == -1){
+				printf("Master timed out\n");
 				resetAddrsList();
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, 0, 0, MSG_MASTER_REQUEST, -1, -1, -1);
@@ -305,39 +303,32 @@ void* masterTimeout(void *args){
 				return NULL;
 			}
 			clock_gettime(CLOCK_REALTIME, &ts);
-			ts.tv_sec = ts.tv_sec + 15;
+			ts.tv_sec = ts.tv_sec + MASTER_TIMEOUT;
 		}
 	}else{
-		printf("Timer: master\n");
 		transferBackupOrders();
 		reportElevState(getFloor(), -1, BUTTON_COMMAND);
-		ts.tv_sec = 5;
+		ts.tv_sec = IM_ALIVE_INTERVALS;
 		ts.tv_nsec = 0;
 		BufferInfo newMsg;
 		encodeMessage(&newMsg, 0, 0, MSG_IM_ALIVE, 1, -1, -1);
 		while(getMasterStatus() == 1){
 			enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 			nanosleep(&ts, &rem);
-			printf("Addresses in list: %d\n", getAddrsCount());
 		}
 	}
 	return NULL;
 }
 
 void deleteOrder(int floor, buttonType button, int elevator){
-	printf("Enter deleteOrder: floor: %d, button: %d, elev: %d\n", floor, button, elevator);
 	if (getMasterStatus() == 1){
 		int i;
-		int remainingOrders = 0;
 		for (i = 0; i < N_ORDERS; i++){
 			if (orderQueue.inUse[i] == 1){
-				remainingOrders++;
-				printf("In queue: floor: %d, button: %d, elev: %d\n", orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, orderQueue.Queue[i].elevator);
 				if (orderQueue.Queue[i].dest == floor && orderQueue.Queue[i].buttonType == button && (orderQueue.localPri[i] == elevator || orderQueue.localPri[i] == -1)){
 					orderQueue.inUse[i] = 0;
 					orderQueue.localPri[i] = -1;
 					orderQueue.enRoute[i] = 0;
-					printf("Deleting order!\n");
 					BufferInfo newMsg;
 					if (button == BUTTON_COMMAND && elevator != getLocalIP()){
 						encodeMessage(&newMsg, 0, elevator, MSG_SET_LAMP, floor, button, 0);
@@ -348,14 +339,12 @@ void deleteOrder(int floor, buttonType button, int elevator){
 						setButtonLamp(floor, button, 0);
 					}
 					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
-					remainingOrders--;
 					BufferInfo backupMsg;
 					encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_DELETE, floor, button, elevator);
 					enqueue(sendQueue, &backupMsg, sizeof(BufferInfo));
 				}
 			}
 		}
-		printf("remainingOrders: %d\n", remainingOrders);
 	}else{
 		BufferInfo msg;
 		encodeMessage(&msg, 0, 0, MSG_DELETE_ORDER, floor, button, 1);
@@ -401,17 +390,16 @@ void initPriorityQueue(){
 	for (i = 0; i < N_ORDERS; i++){
 		orderQueue.inUse[i] = 0;
 		orderQueue.localPri[i] = -1;
-		orderQueue.Queue[i].dest = 100;
 		orderQueue.enRoute[i] = 0;
 	}
-
 	pthread_mutex_init(&(orderQueue.rwLock), NULL);
 	initBackupQueue();
-	printf("Init orderQueue and backupQueue\n");
 }
 
-void* orderTimeout(){
+void* orderTimeout(){ // Only used by master
 	struct timespec ts, rem;
+	ts.tv_sec = 1;
+	ts.tv_nsec = 0;
 	int i;
 	while(1){
 		for (i = 0; i < N_ORDERS; i++){
@@ -424,14 +412,11 @@ void* orderTimeout(){
 				resetAddr(localIPlist[pos]);
 				orderQueue.enRoute[i] = 0;
 
-				//resetAddrsList();
 				BufferInfo newMsg;
 				encodeMessage(&newMsg, 0, 0, MSG_ADDR_REQUEST, -1, -1, -1);
 				enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 			}
 		}
-		ts.tv_sec = 1;
-		ts.tv_nsec = 0;
 		nanosleep(&ts, &rem);
 	}
 	return NULL;

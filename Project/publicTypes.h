@@ -52,5 +52,4 @@ typedef struct BufferInfo{
 	int buttonType;
 } BufferInfo;
 
-
 #endif

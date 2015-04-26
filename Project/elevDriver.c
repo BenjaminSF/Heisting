@@ -51,6 +51,11 @@ int elevDriver_initialize(void) {
 	return 1;
 }
 
+motorDirection getMotorDirection(void){
+	motorDirection direction = io_read_bit(MOTORDIR);
+	return direction;
+}
+
 void setMotorDirection(motorDirection direction){
 	if (direction < 0){
 		io_set_bit(MOTORDIR);
@@ -63,9 +68,17 @@ void setMotorDirection(motorDirection direction){
 	}
 }
 
-motorDirection getMotorDirection(void){
-	motorDirection direction = io_read_bit(MOTORDIR);
-	return direction;
+int getFloor(void){
+	int sensorFloors[4] = {SENSOR_FLOOR1,SENSOR_FLOOR2,SENSOR_FLOOR3,SENSOR_FLOOR4};
+	int i;
+	for (i = 0; i < 4; ++i)
+	{
+		if (io_read_bit(sensorFloors[i]))
+		{
+			return i;
+		}
+	}
+	return -1;
 }
 
 void goToFloor(int floor){
@@ -84,6 +97,10 @@ void goToFloor(int floor){
 	}
 }
 
+int getButtonSignal(int floor, buttonType button){
+	return io_read_bit(buttonMatrix[floor][button]);
+}
+
 void setDoorOpenLamp(int status){
 	if (status){
 		io_set_bit(LIGHT_DOOR_OPEN);
@@ -91,19 +108,6 @@ void setDoorOpenLamp(int status){
 		io_clear_bit(LIGHT_DOOR_OPEN);
 
 	}
-}
-
-int getFloor(void){
-	int sensorFloors[4] = {SENSOR_FLOOR1,SENSOR_FLOOR2,SENSOR_FLOOR3,SENSOR_FLOOR4};
-	int i;
-	for (i = 0; i < 4; ++i)
-	{
-		if (io_read_bit(sensorFloors[i]))
-		{
-			return i;
-		}
-	}
-	return -1;
 }
 
 void setFloorIndicator(int floor){
@@ -117,9 +121,7 @@ void setFloorIndicator(int floor){
 		io_clear_bit(LIGHT_FLOOR_IND2);
 }
 
-int getButtonSignal(int floor, buttonType button){
-	return io_read_bit(buttonMatrix[floor][button]);
-}
+
 
 void setButtonLamp(int floor, buttonType button, int status){
 	if (status){
@@ -127,8 +129,4 @@ void setButtonLamp(int floor, buttonType button, int status){
 	}else{
 		io_clear_bit(lampMatrix[floor][button]);
 	}
-}
-
-int getButtonLamp(int floor,buttonType button){
-	return io_read_bit(lampMatrix[floor][button]);
 }

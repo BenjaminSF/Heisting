@@ -1,22 +1,18 @@
-
-#include "mainDriver.h"
-#include "publicTypes.h"
-#include "orderManager.h"
-#include "elevDriver.h"
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
+#include "mainDriver.h"
+#include "publicTypes.h"
+#include "orderManager.h"
+#include "elevDriver.h"
 
 void* mainDriver(void *args) {
-	printf("Press STOP button to stop elevator and exit program.\n");
 	int i, j, k, currentFloor, checkLocal, newFloor, floorSetCommand, floorSetDown, floorSetUp;
 	time_t startTime, endTime;
 	buttonType buttonCall;
-	int localQueue[N_FLOORS];
-	memset(localQueue,0,sizeof(int)*N_FLOORS);
+	int localQueue[N_FLOORS] = {0};
 	int lastFloor = 0;
 	int nextFloor = -1;
 	int thisElevator = *(int *) args;
@@ -86,9 +82,7 @@ void* mainDriver(void *args) {
 			}else{			
 				buttonCall = BUTTON_CALL_DOWN;
 			}
-
 			reportElevState(currentFloor, nextFloor, buttonCall);
-
 			if (nextFloor == lastFloor){
 				setDoorOpenLamp(1);
 				nanosleep(&ts, &rem);
@@ -107,15 +101,12 @@ void* mainDriver(void *args) {
 				}
 				for(j=0;j<N_FLOORS;j++){
 					if(getButtonSignal(j,BUTTON_COMMAND) && floorSetCommand != j){
-						printf("Add order command\n");
 						Order newOrder = {.dest = j, .buttonType = BUTTON_COMMAND, .elevator = thisElevator};
 						addNewOrder(newOrder);
 						floorSetCommand = j;
-						printf("Leave add order\n");
 					}
 					if(j>0){
 						if (getButtonSignal(j,BUTTON_CALL_DOWN) && floorSetDown != j){
-							printf("Add order down\n");
 							Order newOrder = {.dest = j, .buttonType = BUTTON_CALL_DOWN, .elevator = thisElevator};
 							addNewOrder(newOrder);
 							floorSetDown = j;
@@ -123,7 +114,6 @@ void* mainDriver(void *args) {
 					}
 					if(j<N_FLOORS-1){
 						if (getButtonSignal(j,BUTTON_CALL_UP) && floorSetUp != j){
-							printf("Add order up\n");
 							Order newOrder = {.dest = j, .buttonType = BUTTON_CALL_UP, .elevator = thisElevator};
 							addNewOrder(newOrder);
 							floorSetUp = j;
@@ -133,17 +123,14 @@ void* mainDriver(void *args) {
 				newFloor = getNewOrder(lastFloor,nextFloor, buttonCall);
 				if(newFloor != nextFloor && newFloor != -1){
 					localQueue[newFloor] = 1;
-					printf("localQueue___: %d %d %d %d\n", localQueue[0], localQueue[1], localQueue[2], localQueue[3]);
 					if(buttonCall == BUTTON_CALL_UP && newFloor>nextFloor){
 						nextFloor = newFloor;
 					}else if(buttonCall == BUTTON_CALL_DOWN && newFloor < nextFloor){
 						nextFloor = newFloor;
 					}
 					reportElevState(lastFloor, nextFloor, buttonCall);
-
 				}
 				if((localQueue[lastFloor]== 1) && (currentFloor == lastFloor)){
-					printf("Enter localQueue\n");
 					setMotorDirection(DIRN_STOP);
 					deleteOrder(lastFloor,buttonCall, thisElevator);
 					deleteOrder(lastFloor,BUTTON_COMMAND,thisElevator);
@@ -170,20 +157,16 @@ void* mainDriver(void *args) {
 							reportElevState(lastFloor, nextFloor, buttonCall);
 						}
 					}
-				}	
-				
+				}			
 			} 
 			localQueue[lastFloor] = 0; 
 			nextFloor = -1;
 			reportElevState(lastFloor, nextFloor, BUTTON_COMMAND);
-			k = 0;
-			printf("Dørene åpnes\n");
 			deleteOrder(getFloor(), BUTTON_CALL_UP, thisElevator);
 			deleteOrder(getFloor(), BUTTON_CALL_DOWN, thisElevator);
 			deleteOrder(getFloor(),BUTTON_COMMAND,thisElevator);
 			setMotorDirection(DIRN_STOP);
 			nanosleep(&ts, &rem);
-			printf("localQueue: %d %d %d %d\n", localQueue[0], localQueue[1], localQueue[2], localQueue[3]);
 			checkLocal = N_FLOORS;
 			for(k = 0; k < N_FLOORS; k++){
 				if (localQueue[k] == 1){
@@ -193,6 +176,5 @@ void* mainDriver(void *args) {
 			if (checkLocal < N_FLOORS) nextFloor = checkLocal;
 		} 
 	}
-	
 	return NULL;
 }

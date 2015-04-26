@@ -30,10 +30,9 @@ static struct {
 	sem_t addrslistSem;
 } info;
 
-
 int initNetwork(){
-	receiveQueue = new_fifoqueue();
-	sendQueue = new_fifoqueue();
+	receiveQueue = newFifoqueue();
+	sendQueue = newFifoqueue();
 	sem_init(&(info.addrslistSem), 0, 1);
 	sem_init(&(info.masterSem), 0, 1);
 
@@ -104,7 +103,7 @@ void* sendMessages(void *args){
 		perror("sendSocket re-use port enable failed\n");
 	}
 	while(1){
-		wait_for_content(sendQueue);
+		waitForContent(sendQueue);
 		dequeue(sendQueue, msg);
 		if (sendto(sendSocket, (void *) msg,  sizeof(BufferInfo), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
 			perror("Sending socket failed\n");
@@ -209,7 +208,6 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 			if (var1 != -1) msg->nextFloor = var1;
 			if (var2 != -1) msg->buttonType = var2;
 			break;
-
 	}
 }
 
