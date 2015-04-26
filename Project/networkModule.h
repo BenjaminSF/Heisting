@@ -17,10 +17,10 @@ int addElevatorAddr(int newIP);
 int addrsList(int pos);
 void resetAddrsList();
 void resetAddr(int IP);
+int getAddrsCount();
 int getLocalIP();
 int getBroadcastIP();
-int getAddrsCount();
-int getMaster();
+int getMasterStatus();
 void setMasterIP(int newMasterIP);
 
 #endif

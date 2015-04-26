@@ -40,7 +40,7 @@ sem_t timeoutSem;
 static int bestProposal;
 
 void* orderManager(void* args){
-	printf("Master: %d\n", getMaster());
+	printf("Master: %d\n", getMasterStatus());
 	struct timespec sleep = {.tv_sec = 2, .tv_nsec = 0};
 	struct timespec rem;
 	bestProposal = getLocalIP();
@@ -62,7 +62,7 @@ void* orderManager(void* args){
 
 int addNewOrder(struct order newOrder){
 	printf("Enter addNewOrder---------------------------------------------------\n");
-	if (getMaster() == 1){
+	if (getMasterStatus() == 1){
 		pthread_mutex_lock(&(orderQueue.rwLock));
 		int pos = 0;
 		struct order storeOrder;
@@ -119,7 +119,7 @@ int addNewOrder(struct order newOrder){
 
 int getNewOrder(int currentFloor, int nextFloor, int button){
 	int destFloor = -1;
-	if (getMaster() == 1){
+	if (getMasterStatus() == 1){
 		distributeOrders();
 		int i;
 		for (i = 0; i < N_FLOORS; i++){
@@ -212,8 +212,8 @@ void* sortMessages(void *args){
 				case MSG_CONNECT_SEND:
 					printf("Receive: MSG_CONNECT_SEND\n");
 					addElevatorAddr(bufOrder.srcAddr);
-					if (getMaster()) sendPriorityQueue(srcAddr, 1);
-					encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, getMaster(), -1, -1);
+					if (getMasterStatus()) sendPriorityQueue(srcAddr, 1);
+					encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, getMasterStatus(), -1, -1);
 					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					break;
 				case MSG_CONNECT_RESPONSE:
@@ -246,7 +246,7 @@ void* sortMessages(void *args){
 					addElevatorAddr(srcAddr);
 					break;
 				case MSG_ADD_ORDER:
-					if (getMaster() == 1){
+					if (getMasterStatus() == 1){
 						printf("Receive: MSG_ADD_ORDER\n");
 						printf("floor: %d, button: %d, elev: %d\n", bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
 						struct order newOrder;
@@ -265,7 +265,7 @@ void* sortMessages(void *args){
 					}
 					break;
 				case MSG_DELETE_ORDER:
-					if(getMaster() == 1){
+					if(getMasterStatus() == 1){
 						printf("Receive: MSG_DELETE_ORDER\n");
 						deleteOrder(bufOrder.currentFloor,bufOrder.buttonType,srcAddr);
 						if (bufOrder.buttonType != BUTTON_COMMAND){
@@ -278,7 +278,7 @@ void* sortMessages(void *args){
 					}
 					break;
 				case MSG_ELEVSTATE:
-					if(getMaster() == 1){
+					if(getMasterStatus() == 1){
 						printf("Receive: MSG_ELEVSTATE\n");
 						int i;
 						for (i = 0; i < getAddrsCount(); i++){
@@ -295,7 +295,7 @@ void* sortMessages(void *args){
 					}
 					break;
 				case MSG_CONFIRM_ORDER:
-					if(getMaster() == 1){	
+					if(getMasterStatus() == 1){	
 						printf("Receive: MSG_CONFIRM_ORDER\n");
 						int i;
 						for (i = 0; i < N_ORDERS; i++){
@@ -306,7 +306,7 @@ void* sortMessages(void *args){
 					}
 					break;
 				case MSG_IM_ALIVE:
-					if(getMaster() == 0){
+					if(getMasterStatus() == 0){
 						printf("Receive: MSG_IM_ALIVE\n");
 						sem_post(&timeoutSem);
 					}else{
@@ -325,7 +325,7 @@ void* sortMessages(void *args){
 					}
 					break;
 				case MSG_DO_ORDER:
-					if (getMaster() == 0){
+					if (getMasterStatus() == 0){
 						printf("Receive: DO_ORDER%d\n", bufOrder.nextFloor);
 						localManQueue[bufOrder.nextFloor] = 1;
 						localManButtons[bufOrder.nextFloor] = bufOrder.buttonType;
@@ -335,7 +335,7 @@ void* sortMessages(void *args){
 					}
 					break;
 				case MSG_BACKUP_ADD:
-					if(getMaster() == 0){
+					if(getMasterStatus() == 0){
 					printf("Receive: MSG_BACKUP_ADD\n");
 					newBackupOrder.dest = bufOrder.nextFloor;
 					newBackupOrder.buttonType = bufOrder.buttonType;
@@ -344,7 +344,7 @@ void* sortMessages(void *args){
 					}
 					break;
 				case MSG_BACKUP_DELETE:
-					if(getMaster() == 0){
+					if(getMasterStatus() == 0){
 					printf("Receive: MSG_BACKUP_DELETE\n");
 					newBackupOrder.dest = bufOrder.currentFloor;
 					newBackupOrder.buttonType = bufOrder.buttonType;
@@ -362,13 +362,13 @@ void* sortMessages(void *args){
 void* masterTimeout(void *args){
 	printf("Enter timeout\n");
 	struct timespec ts, rem;
-	int masterStatus = getMaster();
+	int masterStatus = getMasterStatus();
 	if (masterStatus == 0){
 		printf("Timer: slave\n");
 		clock_gettime(CLOCK_REALTIME, &ts);
 		ts.tv_sec = ts.tv_sec + 6;
 		int test;
-		while(getMaster() == 0){
+		while(getMasterStatus() == 0){
 			test = sem_timedwait(&timeoutSem, &ts);
 			if (test == -1){
 				printf("Master timeout\n");
@@ -389,7 +389,7 @@ void* masterTimeout(void *args){
 		ts.tv_nsec = 0;
 		BufferInfo newMsg;
 		encodeMessage(&newMsg, 0, 0, MSG_IM_ALIVE, 1, -1, -1);
-		while(getMaster() == 1){
+		while(getMasterStatus() == 1){
 			enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 			nanosleep(&ts, &rem);
 			printf("Addresses in list: %d\n", getAddrsCount());
@@ -400,7 +400,7 @@ void* masterTimeout(void *args){
 
 void deleteOrder(int floor, buttonType button, int elevator){
 	printf("Enter deleteOrder: floor: %d, button: %d, elev: %d\n", floor, button, elevator);
-	if (getMaster() == 1){
+	if (getMasterStatus() == 1){
 		int i;
 		int remainingOrders = 0;
 		for (i = 0; i < N_ORDERS; i++){
@@ -452,7 +452,7 @@ int orderCompare(struct order *orderA, struct order *orderB){
 }
 void reportElevState(int currentFloor, int nextFloor, int button){
 	
-	if (getMaster() == 1){
+	if (getMasterStatus() == 1){
 		int i;
 		int myIP = getLocalIP();
 		for (i = 0; i < getAddrsCount(); i++){

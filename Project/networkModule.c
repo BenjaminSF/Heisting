@@ -81,7 +81,7 @@ int initNetwork(){
 	info.addrslistCounter = 1;
 	
 	printf("Network initialization finished, local IP: %s\t Port: %d\t Broadcast IP: %s\n", info.localIP, info.port, info.broadcastIP);
-	return info.masterStatus;
+	return inet_addr(info.localIP);
 }
 
 
@@ -213,37 +213,6 @@ void encodeMessage(BufferInfo *msg, int srcAddr, int dstAddr, int myState, int v
 	}
 }
 
-int getLocalIP(){
-	sem_wait(&(info.addrslistSem));
-	int tmp = inet_addr(info.localIP);
-	sem_post(&(info.addrslistSem));
-	return tmp;
-}
-
-int getBroadcastIP(){
-	sem_wait(&(info.addrslistSem));
-	int tmp = inet_addr(info.broadcastIP);
-	sem_post(&(info.addrslistSem));
-	return tmp;
-}
-
-void setMasterIP(int newMasterIP){
-	struct in_addr tmp;
-	tmp.s_addr = newMasterIP;
-	sem_wait(&(info.addrslistSem));
-	sem_wait(&(info.masterSem));
-	info.masterIP = strdup(inet_ntoa(tmp));
-	if (newMasterIP == getLocalIP()){
-		info.masterStatus = 1;
-		printf("This elevator is master.\n");
-	}else{
-		info.masterStatus = 0;
-		printf("This elevator is slave.\n");
-	}
-	sem_post(&(info.masterSem));
-	sem_post(&(info.addrslistSem));
-}
-
 int addElevatorAddr(int newIP){
 	int isInList = 0;
 	struct in_addr tmp;
@@ -264,24 +233,10 @@ int addElevatorAddr(int newIP){
 	return isInList;
 }
 
-int getAddrsCount(){
-	sem_wait(&(info.addrslistSem));
-	int tmp = info.addrslistCounter;
-	sem_post(&(info.addrslistSem));
-	return tmp;
-}
-
 int addrsList(int pos){
 	sem_wait(&(info.addrslistSem));
 	int tmp = inet_addr(info.addrsList[pos]);
 	sem_post(&(info.addrslistSem));
-	return tmp;
-}
-
-int getMaster(){
-	sem_wait(&(info.masterSem));
-	int tmp = info.masterStatus;
-	sem_post(&(info.masterSem));
 	return tmp;
 }
 
@@ -306,3 +261,47 @@ void resetAddr(int IP){
 	sem_post(&(info.addrslistSem));
 }
 
+int getAddrsCount(){
+	sem_wait(&(info.addrslistSem));
+	int tmp = info.addrslistCounter;
+	sem_post(&(info.addrslistSem));
+	return tmp;
+}
+
+int getLocalIP(){
+	sem_wait(&(info.addrslistSem));
+	int tmp = inet_addr(info.localIP);
+	sem_post(&(info.addrslistSem));
+	return tmp;
+}
+
+int getBroadcastIP(){
+	sem_wait(&(info.addrslistSem));
+	int tmp = inet_addr(info.broadcastIP);
+	sem_post(&(info.addrslistSem));
+	return tmp;
+}
+
+int getMasterStatus(){
+	sem_wait(&(info.masterSem));
+	int tmp = info.masterStatus;
+	sem_post(&(info.masterSem));
+	return tmp;
+}
+
+void setMasterIP(int newMasterIP){
+	struct in_addr tmp;
+	tmp.s_addr = newMasterIP;
+	sem_wait(&(info.addrslistSem));
+	sem_wait(&(info.masterSem));
+	info.masterIP = strdup(inet_ntoa(tmp));
+	if (newMasterIP == getLocalIP()){
+		info.masterStatus = 1;
+		printf("This elevator is master.\n");
+	}else{
+		info.masterStatus = 0;
+		printf("This elevator is slave.\n");
+	}
+	sem_post(&(info.masterSem));
+	sem_post(&(info.addrslistSem));
+}
