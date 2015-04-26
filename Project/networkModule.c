@@ -18,8 +18,6 @@
 #include "networkModule.h"
 #include "fifoqueue.h"
 
-
-//All values set by init_network
 static struct {
 	char *localIP;
 	char *broadcastIP;
@@ -30,26 +28,21 @@ static struct {
 	int masterStatus;
 	sem_t masterSem;
 	sem_t addrslistSem;
-
 } info;
 
 
-int init_network(){
+int initNetwork(){
 	receiveQueue = new_fifoqueue();
 	sendQueue = new_fifoqueue();
-
 	sem_init(&(info.addrslistSem), 0, 1);
 	sem_init(&(info.masterSem), 0, 1);
 
 	//Finds the local machine's IP address
-	printf("Start init_network()\n");
 	struct ifaddrs *ifa,*ifaddr;
-	int n, ifError;
-
+	int n;
 	struct sockaddr_in *sa;
 	char *tmpIP;
-	ifError = getifaddrs(&ifaddr);
-	if (ifError < 0){
+	if (getifaddrs(&ifaddr) < 0){
 		perror("Failed to get local IP address.\n");
 		return -1;
 	}
@@ -57,14 +50,11 @@ int init_network(){
 		if ((ifa->ifa_addr->sa_family == AF_INET) && (!strcmp(ifa->ifa_name, "eth0"))){
 			sa = (struct sockaddr_in *) ifa->ifa_addr;
 			tmpIP = inet_ntoa(sa->sin_addr);
-			//Unhandled exception: "eth0" does not exist"
 		}
 	}
 	freeifaddrs(ifaddr);
-	
-	//set IP info for use by other functions
 	info.localIP = strdup(tmpIP);
-	info.port = 20042; //Set to a static value for port, could implement and call a function if necessary
+	info.port = 20042;
 	
 	//Finds broadcast-IP:
 	char *lastDot;
@@ -79,8 +69,6 @@ int init_network(){
 	tmpIP[index+3] = '5';
 	tmpIP[index+4] = '\0';
 	info.broadcastIP = strdup(tmpIP);
-	printf("Lokalt: IP: %s\t Port: %d\t Broadcast: %s\n", info.localIP, info.port, info.broadcastIP);
-	printf("Lokal IP int: %d\n", inet_addr(info.localIP));
 	
 	//Create message to be broadcasted
 	BufferInfo sendInfo;
@@ -92,21 +80,18 @@ int init_network(){
 	info.addrsList[0] = strdup(info.localIP);
 	info.addrslistCounter = 1;
 	
-	printf("Init network finished\n");
+	printf("Network initialization finished, local IP: %s\t Port: %d\t Broadcast IP: %s\n", info.localIP, info.port, info.broadcastIP);
 	return info.masterStatus;
 }
 
 
-void* send_message(void *args){
-	printf("Sending started\n");
-
+void* sendMessages(void *args){
 	int sendSocket;
 	struct sockaddr_in sendAddr;
 	sendAddr.sin_family = AF_INET;
 	sendAddr.sin_port = htons(info.port);
 	sendAddr.sin_addr.s_addr = inet_addr(info.broadcastIP);
 	int socketPermission = 1;
-	printf("BufferInfo: %lu, int: %lu, enum: %lu\n", sizeof(BufferInfo), sizeof(int), sizeof(char));
 	BufferInfo *msg = (BufferInfo *)malloc(sizeof(BufferInfo)+60);
 
 	if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
@@ -126,12 +111,11 @@ void* send_message(void *args){
 		}
 	}
 	free(msg);
-	printf("Sending finished\n");
 	return NULL;
 }
 
 
-void *listen_for_messages(void *args){
+void *receiveMessages(void *args){
 	printf("Listen started\n");
 	BufferInfo *tempMsg = (BufferInfo *)malloc(sizeof(BufferInfo));
 	int port = info.port;
@@ -152,34 +136,26 @@ void *listen_for_messages(void *args){
 	if (bind(recSock, (struct sockaddr *)&myaddr, myaddrLen) < 0){
 		perror("Failed to bind recSocket.\n");
 	}
-	printf("Test mottak, port: %d\n", port);
 	fd_set readfds;
-	//Prepare socket
-	int notDone = 1;
-	while (notDone){
+	while (1){
 		FD_ZERO(&readfds);
 		FD_SET(recSock, &readfds);
 		int event = select(recSock+1, &readfds, 0, 0, timeout);
 		switch (event){
 			case -1:
 				printf("Switch/select for recSock failed.\n");
-				notDone = 0; 
 				break;
 			case 0:
-				close(recSock);
-				notDone = 0;
-				printf("Timed out\n");
+				printf("Timed out, should not happen\n");
 				break;
 			default:
 				recvfrom(recSock, tempMsg, sizeof(BufferInfo), 0, (struct sockaddr *)&remaddr, &remaddrLen);
-				printf("ListenReceived: %d\n", tempMsg->myState);
 				enqueue(receiveQueue, tempMsg, sizeof(BufferInfo));
 				break;
 				
 		}
 	}
-	printf("Listen finished\n");
-	printf("Test mottak, port: %d\n", port);
+	close(recSock);
 	return NULL;
 }
 
@@ -252,11 +228,19 @@ int getBroadcastIP(){
 }
 
 void setMasterIP(int newMasterIP){
-	printf("setMasterIP\n");
 	struct in_addr tmp;
 	tmp.s_addr = newMasterIP;
 	sem_wait(&(info.addrslistSem));
+	sem_wait(&(info.masterSem));
 	info.masterIP = strdup(inet_ntoa(tmp));
+	if (newMasterIP == getLocalIP()){
+		info.masterStatus = 1;
+		printf("This elevator is master.\n");
+	}else{
+		info.masterStatus = 0;
+		printf("This elevator is slave.\n");
+	}
+	sem_post(&(info.masterSem));
 	sem_post(&(info.addrslistSem));
 }
 
@@ -276,7 +260,6 @@ int addElevatorAddr(int newIP){
 		info.addrsList[info.addrslistCounter] = strdup(inet_ntoa(tmp));
 		info.addrslistCounter++;
 	}
-	printf("Elevator count: %d\n", info.addrslistCounter);
 	sem_post(&(info.addrslistSem));
 	return isInList;
 }
@@ -302,12 +285,6 @@ int getMaster(){
 	return tmp;
 }
 
-void setMaster(int newMaster){
-	sem_wait(&(info.masterSem));
-	info.masterStatus = newMaster;
-	sem_post(&(info.masterSem));
-}
-
 void resetAddrsList(){
 	sem_wait(&(info.addrslistSem));
 	info.addrslistCounter = 1;
@@ -326,7 +303,6 @@ void resetAddr(int IP){
 			break;
 		}
 	}
-	
 	sem_post(&(info.addrslistSem));
 }
 

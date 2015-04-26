@@ -52,13 +52,6 @@ void* orderManager(void* args){
 		pthread_create(&masterTimeout_, 0, &masterTimeout, 0);
 		pthread_join(masterTimeout_, 0);
 		nanosleep(&sleep, &rem);
-		if (bestProposal == getLocalIP()){
-			printf("I AM MASTER\n");
-			setMaster(1);
-		}else{
-			printf("I AM SLAVE\n");
-			setMaster(0);
-		}
 		setMasterIP(bestProposal);
 		bestProposal = getLocalIP();
 	}
@@ -323,7 +316,6 @@ void* sortMessages(void *args){
 							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 							if (getLocalIP() != bestProposal){ // Give up master status
 								setMasterIP(bestProposal);
-								setMaster(0);
 								sendPriorityQueue(bestProposal, 0);
 								BufferInfo getOrdersMsg;
 								encodeMessage(&getOrdersMsg, 0, 0, MSG_CONNECT_SEND, 0, -1, -1);
@@ -362,7 +354,6 @@ void* sortMessages(void *args){
 					break;
 				default:
 					break;
-
 			}
 		}
 	}

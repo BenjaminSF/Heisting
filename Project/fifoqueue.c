@@ -1,9 +1,9 @@
-#include "fifoqueue.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <semaphore.h>
-#include "networkModule.h"
+#include "fifoqueue.h"
+#include "publicTypes.h"
 
 fifoqueue_t* new_fifoqueue(void){
     fifoqueue_t* q = malloc(sizeof(fifoqueue_t));
