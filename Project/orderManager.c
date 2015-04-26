@@ -259,6 +259,7 @@ void* sortMessages(void *args){
 				case MSG_ADD_ORDER:
 					if (getMaster() == 1){
 						printf("Receive: MSG_ADD_ORDER\n");
+						printf("floor: %d, button: %d, elev: %d\n", bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
 						struct order newOrder;
 						newOrder.dest = bufOrder.nextFloor;
 						newOrder.buttonType = bufOrder.buttonType;
@@ -562,6 +563,11 @@ void sendPriorityQueue(int dstAddr, int masterStatus){
 			if (!masterStatus){
 				encodeMessage(&msg, 0, dstAddr, MSG_ADD_ORDER, orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, orderQueue.Queue[i].elevator);
 			}else{
+				if (orderQueue.Queue[i].buttonType != BUTTON_COMMAND || orderQueue.Queue[i].elevator == dstAddr){
+					BufferInfo lightMsg;
+					encodeMessage(&lightMsg, 0, dstAddr, MSG_SET_LAMP, orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, 1);
+					enqueue(sendQueue, &lightMsg, sizeof(BufferInfo));
+				}
 				encodeMessage(&msg, 0, dstAddr, MSG_BACKUP_ADD, orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, orderQueue.Queue[i].elevator);
 			}
 			enqueue(sendQueue, &msg, sizeof(BufferInfo));
