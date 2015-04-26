@@ -354,7 +354,7 @@ void* sortMessages(void *args){
 				case MSG_BACKUP_DELETE:
 					if(getMaster() == 0){
 					printf("Receive: MSG_BACKUP_DELETE\n");
-					newBackupOrder.dest = bufOrder.nextFloor;
+					newBackupOrder.dest = bufOrder.currentFloor;
 					newBackupOrder.buttonType = bufOrder.buttonType;
 					newBackupOrder.elevator = bufOrder.active;
 					deleteBackupOrder(newBackupOrder);

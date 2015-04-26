@@ -53,12 +53,19 @@ void addBackupOrder(struct order storeOrder){
 
 void deleteBackupOrder(struct order storeOrder){
 	pthread_mutex_lock(&(backupQueue.rwLock));
+	printf("Trying to delete in backup: floor: %d, button: %d, elev: %d\n", storeOrder.dest, storeOrder.buttonType, storeOrder.elevator);
 	int i;
 	for (i = 0; i < N_ORDERS; i++){
+		if (backupQueue.inUse[i]){
+			printf("In backup queue (pos %d): floor: %d, button: %d, elev: %d\n",i, backupQueue.Queue[i].dest, backupQueue.Queue[i].buttonType, backupQueue.Queue[i].elevator);
+		}
+
+
 		if (backupQueue.inUse[i] && backupQueue.Queue[i].dest == storeOrder.dest){ //Nesting for readability
 			if (backupQueue.Queue[i].buttonType == storeOrder.buttonType && (backupQueue.Queue[i].elevator == storeOrder.elevator || backupQueue.localPri[i] == -1)){
 				backupQueue.inUse[i] = 0;
 				backupQueue.localPri[i] = -1;
+				printf("Deleting backup: floor: %d, button: %d, elev: %d\n", backupQueue.Queue[i].dest, backupQueue.Queue[i].buttonType, backupQueue.Queue[i].elevator);
 				//break;
 			}
 		}
