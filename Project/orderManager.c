@@ -326,9 +326,10 @@ void* sortMessages(void *args){
 							encodeMessage(&newMsg, 0, 0, MSG_MASTER_REQUEST, -1, -1, -1);
 							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 							if (getLocalIP() != bestProposal){ // Give up master status
-								sendPriorityQueue(bestProposal, 0);
 								setMasterIP(bestProposal);
 								setMaster(0);
+								sendPriorityQueue(bestProposal, 0);
+
 							}
 						}		
 					}

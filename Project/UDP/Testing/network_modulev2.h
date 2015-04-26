@@ -10,7 +10,8 @@ enum bufferState{
 	MSG_ELEVSTATE,
 	MSG_ELEV_UP,
 	MSG_ELEV_DOWN,
-	MSG_ELEV_COMMAND
+	MSG_ELEV_COMMAND,
+	MSG_ADD_ORDER
 };
 
 typedef struct bufferInformation{
@@ -22,12 +23,15 @@ typedef struct bufferInformation{
 	int currentFloor;
 	int nextFloor;
 	int direction; //?
+	buttonType button;
 } BufferInfo;
 
 int init_network();
 void* send_message(void *args);
 void* listen_for_messages(void *args);
 BufferInfo decodeMessage(char *buffer);
+int addNewOrder(struct order newOrder, int currentFloor, int nextFloor);
+int getNewOrder(int currentFloor, int nextFloor);
 
 //encodeMessage: Set the relevant fields in a BufferInfo struct all at once
 //Set var# = -1 when not applicable

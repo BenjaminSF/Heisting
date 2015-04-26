@@ -15,6 +15,7 @@
 #include <semaphore.h>
 #include "network_modulev2.h"
 #include "fifoqueue.h"
+#include "costFunction.h"
 #define BUF_SIZE 1024
 #define MAX_ELEVS 30
 
@@ -47,33 +48,38 @@ struct ListenParams{
 
 void* send_message(void *args){
 	printf("Sending started\n");
-	struct ListenParams myArgs = *((struct ListenParams*)(args));
+	//struct ListenParams myArgs = *((struct ListenParams*)(args));
 	//char msg[BUF_SIZE];
-	BufferInfo msg;
-	wait_for_content(sendQueue);
-	dequeue(sendQueue, &msg);
-	printf("Sending message: %s\n", msg.srcAddr);
 
+	int sendOnce = (int) args;
 	int sendSocket;
 	struct sockaddr_in sendAddr;
 	sendAddr.sin_family = AF_INET;
 	sendAddr.sin_port = htons(info.port);
 	sendAddr.sin_addr.s_addr = inet_addr(info.broadcastIP);
 	int socketPermission = 1;
+	BufferInfo msg;
+	while(1){
+		wait_for_content(sendQueue);
+		dequeue(sendQueue, &msg);
+		printf("Sending message: %s\n", msg.srcAddr);
 
-	if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
-		perror("SendSocket not created\n");
+		if ((sendSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
+			perror("SendSocket not created\n");
+		}
+		if (setsockopt(sendSocket, SOL_SOCKET, SO_BROADCAST, (void*)&socketPermission, sizeof(socketPermission)) < 0){
+			perror("sendSocket broadcast enable failed\n");
+		}
+		if (setsockopt(sendSocket, SOL_SOCKET, SO_REUSEPORT, (void*)&socketPermission, sizeof(socketPermission)) < 0){
+			perror("sendSocket re-use port enable failed\n");
+		}
+		if (sendto(sendSocket, (void *)&msg, sizeof(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
+			perror("Sending socket failed\n");
+		}
+		if (sendOnce == 1){
+			break;
+		}
 	}
-	if (setsockopt(sendSocket, SOL_SOCKET, SO_BROADCAST, (void*)&socketPermission, sizeof(socketPermission)) < 0){
-		perror("sendSocket broadcast enable failed\n");
-	}
-	if (setsockopt(sendSocket, SOL_SOCKET, SO_REUSEPORT, (void*)&socketPermission, sizeof(socketPermission)) < 0){
-		perror("sendSocket re-use port enable failed\n");
-	}
-	if (sendto(sendSocket, (void *)&msg, sizeof(msg), 0, (struct sockaddr*)&sendAddr, sizeof(sendAddr)) < 0){
-		perror("Sending socket failed\n");
-	}
-
 	printf("Sending finished\n");
 	return;
 }
@@ -192,12 +198,13 @@ int init_network(){
 	//Start listening for responses
 	struct ListenParams params = {.port = info.port, .timeoutMs = 5000, .finished = 0};
 	sem_init(&(params.readReady),0,0);
-	struct ListenParams sendParams = {.port = info.port};
+	//struct ListenParams sendParams = {.port = info.port};
+	int sendOnce = 1;
 
 	printf("Starting pthreads\n");
 	pthread_t findOtherElevs, findElevsSend;
 	pthread_create(&findOtherElevs, NULL, &listen_for_messages, &params); //Listen
-	pthread_create(&findElevsSend, NULL, send_message, &sendParams);	//Send
+	pthread_create(&findElevsSend, NULL, send_message, &sendOnce);	//Send
 	info.addrslistCounter = 0;
 	BufferInfo bufInfo;
 
@@ -270,8 +277,17 @@ BufferInfo decodeMessage(char *buffer){
 }
 
 void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, int var1, int var2, int var3){
-	strcpy(msg.srcAddr, srcAddr);
-	strcpy(msg.dstAddr, dstAddr);
+	if (srcAddr == NULL){
+		strcpy(msg.srcAddr, info.localIP);
+	}else{
+		strcpy(msg.srcAddr, srcAddr);
+	}
+	if (dstAddr == NULL){
+		strcpy(msg.dstAddr, info.broadcastIP);
+	}else{
+		strcpy(msg.dstAddr, dstAddr);
+	}
+
 	msg.myState = myState;
 	switch(myState){
 		case MSG_CONNECT_SEND:
@@ -289,9 +305,75 @@ void encodeMessage(BufferInfo msg, char* srcAddr, char* dstAddr, int myState, in
 				if (dir > 0) msg.direction = 1;
 			}
 			break;
-		case MSG_
+		case MSG_ADD_ORDER:
+			if (var1 != -1) msg.nextFloor = var1;
+			if (var2 != -1) msg.button = var2;
+			break;
+
 
 	}
 	//char* melding = "testing 12";
 	//strcpy(buffer,melding);
+}
+
+int addNewOrder(struct order newOrder, int currentFloor, int nextFloor){
+	pthread_mutex_lock(&(orderQueue.rwLock));
+	int pos = 0;
+	int newFloor = -1;
+	motorDirection dir;
+	struct order storeOrder;
+	storeOrder.dest = newOrder.dest;
+	storeOrder.buttonType = newOrder.buttonType;
+	storeOrder.elevator = newOrder.elevator;
+	printf("Button lamp on: floor: %d, type: %d\n", storeOrder.dest, storeOrder.buttonType);
+	setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
+	while(orderQueue.inUse[pos]){
+		pos++;
+		if (pos == N_ORDERS){
+			printf("Error: orderQueue is full, order not received\n");
+			pthread_mutex_unlock(&(orderQueue.rwLock));
+			return;
+		}
+	}
+	orderQueue.Queue[pos] = storeOrder;
+	orderQueue.inUse[pos] = 1;
+	if (storeOrder.buttonType == BUTTON_COMMAND){
+		orderQueue.localPri[pos] = storeOrder.elevator;
+	}
+	if (findCost(newOrder, currentFloor, nextFloor) < N_FLOORS){
+		newFloor = newOrder.dest;
+	}
+	BufferInfo msg;
+	encodeMessage(msg, NULL, NULL, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, -1);
+	enqueue(sendQueue, &msg, sizeof(msg));
+	//dir = getMotorDirection();
+	//if (dir != DIRN_STOP){
+	//	printf("Dir: %d\n", dir);
+	//	newFloor = checkCurrentStatus(storeOrder,currentFloor,nextFloor);
+	//}
+	pthread_mutex_unlock(&(orderQueue.rwLock));
+	return newFloor;
+}
+
+int getNewOrder(int currentFloor, int nextFloor){
+	pthread_mutex_lock(&(orderQueue.rwLock));
+	int i, destFloor;
+	/*for (i = 0; i < N_ORDERS; i++){
+		if ((orderQueue.inUse[i]) && (orderQueue.Queue[i].buttonType == BUTTON_COMMAND)){
+			//Prioritizes commands from the buttons inside the elevator
+			orderQueue.inUse[i] = 0;
+			orderQueue.localPri[i] = -1;
+			orderQueue.Queue[i].elevator = 0;
+			destFloor = orderQueue.Queue[i].dest;
+			printf("Button lamp off1: floor: %d, type: %d\n", orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType);
+			setButtonLamp(orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, 0);
+			pthread_mutex_unlock(&(orderQueue.rwLock));
+			return destFloor;
+		}
+	}*/
+	destFloor = findLowestCost(orderQueue.localPri,orderQueue.inUse,orderQueue.Queue,currentFloor, nextFloor);
+	//setButtonLamp(orderQueue.Queue[i].dest, orderQueue.Queue[i].buttonType, 0);
+
+	pthread_mutex_unlock(&(orderQueue.rwLock));
+	return destFloor;
 }
