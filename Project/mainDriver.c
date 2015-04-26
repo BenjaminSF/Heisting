@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <time.h>
+#include <pthread.h>
 
 void* mainDriver(void *args) {
 	printf("Press STOP button to stop elevator and exit program.\n");
@@ -21,7 +22,14 @@ void* mainDriver(void *args) {
 	int thisElevator = *(int *) args;
 	time(&startTime);
 	reportElevState(getFloor(), nextFloor, BUTTON_COMMAND);
-	while(!isStopped() && !isObstructed()){
+	struct timespec ts,rem;
+	ts.tv_sec = 1;
+	ts.tv_nsec = 0;
+	/*
+	pthread_t blockage;
+	pthread_create(&blockage,NULL,&elevatorBlocked,NULL);
+*/
+	while(1){
 		currentFloor = getFloor();
 		setMotorDirection(DIRN_STOP);
 		if (currentFloor != -1){
@@ -37,9 +45,8 @@ void* mainDriver(void *args) {
 					addNewOrder(newOrder);
 				}else{
 					setDoorOpenLamp(1);
-					for (k = 0; k < 100000; k++){
-						setMotorDirection(DIRN_STOP);
-					}
+					setMotorDirection(DIRN_STOP);
+					nanosleep(&ts, &rem);
 					setDoorOpenLamp(0);
 				}
 			}
@@ -50,9 +57,8 @@ void* mainDriver(void *args) {
 						addNewOrder(newOrder);								
 					}else{
 						setDoorOpenLamp(1);
-						for (k = 0; k < 100000; k++){
-							setMotorDirection(DIRN_STOP);
-						}
+						setMotorDirection(DIRN_STOP);
+						nanosleep(&ts, &rem);
 						setDoorOpenLamp(0);
 					}
 				}
@@ -64,9 +70,8 @@ void* mainDriver(void *args) {
 						addNewOrder(newOrder);
 					}else{
 						setDoorOpenLamp(1);
-						for (k = 0; k < 100000; k++){
-							setMotorDirection(DIRN_STOP);
-						}
+						setMotorDirection(DIRN_STOP);
+						nanosleep(&ts, &rem);
 						setDoorOpenLamp(0);
 					}
 				}
@@ -79,10 +84,8 @@ void* mainDriver(void *args) {
 		}
 		if (nextFloor == -1) nextFloor = getNewOrder(currentFloor, nextFloor, BUTTON_COMMAND);
 
-		//printf("nextFloor %d\n",nextFloor );
 		if(nextFloor != -1){
 			
-			//printf("Kommer ikke hit\n");
 			localQueue[nextFloor] = 1;
 			lastFloor = getFloor();
 			if(nextFloor-getFloor()> 0){
@@ -92,12 +95,17 @@ void* mainDriver(void *args) {
 			}
 
 			reportElevState(currentFloor, nextFloor, buttonCall);
+
+			if (nextFloor == lastFloor){
+				setDoorOpenLamp(1);
+				nanosleep(&ts, &rem);
+			}
 			setDoorOpenLamp(0);
 			goToFloor(nextFloor);
 			floorSetCommand = -1;
 			floorSetUp = -1;
 			floorSetDown = -1;
-			while((lastFloor != nextFloor) && (!isStopped() && !isObstructed())){
+			while(lastFloor != nextFloor){
 				currentFloor = getFloor();
 				//printf("LOOP\n");
 				if(currentFloor != -1 && currentFloor != lastFloor){
@@ -159,11 +167,8 @@ void* mainDriver(void *args) {
 						setButtonLamp(lastFloor,BUTTON_CALL_DOWN,0);
 					}
 					setButtonLamp(lastFloor,BUTTON_COMMAND,0);
-					k=0;
-					while((k<100000) && (!isStopped() && !isObstructed())){
-						k++;
-						setMotorDirection(DIRN_STOP);
-					}
+					setMotorDirection(DIRN_STOP);
+					nanosleep(&ts, &rem);
 					setDoorOpenLamp(0);
 					localQueue[lastFloor] = 0;
 					goToFloor(nextFloor);
@@ -187,10 +192,8 @@ void* mainDriver(void *args) {
 			deleteOrder(getFloor(), BUTTON_CALL_UP, thisElevator);
 			deleteOrder(getFloor(), BUTTON_CALL_DOWN, thisElevator);
 			deleteOrder(getFloor(),BUTTON_COMMAND,thisElevator);
-			while((k<100000) && (!isStopped() && !isObstructed())){
-				k++;
-				setMotorDirection(DIRN_STOP);
-			}
+			setMotorDirection(DIRN_STOP);
+			nanosleep(&ts, &rem);
 			printf("localQueue: %d %d %d %d\n", localQueue[0], localQueue[1], localQueue[2], localQueue[3]);
 			checkLocal = N_FLOORS;
 			for(k = 0; k < N_FLOORS; k++){
@@ -201,12 +204,7 @@ void* mainDriver(void *args) {
 			if (checkLocal < N_FLOORS) nextFloor = checkLocal;
 		} //End if nextFloor != -1
 	}
-	if(isObstructed()){
-		printf("Elevator was obstructed\n");
-	}
-	if(isStopped()){
-		setStopLamp(1);
-		printf("Elevator was stopped\n");
-	}
+	//pthread_join(blockage,NULL);
+	
 	return NULL;
 }

@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <pthread.h>
+
+
 
 static const int lampMatrix[N_FLOORS][N_BUTTONS] = {
 	{LIGHT_UP1, LIGHT_DOWN1, LIGHT_COMMAND1},
@@ -18,6 +21,7 @@ static const int buttonMatrix[N_FLOORS][N_BUTTONS] = {
 	{BUTTON_UP3, BUTTON_DOWN3, BUTTON_COMMAND3},
 	{BUTTON_UP4, BUTTON_DOWN4, BUTTON_COMMAND4},
 };
+
 
 int elevDriver_initialize(void) {
 	int i;
@@ -67,11 +71,11 @@ motorDirection getMotorDirection(void){
 }
 
 void goToFloor(int floor){
+
 	motorDirection direction = DIRN_STOP;
-	if(getFloor() == -1) while(getFloor() == -1){}
+	while(getFloor() == -1){}
 	int currentFloor = getFloor();
 	int diff = floor-currentFloor;
-
 	if(getFloor() != -1){
 		if (diff > 0){
 			direction = DIRN_UP;
@@ -92,7 +96,7 @@ void setDoorOpenLamp(int status){
 
 	}
 }
-
+/*
 int isObstructed(void){
 	return io_read_bit(OBSTRUCTION);
 }
@@ -101,11 +105,29 @@ int isStopped(void){
 	return io_read_bit(STOP);
 }
 
-void setStopLamp(int status){
-	if (!(getFloor() == -1) && status){
-		setDoorOpenLamp(1);
-		printf("The elevator has stopped. Please leave the elevator.\n");
+
+int elevatorBlocked(){
+	if(isObstructed() && isStopped()){
+		setMotorDirection(DIRN_STOP);
+		return 0;
+	}else if(isObstructed()){
+		setMotorDirection(DIRN_STOP);
+		while(isObstructed()){}
+	}else if(isStopped()){
+		setStopLamp(1);
+		setMotorDirection(DIRN_STOP);
+		while(isStopped()){}
+		while(!isStopped()){}
+		setStopLamp(0);
+		struct timespec ts, rem;
+		ts.tv_sec = 0;
+		ts.tv_nsec = 300000000;
+		nanosleep(&ts, &rem);
 	}
+	return 1;
+}
+*/
+void setStopLamp(int status){
 	if (status){
 		io_set_bit(LIGHT_STOP);
 	}else{

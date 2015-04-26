@@ -3,8 +3,7 @@
 #include "networkModule.h"
 #include "orderManager.h"
 #include "elevDriver.h"
-#define N_FLOORS 4
-#define N_ELEVATORS 5
+#include "publicTypes.h"
 
 int main(){
 	int masterInput = init_network();
@@ -26,18 +25,11 @@ int main(){
 	pthread_create(&receiveMessages, 0, &listen_for_messages, 0);
 	pthread_create(&sendMessages, 0, &send_message, 0);
 	pthread_create(&manager, NULL, &orderManager, NULL);
-	//pthread_create(&printsAreFun,NULL,&printFunction,NULL);
-	//pthread_create(&sendMessages, NULL, &send_message, 0);
 
 	pthread_join(driver,NULL);
 	pthread_join(sendMessages, NULL);
 	pthread_join(receiveMessages, NULL);
-	//pthread_join(sendMessages,NULL);
-	printf("test\n");
 	pthread_join(manager,NULL);
-	//pthread_join(printsAreFun,NULL);
-	//struct ListenParams
-	//pthread_create(&receiveMessages, NULL, &listen_for_messages, NULL);
 
 	return 0;
 }
