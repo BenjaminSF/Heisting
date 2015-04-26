@@ -79,7 +79,7 @@ int initNetwork(){
 	info.addrsList[0] = strdup(info.localIP);
 	info.addrslistCounter = 1;
 	
-	printf("Network initialization finished, local IP: %s\t Port: %d\t Broadcast IP: %s\n", info.localIP, info.port, info.broadcastIP);
+	printf("Network initialization finished, local IP: %s, port: %d, broadcast IP: %s\n", info.localIP, info.port, info.broadcastIP);
 	return inet_addr(info.localIP);
 }
 
@@ -115,7 +115,6 @@ void* sendMessages(void *args){
 
 
 void *receiveMessages(void *args){
-	printf("Listen started\n");
 	BufferInfo *tempMsg = (BufferInfo *)malloc(sizeof(BufferInfo));
 	int port = info.port;
 	struct timeval *timeout = NULL;
@@ -295,10 +294,10 @@ void setMasterIP(int newMasterIP){
 	info.masterIP = strdup(inet_ntoa(tmp));
 	if (newMasterIP == getLocalIP()){
 		info.masterStatus = 1;
-		printf("This elevator is master.\n");
+		printf("This elevator is master\n");
 	}else{
 		info.masterStatus = 0;
-		printf("This elevator is slave.\n");
+		printf("This elevator is slave\n");
 	}
 	sem_post(&(info.masterSem));
 }

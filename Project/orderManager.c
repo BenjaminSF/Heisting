@@ -161,7 +161,6 @@ void distributeOrders(){ //Master only
 }
 
 void* sortMessages(void *args){
-	printf("Enter sortMessages\n");
 	BufferInfo bufOrder;
 	int myIP = getLocalIP();
 	int broadcast = getBroadcastIP();
@@ -407,7 +406,7 @@ void* orderTimeout(){ // Only used by master
 				orderQueue.enRoute[i]++;
 			}
 			if (orderQueue.enRoute[i] > 12){
-				printf("Order timed out!!\n");
+				printf("Order timed out\n");
 				int pos = N_BUTTONS*orderQueue.Queue[i].dest + orderQueue.Queue[i].buttonType;
 				resetAddr(localIPlist[pos]);
 				orderQueue.enRoute[i] = 0;
