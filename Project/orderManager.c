@@ -175,7 +175,7 @@ void distributeOrders(){ //Master only
 					minPos = i;
 					minOrderPos = j;
 				}
-				printf("Cost: %d, floor: %d, button: %d, elev: %d\n", tmpCost, orderQueue.Queue[j].dest, orderQueue.Queue[j].buttonType, tmpAddr);
+				//printf("Cost: %d, floor: %d, button: %d, elev: %d\n", tmpCost, orderQueue.Queue[j].dest, orderQueue.Queue[j].buttonType, tmpAddr);
 			}
 		}
 		if (minCost == 0) break;

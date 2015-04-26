@@ -79,8 +79,6 @@ void goToFloor(int floor){
 			direction = DIRN_UP;
 		}else if(diff < 0){
 			direction = DIRN_DOWN;
-		}else{
-			direction = DIRN_STOP;
 		}
 		setMotorDirection(direction);
 	}
