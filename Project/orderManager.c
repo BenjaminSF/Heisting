@@ -60,17 +60,12 @@ void* orderManager(void* args){
 	return NULL;
 }
 
-int addNewOrder(Order storeOrder){
+int addNewOrder(Order newOrder){
 	if (getMasterStatus() == 1){
 		pthread_mutex_lock(&(orderQueue.rwLock));
 		int pos = 0;
-		//Order storeOrder;
-		//storeOrder.dest = newOrder.dest;
-		//storeOrder.buttonType = newOrder.buttonType;
-		//storeOrder.elevator = newOrder.elevator;
-		
 		while(orderQueue.inUse[pos]){
-			if(orderCompare(&(orderQueue.Queue[pos]), &storeOrder)){
+			if(orderCompare(&(orderQueue.Queue[pos]), &newOrder)){
 				pthread_mutex_unlock(&(orderQueue.rwLock));
 				return -1;
 			} 
@@ -81,32 +76,32 @@ int addNewOrder(Order storeOrder){
 				return -1;
 			}
 		}
-		orderQueue.Queue[pos] = storeOrder;
+		orderQueue.Queue[pos] = newOrder;
 		orderQueue.inUse[pos] = 1;
 		orderQueue.enRoute[pos] = 0;
 		
-		if (storeOrder.buttonType != BUTTON_COMMAND){
-			setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
+		if (newOrder.buttonType != BUTTON_COMMAND){
+			setButtonLamp(newOrder.dest,newOrder.buttonType,1);
 			BufferInfo newMsg;
-			encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
+			encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, newOrder.dest, newOrder.buttonType, 1);
 			enqueue(sendQueue, &newMsg, sizeof(newMsg));
-		}else if (storeOrder.buttonType == BUTTON_COMMAND){
-			orderQueue.localPri[pos] = storeOrder.elevator;
-			if (storeOrder.elevator == getLocalIP()){
-				setButtonLamp(storeOrder.dest,storeOrder.buttonType,1);
+		}else if (newOrder.buttonType == BUTTON_COMMAND){
+			orderQueue.localPri[pos] = newOrder.elevator;
+			if (newOrder.elevator == getLocalIP()){
+				setButtonLamp(newOrder.dest,newOrder.buttonType,1);
 			}else{
 				BufferInfo commandMsg;
-				encodeMessage(&commandMsg, 0, storeOrder.elevator, MSG_SET_LAMP, storeOrder.dest, storeOrder.buttonType, 1);
+				encodeMessage(&commandMsg, 0, newOrder.elevator, MSG_SET_LAMP, newOrder.dest, newOrder.buttonType, 1);
 				enqueue(sendQueue, &commandMsg, sizeof(BufferInfo));
 			}
 		}		
 		pthread_mutex_unlock(&(orderQueue.rwLock));
 		BufferInfo backupMsg;
-		encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_ADD, storeOrder.dest, storeOrder.buttonType, storeOrder.elevator);
+		encodeMessage(&backupMsg, 0, 0, MSG_BACKUP_ADD, newOrder.dest, newOrder.buttonType, newOrder.elevator);
 		enqueue(sendQueue, &backupMsg, sizeof(BufferInfo));
 	}else{ //Send new order to the master
 		BufferInfo newMsg;
-		encodeMessage(&newMsg, 0, 0, MSG_ADD_ORDER, storeOrder.dest, storeOrder.buttonType, 0);
+		encodeMessage(&newMsg, 0, 0, MSG_ADD_ORDER, newOrder.dest, newOrder.buttonType, 0);
 		enqueue(sendQueue, &newMsg, sizeof(newMsg));
 	}
 	return -1;
@@ -178,11 +173,9 @@ void* sortMessages(void *args){
 		if ((myIP == dstAddr) || (broadcast == dstAddr)){
 			switch(myState){
 				case MSG_SET_LAMP:
-					printf("Receive: MSG_SET_LAMP\n");
 					setButtonLamp(bufOrder.currentFloor, bufOrder.buttonType, bufOrder.active);
 					break;
 				case MSG_CONNECT_SEND:
-					printf("Receive: MSG_CONNECT_SEND\n");
 					addElevatorAddr(bufOrder.srcAddr);
 					if (getMasterStatus()) sendPriorityQueue(srcAddr, 1);
 					encodeMessage(&newMsg, 0, bufOrder.srcAddr, MSG_CONNECT_RESPONSE, getMasterStatus(), -1, -1);
@@ -195,50 +188,34 @@ void* sortMessages(void *args){
 					addElevatorAddr(srcAddr);
 					break;
 				case MSG_MASTER_REQUEST:
-					printf("Receive: MSG_MASTER_REQUEST\n");
 					resetAddrsList();
 					encodeMessage(&newMsg, 0, 0, MSG_MASTER_PROPOSAL, -1, -1, -1);
 					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					break;
 				case MSG_MASTER_PROPOSAL:
-					printf("Receive: MSG_MASTER_PROPOSAL\n");
 					if (srcAddr > bestProposal){
 						bestProposal = srcAddr;
 					}
 					addElevatorAddr(srcAddr);	
 					break;
 				case MSG_ADDR_REQUEST:
-					printf("Receive: MSG_ADDR_REQUEST\n");
-					BufferInfo newMsg;
 					encodeMessage(&newMsg, 0, srcAddr, MSG_ADDR_RESPONSE,-1, -1, -1);
 					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					break;
 				case MSG_ADDR_RESPONSE:
-					printf("Receive: MSG_ADDR_RESPONSE\n");
 					addElevatorAddr(srcAddr);
 					break;
 				case MSG_ADD_ORDER:
 					if (getMasterStatus() == 1){
-						printf("Receive: MSG_ADD_ORDER\n");
-						printf("floor: %d, button: %d, elev: %d\n", bufOrder.nextFloor, bufOrder.buttonType, bufOrder.active);
 						Order newOrder;
 						newOrder.dest = bufOrder.nextFloor;
 						newOrder.buttonType = bufOrder.buttonType;
 						newOrder.elevator = bufOrder.active;
 						addNewOrder(newOrder);
-						/*if (bufOrder.buttonType == BUTTON_COMMAND){
-							encodeMessage(&newMsg, 0, bufOrder.active, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
-							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
-						}else{
-							BufferInfo newMsg;
-							encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.nextFloor, bufOrder.buttonType, 1);
-							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
-						}*/
 					}
 					break;
 				case MSG_DELETE_ORDER:
 					if(getMasterStatus() == 1){
-						printf("Receive: MSG_DELETE_ORDER\n");
 						deleteOrder(bufOrder.currentFloor,bufOrder.buttonType,srcAddr);
 						if (bufOrder.buttonType != BUTTON_COMMAND){
 							encodeMessage(&newMsg, 0, 0, MSG_SET_LAMP, bufOrder.currentFloor, bufOrder.buttonType, 0);
@@ -251,7 +228,6 @@ void* sortMessages(void *args){
 					break;
 				case MSG_ELEVSTATE:
 					if(getMasterStatus() == 1){
-						printf("Receive: MSG_ELEVSTATE\n");
 						int i;
 						for (i = 0; i < getAddrsCount(); i++){
 							if (addrsList(i) == srcAddr){
@@ -263,24 +239,11 @@ void* sortMessages(void *args){
 						}
 					}
 					break;
-				case MSG_CONFIRM_ORDER:
-					if(getMasterStatus() == 1){	
-						printf("Receive: MSG_CONFIRM_ORDER\n");
-						int i;
-						for (i = 0; i < N_ORDERS; i++){
-							if (orderQueue.inUse[i] && (orderQueue.Queue[i].dest == bufOrder.nextFloor) && orderQueue.enRoute[i]){
-								orderQueue.enRoute[i] = 1;
-							}
-						}
-					}
-					break;
 				case MSG_IM_ALIVE:
 					if(getMasterStatus() == 0){
-						printf("Receive: MSG_IM_ALIVE\n");
 						sem_post(&timeoutSem);
 					}else{
 						if (srcAddr != myIP){ // Master conflict
-							BufferInfo newMsg;
 							encodeMessage(&newMsg, 0, 0, MSG_MASTER_REQUEST, -1, -1, -1);
 							enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 							if (getLocalIP() != bestProposal){ // Give up master status
@@ -295,17 +258,12 @@ void* sortMessages(void *args){
 					break;
 				case MSG_DO_ORDER:
 					if (getMasterStatus() == 0){
-						printf("Receive: DO_ORDER%d\n", bufOrder.nextFloor);
 						localManQueue[bufOrder.nextFloor] = 1;
 						localManButtons[bufOrder.nextFloor] = bufOrder.buttonType;
-						BufferInfo newMsg;
-						encodeMessage(&newMsg, 0, 0, MSG_CONFIRM_ORDER,bufOrder.nextFloor, -1, -1);
-						enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					}
 					break;
 				case MSG_BACKUP_ADD:
 					if(getMasterStatus() == 0){
-					printf("Receive: MSG_BACKUP_ADD\n");
 					Order newBackupOrder;
 					newBackupOrder.dest = bufOrder.nextFloor;
 					newBackupOrder.buttonType = bufOrder.buttonType;
@@ -315,15 +273,12 @@ void* sortMessages(void *args){
 					break;
 				case MSG_BACKUP_DELETE:
 					if(getMasterStatus() == 0){
-					printf("Receive: MSG_BACKUP_DELETE\n");
 					Order newBackupOrder;
 					newBackupOrder.dest = bufOrder.currentFloor;
 					newBackupOrder.buttonType = bufOrder.buttonType;
 					newBackupOrder.elevator = bufOrder.active;
 					deleteBackupOrder(newBackupOrder);
 					}
-					break;
-				default:
 					break;
 			}
 		}
