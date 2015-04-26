@@ -84,10 +84,7 @@ int init_network(){
 	
 	//Create message to be broadcasted
 	BufferInfo sendInfo;
-	sendInfo.srcAddr = inet_addr(info.localIP);
-	sendInfo.dstAddr = inet_addr(info.broadcastIP);
-	sendInfo.masterStatus = 0;
-	sendInfo.myState = MSG_CONNECT_SEND;
+	encodeMessage(&sendInfo, 0, 0, MSG_CONNECT_SEND, 0, -1, -1);
 	enqueue(sendQueue, &sendInfo, sizeof(BufferInfo));
 
 	info.masterStatus = 0;

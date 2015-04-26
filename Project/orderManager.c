@@ -232,11 +232,7 @@ void* sortMessages(void *args){
 				case MSG_MASTER_REQUEST:
 					printf("Receive: MSG_MASTER_REQUEST\n");
 					resetAddrsList();
-					int candidate = 1;
-					if (srcAddr > myIP){
-						candidate = 0;
-					}
-					encodeMessage(&newMsg, 0, 0, MSG_MASTER_PROPOSAL, candidate, -1, -1);
+					encodeMessage(&newMsg, 0, 0, MSG_MASTER_PROPOSAL, -1, -1, -1);
 					enqueue(sendQueue, &newMsg, sizeof(BufferInfo));
 					break;
 				case MSG_MASTER_PROPOSAL:
@@ -329,7 +325,9 @@ void* sortMessages(void *args){
 								setMasterIP(bestProposal);
 								setMaster(0);
 								sendPriorityQueue(bestProposal, 0);
-
+								BufferInfo getOrdersMsg;
+								encodeMessage(&getOrdersMsg, 0, 0, MSG_CONNECT_SEND, 0, -1, -1);
+								enqueue(sendQueue, &getOrdersMsg, sizeof(BufferInfo));
 							}
 						}		
 					}
