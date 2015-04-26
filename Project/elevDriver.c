@@ -121,8 +121,6 @@ void setFloorIndicator(int floor){
 		io_clear_bit(LIGHT_FLOOR_IND2);
 }
 
-
-
 void setButtonLamp(int floor, buttonType button, int status){
 	if (status){
 		io_set_bit(lampMatrix[floor][button]);
